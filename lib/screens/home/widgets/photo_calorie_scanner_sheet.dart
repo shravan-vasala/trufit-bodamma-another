@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -256,12 +257,19 @@ class _PhotoCalorieScannerSheetState
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
-                    Image.file(
-                      _selectedImage!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                    kIsWeb
+                        ? Image.network(
+                            _selectedImage!.path,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.file(
+                            _selectedImage!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                     if (_isAnalyzing)
                       Container(
                         height: 200,

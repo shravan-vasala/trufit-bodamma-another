@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -104,17 +105,29 @@ class _PhysiquePicturesScreenState
                       itemBuilder: (context, i) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            File(photos[i]),
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, e, s) => Container(
-                              color: AppColors.lavender,
-                              child: const Icon(
-                                Icons.broken_image_rounded,
-                                color: AppColors.textLight,
-                              ),
-                            ),
-                          ),
+                          child: kIsWeb
+                              ? Image.network(
+                                  photos[i],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, e, s) => Container(
+                                    color: AppColors.lavender,
+                                    child: const Icon(
+                                      Icons.broken_image_rounded,
+                                      color: AppColors.textLight,
+                                    ),
+                                  ),
+                                )
+                              : Image.file(
+                                  File(photos[i]),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, e, s) => Container(
+                                    color: AppColors.lavender,
+                                    child: const Icon(
+                                      Icons.broken_image_rounded,
+                                      color: AppColors.textLight,
+                                    ),
+                                  ),
+                                ),
                         );
                       },
                     ),

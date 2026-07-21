@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -11,19 +12,28 @@ class MediaRepository {
 
   Future<void> init() async {
     _box = await Hive.openBox<String>(_boxName);
-    final appDir = await getApplicationDocumentsDirectory();
-    _baseDir = '${appDir.path}/trufit_media';
-    await Directory(_baseDir).create(recursive: true);
-    await Directory('$_baseDir/progress_photos').create(recursive: true);
-    await Directory('$_baseDir/form_check_videos').create(recursive: true);
+    if (!kIsWeb) {
+      final appDir = await getApplicationDocumentsDirectory();
+      _baseDir = '${appDir.path}/trufit_media';
+      await Directory(_baseDir).create(recursive: true);
+      await Directory('$_baseDir/progress_photos').create(recursive: true);
+      await Directory('$_baseDir/form_check_videos').create(recursive: true);
+    } else {
+      _baseDir = 'trufit_media';
+    }
   }
 
   // Progress photos
   Future<String> saveProgressPhoto(String date, String sourcePath) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final ext = sourcePath.split('.').last;
-    final destPath = '$_baseDir/progress_photos/${date}_$timestamp.$ext';
-    await File(sourcePath).copy(destPath);
+    final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'jpg';
+    final destPath = kIsWeb
+        ? sourcePath
+        : '$_baseDir/progress_photos/${date}_$timestamp.$ext';
+
+    if (!kIsWeb) {
+      await File(sourcePath).copy(destPath);
+    }
 
     // Update metadata
     final photos = getProgressPhotos(date);
@@ -40,7 +50,7 @@ class MediaRepository {
   }
 
   List<MapEntry<String, List<String>>> getAllProgressPhotos() {
-    final result = <MapEntry<String, List<String>>>[];
+    final result = <MapEntry<String, List<String>> >[];
     for (final key in _box.keys) {
       final keyStr = key as String;
       if (keyStr.startsWith('photos_')) {
@@ -59,10 +69,15 @@ class MediaRepository {
   Future<String> saveFormCheckVideo(
       String date, String exerciseName, String sourcePath) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final ext = sourcePath.split('.').last;
+    final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'mp4';
     final safeName = exerciseName.replaceAll(RegExp(r'[^\w]'), '_');
-    final destPath = '$_baseDir/form_check_videos/${date}_${safeName}_$timestamp.$ext';
-    await File(sourcePath).copy(destPath);
+    final destPath = kIsWeb
+        ? sourcePath
+        : '$_baseDir/form_check_videos/${date}_${safeName}_$timestamp.$ext';
+
+    if (!kIsWeb) {
+      await File(sourcePath).copy(destPath);
+    }
 
     final key = 'video_${date}_$safeName';
     final videos = getFormCheckVideos(date, exerciseName);

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/scanned_meal_log.dart';
@@ -12,9 +13,13 @@ class PhotoMealRepository {
 
   Future<void> init() async {
     _box = await Hive.openBox<String>(_boxName);
-    final appDir = await getApplicationDocumentsDirectory();
-    _baseDir = '${appDir.path}/trufit_meal_photos';
-    await Directory(_baseDir).create(recursive: true);
+    if (!kIsWeb) {
+      final appDir = await getApplicationDocumentsDirectory();
+      _baseDir = '${appDir.path}/trufit_meal_photos';
+      await Directory(_baseDir).create(recursive: true);
+    } else {
+      _baseDir = 'trufit_meal_photos';
+    }
   }
 
   Future<ScannedMealLog> saveScannedMeal({
@@ -29,9 +34,14 @@ class PhotoMealRepository {
     required double portionMultiplier,
   }) async {
     final timestampMs = DateTime.now().millisecondsSinceEpoch;
-    final ext = sourcePhotoPath.split('.').last;
-    final destPath = '$_baseDir/${date}_$timestampMs.$ext';
-    await File(sourcePhotoPath).copy(destPath);
+    final ext = sourcePhotoPath.contains('.') ? sourcePhotoPath.split('.').last : 'jpg';
+    final destPath = kIsWeb
+        ? sourcePhotoPath
+        : '$_baseDir/${date}_$timestampMs.$ext';
+
+    if (!kIsWeb) {
+      await File(sourcePhotoPath).copy(destPath);
+    }
 
     final log = ScannedMealLog(
       id: 'photo_meal_$timestampMs',
@@ -72,9 +82,11 @@ class PhotoMealRepository {
     final jsonStr = _box.get(id);
     if (jsonStr != null) {
       final log = ScannedMealLog.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
-      final file = File(log.photoPath);
-      if (await file.exists()) {
-        await file.delete();
+      if (!kIsWeb) {
+        final file = File(log.photoPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
       }
       await _box.delete(id);
     }

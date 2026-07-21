@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
@@ -250,18 +251,31 @@ class _ScannedMealCard extends ConsumerWidget {
           // Photo preview thumbnail
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Image.file(
-              File(log.photoPath),
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, stack) => Container(
-                width: 72,
-                height: 72,
-                color: AppColors.lavender,
-                child: const Icon(Icons.fastfood_rounded, color: AppColors.primary),
-              ),
-            ),
+            child: kIsWeb
+                ? Image.network(
+                    log.photoPath,
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Container(
+                      width: 72,
+                      height: 72,
+                      color: AppColors.lavender,
+                      child: const Icon(Icons.fastfood_rounded, color: AppColors.primary),
+                    ),
+                  )
+                : Image.file(
+                    File(log.photoPath),
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Container(
+                      width: 72,
+                      height: 72,
+                      color: AppColors.lavender,
+                      child: const Icon(Icons.fastfood_rounded, color: AppColors.primary),
+                    ),
+                  ),
           ),
           const SizedBox(width: 14),
           // Info
