@@ -1,0 +1,183 @@
+{
+  "planName": "Beginner Plan",
+  "days": [
+    {
+      "dayId": "beg_day1",
+      "label": "Day 1 - Upper Body",
+      "sections": [
+        {
+          "title": "Warm Up",
+          "exercises": [
+            {
+              "name": "Jumping Jacks",
+              "youtubeUrl": "https://youtu.be/iSSAk4XCsRA",
+              "reps": [30],
+              "note": "",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Arm Circles",
+              "youtubeUrl": "https://youtu.be/UVcShl5y3J4",
+              "reps": [15],
+              "note": "Start small, gradually increase circle size",
+              "sideInfo": "Per Arm",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Wall Shoulder Circles",
+              "youtubeUrl": "https://youtu.be/pJHjQj0gNOg",
+              "reps": [10],
+              "note": "Avoid rotating from chest",
+              "sideInfo": "Per Arm",
+              "restSecondsAfterSet": 0
+            }
+          ]
+        },
+        {
+          "title": "Main Workout",
+          "exercises": [
+            {
+              "name": "Wall Push Ups",
+              "youtubeUrl": "https://youtu.be/1SkEFElIOFg",
+              "reps": [10, 10, 10],
+              "note": "Dont drop the heels and elbows move at 45degree angle",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 60
+            },
+            {
+              "name": "Incline Push Ups",
+              "youtubeUrl": "https://youtu.be/Z4r3Fbb5MIo",
+              "reps": [8, 8, 8],
+              "note": "Keep core tight, full range of motion",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 60
+            },
+            {
+              "name": "Tricep Dips (Chair)",
+              "youtubeUrl": "https://youtu.be/0326dy_-CzM",
+              "reps": [10, 10],
+              "note": "Keep back close to the chair",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 60
+            },
+            {
+              "name": "Bicep Curls (Water Bottles)",
+              "youtubeUrl": "https://youtu.be/ykJmrZ5v0Oo",
+              "reps": [12, 12, 12],
+              "note": "Slow and controlled movement",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 45
+            }
+          ]
+        },
+        {
+          "title": "Cooldown",
+          "exercises": [
+            {
+              "name": "Chest Doorway Stretch",
+              "youtubeUrl": "https://youtu.be/WxzxCf6BXWU",
+              "reps": [30],
+              "note": "Hold for 30 seconds each side",
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Tricep Stretch",
+              "youtubeUrl": "https://youtu.be/4aoUOEFHRcY",
+              "reps": [30],
+              "note": "Hold each arm for 30 seconds",
+              "sideInfo": "Per Arm",
+              "restSecondsAfterSet": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dayId": "beg_day2",
+      "label": "Day 2 - Lower Body",
+      "sections": [
+        {
+          "title": "Warm Up",
+          "exercises": [
+            {
+              "name": "High Knees",
+              "youtubeUrl": "https://youtu.be/D0GVCOBmFDY",
+              "reps": [30],
+              "note": "Drive knees up to hip height",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Leg Swings",
+              "youtubeUrl": "https://youtu.be/gBVGJGeTPYg",
+              "reps": [15],
+              "note": "Hold wall for balance",
+              "sideInfo": "Per Leg",
+              "restSecondsAfterSet": 0
+            }
+          ]
+        },
+        {
+          "title": "Main Workout",
+          "exercises": [
+            {
+              "name": "Bodyweight Squats",
+              "youtubeUrl": "https://youtu.be/aclHkVaku9U",
+              "reps": [15, 15, 15],
+              "note": "Push top knee to the ground. Keep weight on heels",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 60
+            },
+            {
+              "name": "Walking Lunges",
+              "youtubeUrl": "https://youtu.be/L8fvypPrzzs",
+              "reps": [10, 10],
+              "note": "Step forward, both knees at 90 degrees",
+              "sideInfo": "Per Leg",
+              "restSecondsAfterSet": 60
+            },
+            {
+              "name": "Glute Bridges",
+              "youtubeUrl": "https://youtu.be/OUgsJ8-Vi0E",
+              "reps": [15, 15, 15],
+              "note": "Squeeze glutes at the top, hold 2 seconds",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 45
+            },
+            {
+              "name": "Calf Raises",
+              "youtubeUrl": "https://youtu.be/-M4-G8p8fmc",
+              "reps": [20, 20],
+              "note": "Slow on the way down",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 30
+            }
+          ]
+        },
+        {
+          "title": "Cooldown",
+          "exercises": [
+            {
+              "name": "Quad Stretch",
+              "youtubeUrl": "https://youtu.be/HOnSjaLVkYw",
+              "reps": [30],
+              "note": "Hold each leg for 30 seconds",
+              "sideInfo": "Per Leg",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Seated Hamstring Stretch",
+              "youtubeUrl": "https://youtu.be/FDwpEdBbhoY",
+              "reps": [30],
+              "note": "Reach for toes, hold 30 seconds",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

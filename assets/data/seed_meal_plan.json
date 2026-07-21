@@ -1,0 +1,49 @@
+{
+  "planName": "Mamatha NonVeg Plan",
+  "totalCalories": 1397,
+  "meals": [
+    {
+      "name": "Protein Breakfast",
+      "type": "breakfast",
+      "calories": 350,
+      "items": [
+        {"name": "Boiled Eggs", "quantity": "3 whole", "calories": 210},
+        {"name": "Multigrain Toast", "quantity": "1 slice", "calories": 80},
+        {"name": "Black Coffee", "quantity": "1 cup", "calories": 5},
+        {"name": "Banana", "quantity": "1 small", "calories": 55}
+      ]
+    },
+    {
+      "name": "Balanced Lunch",
+      "type": "lunch",
+      "calories": 450,
+      "items": [
+        {"name": "Chicken Breast Curry", "quantity": "150g", "calories": 220},
+        {"name": "Brown Rice", "quantity": "1 cup cooked", "calories": 130},
+        {"name": "Mixed Salad", "quantity": "1 bowl", "calories": 50},
+        {"name": "Curd", "quantity": "100g", "calories": 50}
+      ]
+    },
+    {
+      "name": "Evening Snack",
+      "type": "snack",
+      "calories": 197,
+      "items": [
+        {"name": "Greek Yogurt", "quantity": "150g", "calories": 100},
+        {"name": "Mixed Nuts", "quantity": "15g", "calories": 82},
+        {"name": "Green Tea", "quantity": "1 cup", "calories": 15}
+      ]
+    },
+    {
+      "name": "Light Dinner",
+      "type": "dinner",
+      "calories": 400,
+      "items": [
+        {"name": "Grilled Fish", "quantity": "150g", "calories": 180},
+        {"name": "Sauteed Vegetables", "quantity": "1 bowl", "calories": 100},
+        {"name": "Roti (Wheat)", "quantity": "1 piece", "calories": 90},
+        {"name": "Dal", "quantity": "1 small bowl", "calories": 30}
+      ]
+    }
+  ]
+}
