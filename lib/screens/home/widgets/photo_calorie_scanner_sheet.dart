@@ -22,11 +22,11 @@ class _PhotoCalorieScannerSheetState
   bool _analysisComplete = false;
 
   // Food detection state
-  late String _detectedFoodName;
-  late int _baseCalories;
-  late double _proteinGrams;
-  late double _carbsGrams;
-  late double _fatGrams;
+  String _detectedFoodName = 'Chicken Breast & Brown Rice Bowl';
+  int _baseCalories = 420;
+  double _proteinGrams = 38.0;
+  double _carbsGrams = 44.0;
+  double _fatGrams = 8.0;
   double _portionSize = 1.0;
   String _selectedMealType = 'lunch';
 
