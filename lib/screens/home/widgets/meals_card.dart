@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import 'photo_calorie_scanner_sheet.dart';
 
 class MealsCard extends ConsumerWidget {
   const MealsCard({super.key});
@@ -77,7 +78,7 @@ class MealsCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     Icons.chevron_right_rounded,
                     color: AppColors.textLight,
                   ),
@@ -94,12 +95,54 @@ class MealsCard extends ConsumerWidget {
                   minHeight: 8,
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                '$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const PhotoCalorieScannerSheet(),
+                      );
+                    },
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.center_focus_strong_rounded,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Scan Food',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ),
+                ],
               ),
             ],
           ),

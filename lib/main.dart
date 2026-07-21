@@ -9,6 +9,7 @@ import 'repositories/habit_repository.dart';
 import 'repositories/body_stats_repository.dart';
 import 'repositories/media_repository.dart';
 import 'repositories/profile_repository.dart';
+import 'repositories/photo_meal_repository.dart';
 import 'repositories/exercise_log_repository.dart';
 import 'providers/app_providers.dart';
 import 'router/app_router.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
   // Initialize all repositories
   final workoutRepo = WorkoutRepository();
   final mealRepo = MealRepository();
+  final photoMealRepo = PhotoMealRepository();
   final dailyLogRepo = DailyLogRepository();
   final habitRepo = HabitRepository();
   final bodyStatsRepo = BodyStatsRepository();
@@ -47,6 +49,7 @@ Future<void> main() async {
   await Future.wait([
     workoutRepo.init(),
     mealRepo.init(),
+    photoMealRepo.init(),
     dailyLogRepo.init(),
     habitRepo.init(),
     bodyStatsRepo.init(),
@@ -60,6 +63,7 @@ Future<void> main() async {
       overrides: [
         workoutRepoProvider.overrideWithValue(workoutRepo),
         mealRepoProvider.overrideWithValue(mealRepo),
+        photoMealRepoProvider.overrideWithValue(photoMealRepo),
         dailyLogRepoProvider.overrideWithValue(dailyLogRepo),
         habitRepoProvider.overrideWithValue(habitRepo),
         bodyStatsRepoProvider.overrideWithValue(bodyStatsRepo),

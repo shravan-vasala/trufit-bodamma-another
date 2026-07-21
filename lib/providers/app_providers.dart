@@ -8,6 +8,7 @@ import '../repositories/body_stats_repository.dart';
 import '../repositories/media_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/exercise_log_repository.dart';
+import '../repositories/photo_meal_repository.dart';
 import '../models/workout_plan.dart';
 import '../models/meal_plan.dart';
 import '../models/daily_log.dart';
@@ -32,6 +33,10 @@ final workoutRepoProvider = Provider<WorkoutRepository>((ref) {
 });
 
 final mealRepoProvider = Provider<MealRepository>((ref) {
+  throw UnimplementedError('Must be overridden in main');
+});
+
+final photoMealRepoProvider = Provider<PhotoMealRepository>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
