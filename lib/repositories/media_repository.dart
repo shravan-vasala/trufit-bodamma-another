@@ -17,30 +17,57 @@ class MediaRepository {
       _baseDir = '${appDir.path}/trufit_media';
       await Directory(_baseDir).create(recursive: true);
       await Directory('$_baseDir/progress_photos').create(recursive: true);
-      await Directory('$_baseDir/form_check_videos').create(recursive: true);
     } else {
       _baseDir = 'trufit_media';
     }
   }
 
-  // Progress photos
-  Future<String> saveProgressPhoto(String date, String sourcePath) async {
+  // Save a progress photo from raw bytes (works on both web and mobile)
+  Future<String> saveProgressPhoto(String date, Uint8List imageBytes, {String poseTag = 'none'}) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'jpg';
+    final destPath = kIsWeb
+        ? 'web_photo_${date}_$timestamp.jpg'
+        : '$_baseDir/progress_photos/${date}_$timestamp.jpg';
+
+    if (!kIsWeb) {
+      final file = File(destPath);
+      await file.writeAsBytes(imageBytes);
+    }
+
+    // Update photo list metadata
+    final photos = getProgressPhotos(date);
+    photos.add(destPath);
+    await _box.put('photos_$date', jsonEncode(photos));
+
+    // Update pose tag metadata
+    await _box.put('pose_$destPath', poseTag);
+
+    return destPath;
+  }
+
+  // Save a progress photo from a file path (legacy, mobile-only)
+  Future<String> saveProgressPhotoFromPath(String date, String sourcePath, {String poseTag = 'none'}) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final destPath = kIsWeb
         ? sourcePath
-        : '$_baseDir/progress_photos/${date}_$timestamp.$ext';
+        : '$_baseDir/progress_photos/${date}_$timestamp.jpg';
 
     if (!kIsWeb) {
       await File(sourcePath).copy(destPath);
     }
 
-    // Update metadata
     final photos = getProgressPhotos(date);
     photos.add(destPath);
     await _box.put('photos_$date', jsonEncode(photos));
 
+    // Update pose tag metadata
+    await _box.put('pose_$destPath', poseTag);
+
     return destPath;
+  }
+
+  String getPoseTag(String photoPath) {
+    return _box.get('pose_$photoPath') ?? 'none';
   }
 
   List<String> getProgressPhotos(String date) {
@@ -50,7 +77,7 @@ class MediaRepository {
   }
 
   List<MapEntry<String, List<String>>> getAllProgressPhotos() {
-    final result = <MapEntry<String, List<String>> >[];
+    final result = <MapEntry<String, List<String>>>[];
     for (final key in _box.keys) {
       final keyStr = key as String;
       if (keyStr.startsWith('photos_')) {
@@ -65,33 +92,15 @@ class MediaRepository {
     return result;
   }
 
-  // Form check videos
-  Future<String> saveFormCheckVideo(
-      String date, String exerciseName, String sourcePath) async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'mp4';
-    final safeName = exerciseName.replaceAll(RegExp(r'[^\w]'), '_');
-    final destPath = kIsWeb
-        ? sourcePath
-        : '$_baseDir/form_check_videos/${date}_${safeName}_$timestamp.$ext';
-
-    if (!kIsWeb) {
-      await File(sourcePath).copy(destPath);
+  int getAllPhotoCount() {
+    int count = 0;
+    for (final key in _box.keys) {
+      final keyStr = key as String;
+      if (keyStr.startsWith('photos_')) {
+        final photos = getProgressPhotos(keyStr.substring(7));
+        count += photos.length;
+      }
     }
-
-    final key = 'video_${date}_$safeName';
-    final videos = getFormCheckVideos(date, exerciseName);
-    videos.add(destPath);
-    await _box.put(key, jsonEncode(videos));
-
-    return destPath;
-  }
-
-  List<String> getFormCheckVideos(String date, String exerciseName) {
-    final safeName = exerciseName.replaceAll(RegExp(r'[^\w]'), '_');
-    final key = 'video_${date}_$safeName';
-    final jsonStr = _box.get(key);
-    if (jsonStr == null) return [];
-    return (jsonDecode(jsonStr) as List).cast<String>();
+    return count;
   }
 }

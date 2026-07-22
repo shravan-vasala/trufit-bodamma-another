@@ -289,46 +289,6 @@ class ExerciseCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 36,
-                  width: 56,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      _recordFormCheck(context, ref);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      foregroundColor: AppColors.red,
-                      side: const BorderSide(color: AppColors.red, width: 1.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.red,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'REC',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -336,15 +296,5 @@ class ExerciseCard extends ConsumerWidget {
       ),
     );
   }
-
-  void _recordFormCheck(BuildContext context, WidgetRef ref) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Camera recording requires a physical device'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
 }
+

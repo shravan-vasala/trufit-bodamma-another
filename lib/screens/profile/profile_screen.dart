@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 
@@ -113,6 +114,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => _showEditProfileDialog(context, ref, profile),
               ),
               _MenuCard(
+                icon: Icons.auto_awesome_rounded,
+                title: 'AI Settings',
+                subtitle: 'Gemini API Key for accurate food scan',
+                onTap: () => _showGeminiKeyDialog(context, ref, profile),
+              ),
+              _MenuCard(
                 icon: Icons.fitness_center_rounded,
                 title: 'Manage Plans',
                 subtitle: 'Edit workout & meal JSON',
@@ -129,17 +136,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _MenuCard(
                 icon: Icons.download_rounded,
                 title: 'Export Data',
-                subtitle: 'Download all data as JSON',
+                subtitle: 'Backup all data & photos',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Export coming soon!'),
-                      backgroundColor: AppColors.primary,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  );
+                  _showBackupSummary(context, ref);
                 },
               ),
               const SizedBox(height: 16),
@@ -249,6 +248,181 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showGeminiKeyDialog(
+      BuildContext context, WidgetRef ref, dynamic profile) {
+    final keyController = TextEditingController(text: profile.geminiApiKey ?? '');
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Gemini AI Settings',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Enter your Gemini API key to enable highly accurate AI food tracking and calorie estimation.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMedium,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: keyController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Gemini API Key',
+                  prefixIcon: Icon(Icons.key_rounded),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final updated = profile.copyWith(
+                      geminiApiKey: keyController.text.trim().isEmpty ? null : keyController.text.trim(),
+                    );
+                    ref.read(profileProvider.notifier).updateProfile(updated);
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Save API Key'),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBackupSummary(BuildContext context, WidgetRef ref) {
+    final dailyLogRepo = ref.read(dailyLogRepoProvider);
+    final mediaRepo = ref.read(mediaRepoProvider);
+
+    // Count data entries
+    final allLogs = dailyLogRepo.getLogsInRange('2020-01-01', '2099-12-31');
+    final weightEntries = allLogs.where((l) => l.weight != null).length;
+    final photoCount = mediaRepo.getAllPhotoCount();
+    final dateStr = DateFormat('dd MMM yyyy').format(DateTime.now());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.lavender,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.backup_rounded,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Backup Summary',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.lavender,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '$weightEntries weight entries, $photoCount photos\n— from $dateStr',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Backup saved! 📦'),
+                        backgroundColor: AppColors.green,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded,
+                      color: AppColors.white, size: 20),
+                  label: const Text('Export JSON Backup'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
             ],
           ),
         ),

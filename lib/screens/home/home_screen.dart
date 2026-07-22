@@ -118,11 +118,64 @@ class _WorkoutCta extends ConsumerWidget {
     final workoutPlan = ref.watch(workoutPlanProvider);
     if (workoutPlan == null || workoutPlan.days.isEmpty) return const SizedBox();
 
-    // Pick next workout day (cycle through)
     final dateStr = ref.watch(dateStringProvider);
     final dailyLog = ref.watch(dailyLogProvider);
-    final dayIndex = DateTime.parse(dateStr).difference(DateTime(2026, 1, 1)).inDays %
-        workoutPlan.days.length;
+    final weekday = DateTime.parse(dateStr).weekday;
+
+    // Sunday is Rest Day
+    if (weekday == DateTime.sunday) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.lavender,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.self_improvement_rounded,
+                color: AppColors.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Rest Day 🧘‍♀️',
+                    style: TextStyle(
+                      color: AppColors.textDark,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Time to recover and relax!',
+                    style: TextStyle(
+                      color: AppColors.textMedium,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final dayIndex = (weekday - 1).clamp(0, workoutPlan.days.length - 1);
     final day = workoutPlan.days[dayIndex];
     final isCompleted = dailyLog.workoutCompleted;
 

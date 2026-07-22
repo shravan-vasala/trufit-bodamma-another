@@ -7,6 +7,8 @@ class UserProfile {
   final String? activeMealPlan;
   final String? activeWorkoutPlan;
   final List<Map<String, dynamic>> customHabits;
+  final String? geminiApiKey;
+
 
   UserProfile({
     this.name = 'Mamatha',
@@ -17,6 +19,7 @@ class UserProfile {
     this.activeMealPlan,
     this.activeWorkoutPlan,
     this.customHabits = const [],
+    this.geminiApiKey,
   });
 
   double get heightInMeters => height / 100;
@@ -52,6 +55,7 @@ class UserProfile {
               ?.map((h) => Map<String, dynamic>.from(h as Map))
               .toList() ??
           [],
+      geminiApiKey: json['geminiApiKey'] as String?,
     );
   }
 
@@ -64,6 +68,7 @@ class UserProfile {
         if (activeMealPlan != null) 'activeMealPlan': activeMealPlan,
         if (activeWorkoutPlan != null) 'activeWorkoutPlan': activeWorkoutPlan,
         'customHabits': customHabits,
+        if (geminiApiKey != null) 'geminiApiKey': geminiApiKey,
       };
 
   UserProfile copyWith({
@@ -75,6 +80,7 @@ class UserProfile {
     String? activeMealPlan,
     String? activeWorkoutPlan,
     List<Map<String, dynamic>>? customHabits,
+    String? geminiApiKey,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -85,6 +91,7 @@ class UserProfile {
       activeMealPlan: activeMealPlan ?? this.activeMealPlan,
       activeWorkoutPlan: activeWorkoutPlan ?? this.activeWorkoutPlan,
       customHabits: customHabits ?? this.customHabits,
+      geminiApiKey: geminiApiKey ?? this.geminiApiKey,
     );
   }
 }

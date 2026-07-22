@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import '../../../services/gemini_food_service.dart';
 
 class PhotoCalorieScannerSheet extends ConsumerStatefulWidget {
   const PhotoCalorieScannerSheet({super.key});
@@ -32,51 +33,6 @@ class _PhotoCalorieScannerSheetState
 
   final _foodNameController = TextEditingController();
 
-  final List<Map<String, dynamic>> _foodPresets = [
-    {
-      'name': 'Chicken Breast & Brown Rice Bowl',
-      'calories': 420,
-      'protein': 38.0,
-      'carbs': 44.0,
-      'fat': 8.0,
-    },
-    {
-      'name': 'Boiled Eggs & Multigrain Toast',
-      'calories': 320,
-      'protein': 22.0,
-      'carbs': 28.0,
-      'fat': 12.0,
-    },
-    {
-      'name': 'Roti, Dal & Mixed Vegetable Curry',
-      'calories': 380,
-      'protein': 14.0,
-      'carbs': 62.0,
-      'fat': 9.0,
-    },
-    {
-      'name': 'Greek Yogurt & Mixed Fruit Bowl',
-      'calories': 240,
-      'protein': 16.0,
-      'carbs': 36.0,
-      'fat': 3.0,
-    },
-    {
-      'name': 'Grilled Fish & Sauteed Greens',
-      'calories': 360,
-      'protein': 35.0,
-      'carbs': 12.0,
-      'fat': 18.0,
-    },
-    {
-      'name': 'Paneer Tikka & Salad',
-      'calories': 410,
-      'protein': 24.0,
-      'carbs': 18.0,
-      'fat': 26.0,
-    },
-  ];
-
   @override
   void dispose() {
     _foodNameController.dispose();
@@ -93,23 +49,49 @@ class _PhotoCalorieScannerSheetState
       _analysisComplete = false;
     });
 
-    // Simulate AI Vision analysis algorithm
-    await Future.delayed(const Duration(milliseconds: 1600));
+    try {
+      final imageBytes = await picked.readAsBytes();
+      String mimeType = picked.mimeType ?? 'image/jpeg';
+      if (picked.path.toLowerCase().endsWith('.png')) {
+        mimeType = 'image/png';
+      } else if (picked.path.toLowerCase().endsWith('.webp')) {
+        mimeType = 'image/webp';
+      }
 
-    // Choose preset based on hash of file length to feel dynamic and consistent
-    final hash = picked.path.length % _foodPresets.length;
-    final preset = _foodPresets[hash];
+      final geminiService = ref.read(geminiFoodServiceProvider);
+      final result = await geminiService.analyzeFoodImage(imageBytes, mimeType);
+      
+      if (result != null) {
+        setState(() {
+          _detectedFoodName = result['name'] ?? 'Unknown Food';
+          _baseCalories = (result['calories'] ?? 0).toInt();
+          _proteinGrams = (result['protein'] ?? 0).toDouble();
+          _carbsGrams = (result['carbs'] ?? 0).toDouble();
+          _fatGrams = (result['fat'] ?? 0).toDouble();
+          _foodNameController.text = _detectedFoodName;
+          _isAnalyzing = false;
+          _analysisComplete = true;
+        });
+      } else {
+        _showError('AI could not analyze the image.');
+      }
+    } catch (e) {
+      _showError(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
 
+  void _showError(String message) {
     setState(() {
-      _detectedFoodName = preset['name'] as String;
-      _baseCalories = preset['calories'] as int;
-      _proteinGrams = preset['protein'] as double;
-      _carbsGrams = preset['carbs'] as double;
-      _fatGrams = preset['fat'] as double;
-      _foodNameController.text = _detectedFoodName;
       _isAnalyzing = false;
-      _analysisComplete = true;
+      _selectedImage = null;
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
