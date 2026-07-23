@@ -1,74 +1,118 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
-import '../models/meal_plan.dart';
+import '../models/daily_meal_log.dart';
 
 class MealRepository {
-  static const String _planBoxName = 'meal_plans';
-  static const String _completionBoxName = 'meal_completions';
+  static const String _dailyLogsBoxName = 'daily_meal_logs';
+  static const String _completionBoxName = 'meal_completions'; // Legacy box
 
-  late Box<String> _planBox;
+  late Box<String> _dailyLogsBox;
   late Box<String> _completionBox;
 
   Future<void> init() async {
-    _planBox = await Hive.openBox<String>(_planBoxName);
+    _dailyLogsBox = await Hive.openBox<String>(_dailyLogsBoxName);
     _completionBox = await Hive.openBox<String>(_completionBoxName);
-    await _seedIfEmpty();
+    await _migrateLegacyCompletions();
   }
 
-  Future<void> _seedIfEmpty() async {
-    if (_planBox.isEmpty) {
-      final jsonStr = await rootBundle.loadString('assets/data/seed_meal_plan.json');
-      _planBox.put('mamatha_nonveg', jsonStr);
+  Future<void> _migrateLegacyCompletions() async {
+    // If the legacy box has entries, convert them to DailyMealLog manual entries
+    if (_completionBox.isNotEmpty) {
+      for (final key in _completionBox.keys) {
+        final date = key as String;
+        final jsonStr = _completionBox.get(date);
+        if (jsonStr != null) {
+          try {
+            final completions = jsonDecode(jsonStr) as Map<String, dynamic>;
+            final existingLog = getDailyLog(date);
+            
+            MealSlotLog? makeDummySlot(bool isCompleted) {
+              if (!isCompleted) return null;
+              return MealSlotLog(
+                items: [
+                  MealItemLog(name: 'Legacy Log', portion: '1', calories: 350, proteinG: 0, carbsG: 0, fatG: 0)
+                ],
+                totalCalories: 350,
+                totalProtein: 0,
+                totalCarbs: 0,
+                totalFat: 0,
+              );
+            }
+
+            final newLog = existingLog.copyWith(
+              breakfast: existingLog.breakfast ?? makeDummySlot(completions['breakfast'] == true),
+              lunch: existingLog.lunch ?? makeDummySlot(completions['lunch'] == true),
+              snack: existingLog.snack ?? makeDummySlot(completions['snack'] == true),
+              dinner: existingLog.dinner ?? makeDummySlot(completions['dinner'] == true),
+            );
+
+            await saveDailyLog(newLog);
+          } catch (_) {
+            // Ignore corrupted legacy data
+          }
+        }
+      }
+      await _completionBox.clear(); // Clear so we don't migrate again
     }
   }
 
-  MealPlan? getActivePlan() {
-    if (_planBox.isEmpty) return null;
-    final jsonStr = _planBox.values.first;
-    return MealPlan.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+  DailyMealLog getDailyLog(String date) {
+    final jsonStr = _dailyLogsBox.get(date);
+    if (jsonStr == null) {
+      return DailyMealLog(date: date);
+    }
+    try {
+      return DailyMealLog.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    } catch (_) {
+      return DailyMealLog(date: date);
+    }
   }
 
-  List<MealPlan> getAllPlans() {
-    return _planBox.values.map((jsonStr) {
-      return MealPlan.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
-    }).toList();
+  Future<void> saveDailyLog(DailyMealLog log) async {
+    await _dailyLogsBox.put(log.date, jsonEncode(log.toJson()));
   }
 
-  // Meal completions for a date
-  Map<String, bool> getMealCompletions(String date) {
-    final jsonStr = _completionBox.get(date);
-    if (jsonStr == null) return {};
-    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-    return data.map((k, v) => MapEntry(k, v as bool));
+  Future<void> saveMealSlot(String date, String slotName, MealSlotLog slotLog) async {
+    final currentLog = getDailyLog(date);
+    DailyMealLog updated;
+    switch (slotName) {
+      case 'breakfast':
+        updated = currentLog.copyWith(breakfast: slotLog);
+        break;
+      case 'lunch':
+        updated = currentLog.copyWith(lunch: slotLog);
+        break;
+      case 'snack':
+        updated = currentLog.copyWith(snack: slotLog);
+        break;
+      case 'dinner':
+        updated = currentLog.copyWith(dinner: slotLog);
+        break;
+      default:
+        return;
+    }
+    await saveDailyLog(updated);
   }
 
-  Future<void> toggleMealCompletion(String date, String mealType) async {
-    final completions = getMealCompletions(date);
-    completions[mealType] = !(completions[mealType] ?? false);
-    await _completionBox.put(date, jsonEncode(completions));
-  }
-
-  MealPlan? getPlanWithCompletions(String date) {
-    final plan = getActivePlan();
-    if (plan == null) return null;
-    final completions = getMealCompletions(date);
-    final updatedMeals = plan.meals.map((meal) {
-      return meal.copyWith(isCompleted: completions[meal.type] ?? false);
-    }).toList();
-    return plan.copyWith(meals: updatedMeals);
-  }
-
-  Future<void> savePlanJson(String key, String jsonStr) async {
-    jsonDecode(jsonStr); // validate
-    await _planBox.put(key, jsonStr);
-  }
-
-  String? getRawPlanJson(String key) {
-    return _planBox.get(key);
-  }
-
-  List<String> getPlanKeys() {
-    return _planBox.keys.cast<String>().toList();
+  Future<void> clearMealSlot(String date, String slotName) async {
+    final currentLog = getDailyLog(date);
+    DailyMealLog updated;
+    switch (slotName) {
+      case 'breakfast':
+        updated = currentLog.copyWith(clearBreakfast: true);
+        break;
+      case 'lunch':
+        updated = currentLog.copyWith(clearLunch: true);
+        break;
+      case 'snack':
+        updated = currentLog.copyWith(clearSnack: true);
+        break;
+      case 'dinner':
+        updated = currentLog.copyWith(clearDinner: true);
+        break;
+      default:
+        return;
+    }
+    await saveDailyLog(updated);
   }
 }

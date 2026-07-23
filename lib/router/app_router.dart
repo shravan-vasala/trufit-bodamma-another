@@ -8,14 +8,13 @@ import '../screens/workout/workout_screen.dart';
 import '../screens/workout/youtube_player_screen.dart';
 import '../screens/workout/exercise_progress_screen.dart';
 import '../screens/progress/progress_screen.dart';
-import '../screens/chats/chats_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/manage_plans_screen.dart';
 import '../theme/app_colors.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
-final _chatsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'chats');
+final _progressNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'progress');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final appRouter = GoRouter(
@@ -58,11 +57,34 @@ final appRouter = GoRouter(
           ],
         ),
         StatefulShellBranch(
-          navigatorKey: _chatsNavigatorKey,
+          navigatorKey: _progressNavigatorKey,
           routes: [
             GoRoute(
-              path: '/chats',
-              builder: (context, state) => const ChatsScreen(),
+              path: '/progress',
+              builder: (context, state) {
+                final metricStr = state.uri.queryParameters['metric'];
+                MetricType? metric;
+                if (metricStr != null) {
+                  switch (metricStr) {
+                    case 'weight':
+                      metric = MetricType.weight;
+                      break;
+                    case 'steps':
+                      metric = MetricType.steps;
+                      break;
+                    case 'sleep':
+                      metric = MetricType.sleep;
+                      break;
+                    case 'bmi':
+                      metric = MetricType.bmi;
+                      break;
+                    case 'bodyFat':
+                      metric = MetricType.bodyFat;
+                      break;
+                  }
+                }
+                return ProgressScreen(initialMetric: metric);
+              },
             ),
           ],
         ),
@@ -73,10 +95,7 @@ final appRouter = GoRouter(
               path: '/profile',
               builder: (context, state) => const ProfileScreen(),
               routes: [
-                GoRoute(
-                  path: 'progress',
-                  builder: (context, state) => const ProgressScreen(),
-                ),
+
                 GoRoute(
                   path: 'manage-plans',
                   builder: (context, state) => const ManagePlansScreen(),
@@ -141,8 +160,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
                   onTap: () => navigationShell.goBranch(0),
                 ),
                 _NavItem(
-                  icon: Icons.chat_bubble_rounded,
-                  label: 'Chats',
+                  icon: Icons.show_chart_rounded,
+                  label: 'Progress',
                   isSelected: navigationShell.currentIndex == 1,
                   onTap: () => navigationShell.goBranch(1),
                 ),

@@ -11,6 +11,11 @@ class HabitsCard extends ConsumerWidget {
     final habits = ref.watch(habitsProvider);
     final completions = ref.watch(habitCompletionsProvider);
     final completedCount = completions.completedCount;
+    
+    final selectedDateStr = ref.watch(dateStringProvider);
+    final selectedDate = DateTime.parse(selectedDateStr);
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final isFuture = selectedDate.isAfter(today);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -51,9 +56,11 @@ class HabitsCard extends ConsumerWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: GestureDetector(
-                  onTap: () {
-                    ref.read(habitCompletionsProvider.notifier).toggle(habit.id);
-                  },
+                  onTap: isFuture
+                      ? null
+                      : () {
+                          ref.read(habitCompletionsProvider.notifier).toggle(habit.id);
+                        },
                   behavior: HitTestBehavior.opaque,
                   child: Row(
                     children: [
@@ -63,14 +70,14 @@ class HabitsCard extends ConsumerWidget {
                         height: 28,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isCompleted ? AppColors.green : Colors.transparent,
-                          border: isCompleted
+                          color: isCompleted ? AppColors.green : (isFuture ? AppColors.textLight.withValues(alpha: 0.1) : Colors.transparent),
+                          border: isCompleted || isFuture
                               ? null
                               : Border.all(color: AppColors.border, width: 2),
                         ),
                         child: isCompleted
                             ? const Icon(Icons.check, color: AppColors.white, size: 16)
-                            : null,
+                            : (isFuture ? Icon(Icons.lock_outline_rounded, color: AppColors.textLight.withValues(alpha: 0.5), size: 14) : null),
                       ),
                       const SizedBox(width: 14),
                       Expanded(

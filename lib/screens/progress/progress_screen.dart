@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/daily_log.dart';
+import 'widgets/shared_chart_card.dart';
 
-enum MetricType { weight, steps, sleep, bmi, bodyFat }
+enum MetricType { weight, steps, sleep, bmi, bodyFat, calories }
 
 enum TimeRange { weekly, monthly, sixMonths }
 
 class ProgressScreen extends ConsumerStatefulWidget {
-  const ProgressScreen({super.key});
+  const ProgressScreen({super.key, this.initialMetric});
+  
+  final MetricType? initialMetric;
 
   @override
   ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
 class _ProgressScreenState extends ConsumerState<ProgressScreen> {
-  MetricType _selectedMetric = MetricType.weight;
+  late MetricType _selectedMetric;
   TimeRange _selectedRange = TimeRange.monthly;
   late DateTime _endDate;
 
   @override
   void initState() {
     super.initState();
+    _selectedMetric = widget.initialMetric ?? MetricType.weight;
     _endDate = DateTime.now();
   }
 
@@ -155,69 +158,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              _metricTitle(_selectedMetric),
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textDark,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_selectedMetric == MetricType.weight)
-                              GestureDetector(
-                                onTap: () {
-                                  ref.read(profileProvider.notifier).toggleUnit();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.lavender,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    profile.useKg ? 'KG' : 'LB',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          height: 200,
-                          child: _buildChart(logs, profile.useKg, profile),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Stats strip
-                  _buildStatsStrip(logs, profile),
+                  _selectedMetric == MetricType.calories
+                    ? _buildCaloriesChart(startStr, endStr, profile)
+                    : _buildChart(logs, profile.useKg, profile),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -307,186 +250,163 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       }
     }).toList();
 
-    if (filteredLogs.isEmpty) {
-      return Center(
-        child: Text(
-          'No data for this period',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textLight,
-          ),
-        ),
-      );
+    // Fill in gaps depending on the range
+    final List<ChartDataPoint> data = [];
+    if (filteredLogs.isNotEmpty) {
+      final startDate = DateTime.parse(filteredLogs.first.date);
+      final endDate = DateTime.parse(filteredLogs.last.date);
+      
+      final daysDiff = endDate.difference(startDate).inDays;
+      final logsByDate = {for (var l in filteredLogs) l.date: l};
+      
+      for (int i = 0; i <= daysDiff; i++) {
+        final d = startDate.add(Duration(days: i));
+        final dateStr = DateFormat('yyyy-MM-dd').format(d);
+        final log = logsByDate[dateStr];
+        
+        if (log != null) {
+          double val = 0;
+          switch (_selectedMetric) {
+            case MetricType.weight:
+              val = useKg ? log.weight! : log.weight! * 2.20462;
+              break;
+            case MetricType.steps:
+              val = log.steps!.toDouble();
+              break;
+            case MetricType.sleep:
+              val = log.sleepHours!;
+              break;
+            case MetricType.bmi:
+              final h = profile.heightInMeters;
+              val = log.weight! / (h * h);
+              break;
+            case MetricType.bodyFat:
+              val = log.bodyFat!;
+              break;
+          }
+          data.add(ChartDataPoint(d, val));
+        } else {
+          if (_selectedMetric == MetricType.steps) {
+            data.add(ChartDataPoint(d, 0)); // Missing steps means 0
+          } else {
+            // For others, if we want to connect smoothly we can just omit missing days from data.
+            // fl_chart connects the adjacent points if we just don't add the gap point.
+            // Except for 6-months we might need to do real downsampling, but keeping it simple connects the dots.
+          }
+        }
+      }
     }
 
-    final spots = filteredLogs.asMap().entries.map((e) {
-      double value;
-      switch (_selectedMetric) {
-        case MetricType.weight:
-          value = useKg ? e.value.weight! : e.value.weight! * 2.20462;
-          break;
-        case MetricType.steps:
-          value = e.value.steps!.toDouble();
-          break;
-        case MetricType.sleep:
-          value = e.value.sleepHours!;
-          break;
-        case MetricType.bmi:
-          final h = profile.heightInMeters;
-          value = e.value.weight! / (h * h);
-          break;
-        case MetricType.bodyFat:
-          value = e.value.bodyFat!;
-          break;
+    // Determine stats
+    List<String> labels = [];
+    List<String> values = [];
+    
+    if (filteredLogs.isNotEmpty) {
+      if (_selectedMetric == MetricType.steps) {
+        final steps = filteredLogs.map((l) => l.steps!).toList();
+        final total = steps.reduce((a, b) => a + b);
+        final avg = total ~/ steps.length;
+        final max = steps.reduce((a, b) => a > b ? a : b);
+        labels = ['AVERAGE', 'TOTAL', 'MAX'];
+        values = [avg.toString(), total.toString(), max.toString()];
+      } else if (_selectedMetric == MetricType.weight) {
+        final weights = filteredLogs.map((l) => useKg ? l.weight! : l.weight! * 2.20462).toList();
+        final avg = weights.reduce((a, b) => a + b) / weights.length;
+        final max = weights.reduce((a, b) => a > b ? a : b);
+        final min = weights.reduce((a, b) => a < b ? a : b);
+        final unit = useKg ? 'kg' : 'lb';
+        labels = ['AVERAGE', 'MAX', 'MIN'];
+        values = ['${avg.toStringAsFixed(1)} $unit', '${max.toStringAsFixed(1)} $unit', '${min.toStringAsFixed(1)} $unit'];
+      } else if (_selectedMetric == MetricType.sleep) {
+        final sleeps = filteredLogs.map((l) => l.sleepHours!).toList();
+        final avg = sleeps.reduce((a, b) => a + b) / sleeps.length;
+        final max = sleeps.reduce((a, b) => a > b ? a : b);
+        final min = sleeps.reduce((a, b) => a < b ? a : b);
+        labels = ['AVERAGE', 'MAX', 'MIN'];
+        values = ['${avg.toStringAsFixed(1)}h', '${max.toStringAsFixed(1)}h', '${min.toStringAsFixed(1)}h'];
+      } else if (_selectedMetric == MetricType.bmi) {
+        final h = profile.heightInMeters;
+        final bmis = filteredLogs.map((l) => l.weight! / (h * h)).toList();
+        final avg = bmis.reduce((a, b) => a + b) / bmis.length;
+        final max = bmis.reduce((a, b) => a > b ? a : b);
+        final min = bmis.reduce((a, b) => a < b ? a : b);
+        labels = ['AVERAGE', 'MAX', 'MIN'];
+        values = [avg.toStringAsFixed(1), max.toStringAsFixed(1), min.toStringAsFixed(1)];
+      } else if (_selectedMetric == MetricType.bodyFat) {
+        final fats = filteredLogs.map((l) => l.bodyFat!).toList();
+        final avg = fats.reduce((a, b) => a + b) / fats.length;
+        final max = fats.reduce((a, b) => a > b ? a : b);
+        final min = fats.reduce((a, b) => a < b ? a : b);
+        labels = ['AVERAGE', 'MAX', 'MIN'];
+        values = ['${avg.toStringAsFixed(1)}%', '${max.toStringAsFixed(1)}%', '${min.toStringAsFixed(1)}%'];
       }
-      return FlSpot(e.key.toDouble(), value);
-    }).toList();
+    }
 
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: AppColors.border,
-            strokeWidth: 1,
-          ),
-        ),
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                final idx = value.toInt();
-                if (idx < 0 || idx >= filteredLogs.length) {
-                  return const SizedBox.shrink();
-                }
-                if (filteredLogs.length > 10 && idx % 3 != 0) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    DateFormat('dd').format(DateTime.parse(filteredLogs[idx].date)),
-                    style: const TextStyle(
-                        fontSize: 10, color: AppColors.textLight),
-                  ),
-                );
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        borderData: FlBorderData(show: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: AppColors.primary,
-            barWidth: 3,
-            dotData: FlDotData(
-              show: spots.length <= 14,
-              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
-                radius: 4,
-                color: AppColors.white,
-                strokeWidth: 2,
-                strokeColor: AppColors.primary,
-              ),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.2),
-                  AppColors.primary.withValues(alpha: 0.02),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    ChartTimeFormat format;
+    switch (_selectedRange) {
+      case TimeRange.weekly: format = ChartTimeFormat.weekly; break;
+      case TimeRange.monthly: format = ChartTimeFormat.monthly; break;
+      case TimeRange.sixMonths: format = ChartTimeFormat.sixMonths; break;
+    }
+
+    return SharedChartCard(
+      title: _metricTitle(_selectedMetric),
+      data: data,
+      isSteps: _selectedMetric == MetricType.steps,
+      showKgLbToggle: _selectedMetric == MetricType.weight,
+      useKg: useKg,
+      onToggleUnit: () => ref.read(profileProvider.notifier).toggleUnit(),
+      statLabels: labels,
+      statValues: values,
+      timeFormat: format,
+      emptyMessage: 'No ${_metricLabel(_selectedMetric).toLowerCase()} entries yet — tap + to log',
     );
   }
 
-  Widget _buildStatsStrip(List<DailyLog> logs, dynamic profile) {
-    List<_StatItem> stats = [];
-
-    switch (_selectedMetric) {
-      case MetricType.steps:
-        final stepsLogs = logs.where((l) => l.steps != null).toList();
-        if (stepsLogs.isNotEmpty) {
-          final total = stepsLogs.fold<int>(0, (s, l) => s + l.steps!);
-          final avg = total ~/ stepsLogs.length;
-          final max = stepsLogs.map((l) => l.steps!).reduce((a, b) => a > b ? a : b);
-          stats = [
-            _StatItem('AVERAGE', avg.toString()),
-            _StatItem('TOTAL', total.toString()),
-            _StatItem('MAX', max.toString()),
-          ];
-        }
-        break;
-      case MetricType.weight:
-        final weightLogs = logs.where((l) => l.weight != null).toList();
-        if (weightLogs.isNotEmpty) {
-          final useKg = profile.useKg as bool;
-          final unit = useKg ? 'kg' : 'lb';
-          final values = weightLogs
-              .map((l) => useKg ? l.weight! : l.weight! * 2.20462)
-              .toList();
-          final avg = values.reduce((a, b) => a + b) / values.length;
-          final max = values.reduce((a, b) => a > b ? a : b);
-          final min = values.reduce((a, b) => a < b ? a : b);
-          stats = [
-            _StatItem('AVERAGE', '${avg.toStringAsFixed(1)} $unit'),
-            _StatItem('MAX', '${max.toStringAsFixed(1)} $unit'),
-            _StatItem('MIN', '${min.toStringAsFixed(1)} $unit'),
-          ];
-        }
-        break;
-      default:
-        break;
+  Widget _buildCaloriesChart(String startStr, String endStr, dynamic profile) {
+    final mealLogs = ref.watch(dailyMealLogsRangeProvider((startStr, endStr)));
+    
+    final List<ChartDataPoint> data = [];
+    final List<int> validCalories = [];
+    
+    for (final log in mealLogs) {
+      final d = DateTime.parse(log.date);
+      data.add(ChartDataPoint(d, log.totalCalories.toDouble()));
+      if (log.totalCalories > 0) {
+        validCalories.add(log.totalCalories);
+      }
+    }
+    
+    List<String> labels = ['AVERAGE', 'MAX', 'MIN'];
+    List<String> values = ['0', '0', '0'];
+    
+    if (validCalories.isNotEmpty) {
+      final sum = validCalories.reduce((a, b) => a + b);
+      final avg = sum ~/ validCalories.length;
+      final max = validCalories.reduce((a, b) => a > b ? a : b);
+      final min = validCalories.reduce((a, b) => a < b ? a : b);
+      values = [avg.toString(), max.toString(), min.toString()];
     }
 
-    if (stats.isEmpty) return const SizedBox.shrink();
+    ChartTimeFormat format;
+    switch (_selectedRange) {
+      case TimeRange.weekly: format = ChartTimeFormat.weekly; break;
+      case TimeRange.monthly: format = ChartTimeFormat.monthly; break;
+      case TimeRange.sixMonths: format = ChartTimeFormat.sixMonths; break;
+    }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: stats
-            .map((s) => Column(
-                  children: [
-                    Text(
-                      s.label,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textLight,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      s.value,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ],
-                ))
-            .toList(),
-      ),
+    return SharedChartCard(
+      title: 'Calories',
+      data: data,
+      isSteps: false,
+      showKgLbToggle: false,
+      useKg: true,
+      onToggleUnit: () {},
+      statLabels: labels,
+      statValues: values,
+      timeFormat: format,
+      emptyMessage: 'No calories logged yet',
+      targetValue: profile.targetCalories.toDouble(),
     );
   }
 
@@ -513,6 +433,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         return 'BMI';
       case MetricType.bodyFat:
         return 'Body Fat';
+      case MetricType.calories:
+        return 'Calories';
     }
   }
 
@@ -528,6 +450,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         return 'BMI';
       case MetricType.bodyFat:
         return 'Body Fat';
+      case MetricType.calories:
+        return 'Calories';
     }
   }
 
@@ -543,12 +467,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         return Icons.speed_rounded;
       case MetricType.bodyFat:
         return Icons.water_drop_rounded;
+      case MetricType.calories:
+        return Icons.restaurant_rounded;
     }
   }
 }
 
-class _StatItem {
-  final String label;
-  final String value;
-  _StatItem(this.label, this.value);
-}

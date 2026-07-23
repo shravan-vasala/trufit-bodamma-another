@@ -84,12 +84,19 @@ class Exercise {
   String? get youtubeVideoId {
     final uri = Uri.tryParse(youtubeUrl);
     if (uri == null) return null;
+    
     // Handle youtu.be/ID format
     if (uri.host.contains('youtu.be')) {
       return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
     }
-    // Handle youtube.com/watch?v=ID format
+    
+    // Handle youtube.com/watch?v=ID or youtube.com/shorts/ID format
     if (uri.host.contains('youtube.com')) {
+      if (uri.pathSegments.isNotEmpty && uri.pathSegments.first == 'shorts') {
+        if (uri.pathSegments.length > 1) {
+          return uri.pathSegments[1];
+        }
+      }
       return uri.queryParameters['v'];
     }
     return null;
@@ -97,10 +104,10 @@ class Exercise {
 
   String get thumbnailUrl {
     final id = youtubeVideoId;
-    if (id == null || id == 'XXXX') {
+    if (id == null || id.isEmpty || id == 'XXXX') {
       return '';
     }
-    return 'https://img.youtube.com/vi/$id/mqdefault.jpg';
+    return 'https://img.youtube.com/vi/$id/hqdefault.jpg';
   }
 
   String get repsDisplay {

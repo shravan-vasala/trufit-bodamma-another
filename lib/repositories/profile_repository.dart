@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_profile.dart';
 
 class ProfileRepository {
@@ -7,12 +8,21 @@ class ProfileRepository {
   static const String _profileKey = 'profile';
 
   late Box<String> _box;
+  final _secureStorage = const FlutterSecureStorage();
 
   Future<void> init() async {
     _box = await Hive.openBox<String>(_boxName);
     if (!_box.containsKey(_profileKey)) {
       await saveProfile(UserProfile());
     }
+  }
+
+  Future<String?> getSecureGeminiKey() async {
+    return await _secureStorage.read(key: 'gemini_api_key');
+  }
+
+  Future<void> saveSecureGeminiKey(String key) async {
+    await _secureStorage.write(key: 'gemini_api_key', value: key);
   }
 
   UserProfile getProfile() {

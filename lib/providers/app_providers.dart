@@ -8,9 +8,8 @@ import '../repositories/body_stats_repository.dart';
 import '../repositories/media_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/exercise_log_repository.dart';
-import '../repositories/photo_meal_repository.dart';
 import '../models/workout_plan.dart';
-import '../models/meal_plan.dart';
+import '../models/daily_meal_log.dart';
 import '../models/daily_log.dart';
 import '../models/habit.dart';
 import '../models/body_stats.dart';
@@ -19,12 +18,17 @@ import '../models/user_profile.dart';
 
 // ── Date ──
 
-final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+final selectedDateProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
+});
 
 final dateStringProvider = Provider<String>((ref) {
   final date = ref.watch(selectedDateProvider);
   return DateFormat('yyyy-MM-dd').format(date);
 });
+
+final weekOffsetProvider = StateProvider<int>((ref) => 0);
 
 // ── Repositories (singletons) ──
 
@@ -33,10 +37,6 @@ final workoutRepoProvider = Provider<WorkoutRepository>((ref) {
 });
 
 final mealRepoProvider = Provider<MealRepository>((ref) {
-  throw UnimplementedError('Must be overridden in main');
-});
-
-final photoMealRepoProvider = Provider<PhotoMealRepository>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
@@ -79,13 +79,15 @@ class ExerciseCompletionsNotifier extends StateNotifier<Map<String, bool>> {
   final WorkoutRepository _repo;
   final String _date;
   final String _dayId;
+  final Ref _ref;
 
-  ExerciseCompletionsNotifier(this._repo, this._date, this._dayId)
+  ExerciseCompletionsNotifier(this._repo, this._date, this._dayId, this._ref)
       : super(_repo.getExerciseCompletions(_date, _dayId));
 
   void toggle(String exerciseName) {
     _repo.toggleExerciseCompletion(_date, _dayId, exerciseName);
     state = _repo.getExerciseCompletions(_date, _dayId);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -93,61 +95,75 @@ final exerciseCompletionsProvider = StateNotifierProvider.family<
     ExerciseCompletionsNotifier, Map<String, bool>, String>((ref, dayId) {
   final repo = ref.watch(workoutRepoProvider);
   final date = ref.watch(dateStringProvider);
-  return ExerciseCompletionsNotifier(repo, date, dayId);
+  return ExerciseCompletionsNotifier(repo, date, dayId, ref);
 });
 
 // ── Meal Providers ──
 
-class MealCompletionsNotifier extends StateNotifier<MealPlan?> {
+class DailyMealLogNotifier extends StateNotifier<DailyMealLog> {
   final MealRepository _repo;
   final String _date;
+  final Ref _ref;
 
-  MealCompletionsNotifier(this._repo, this._date)
-      : super(_repo.getPlanWithCompletions(_date));
+  DailyMealLogNotifier(this._repo, this._date, this._ref)
+      : super(_repo.getDailyLog(_date));
 
-  void toggleMeal(String mealType) {
-    _repo.toggleMealCompletion(_date, mealType);
-    state = _repo.getPlanWithCompletions(_date);
+  Future<void> saveMealSlot(String slotName, MealSlotLog slotLog) async {
+    await _repo.saveMealSlot(_date, slotName, slotLog);
+    state = _repo.getDailyLog(_date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
+  }
+
+  Future<void> clearMealSlot(String slotName) async {
+    await _repo.clearMealSlot(_date, slotName);
+    state = _repo.getDailyLog(_date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
-final mealPlanWithCompletionsProvider =
-    StateNotifierProvider<MealCompletionsNotifier, MealPlan?>((ref) {
+final dailyMealLogProvider =
+    StateNotifierProvider<DailyMealLogNotifier, DailyMealLog>((ref) {
   final repo = ref.watch(mealRepoProvider);
   final date = ref.watch(dateStringProvider);
-  return MealCompletionsNotifier(repo, date);
+  return DailyMealLogNotifier(repo, date, ref);
 });
 
 // ── Daily Log Providers ──
 
 class DailyLogNotifier extends StateNotifier<DailyLog> {
   final DailyLogRepository _repo;
+  final Ref _ref;
 
-  DailyLogNotifier(this._repo, String date) : super(_repo.getOrCreate(date));
+  DailyLogNotifier(this._repo, String date, this._ref) : super(_repo.getOrCreate(date));
 
   Future<void> updateWeight(double weight) async {
     await _repo.updateWeight(state.date, weight);
     state = _repo.getOrCreate(state.date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateSteps(int steps) async {
     await _repo.updateSteps(state.date, steps);
     state = _repo.getOrCreate(state.date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateSleep(double hours) async {
     await _repo.updateSleep(state.date, hours);
     state = _repo.getOrCreate(state.date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateBodyFat(double bodyFat) async {
     await _repo.updateBodyFat(state.date, bodyFat);
     state = _repo.getOrCreate(state.date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> markWorkoutCompleted(String dayId) async {
     await _repo.markWorkoutCompleted(state.date, dayId);
     state = _repo.getOrCreate(state.date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -155,7 +171,7 @@ final dailyLogProvider =
     StateNotifierProvider<DailyLogNotifier, DailyLog>((ref) {
   final repo = ref.watch(dailyLogRepoProvider);
   final date = ref.watch(dateStringProvider);
-  return DailyLogNotifier(repo, date);
+  return DailyLogNotifier(repo, date, ref);
 });
 
 // ── Habit Providers ──
@@ -167,13 +183,15 @@ final habitsProvider = Provider<List<Habit>>((ref) {
 class HabitCompletionsNotifier extends StateNotifier<HabitCompletion> {
   final HabitRepository _repo;
   final String _date;
+  final Ref _ref;
 
-  HabitCompletionsNotifier(this._repo, this._date)
+  HabitCompletionsNotifier(this._repo, this._date, this._ref)
       : super(_repo.getCompletions(_date));
 
   Future<void> toggle(String habitId) async {
     await _repo.toggleCompletion(_date, habitId);
     state = _repo.getCompletions(_date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -181,7 +199,7 @@ final habitCompletionsProvider =
     StateNotifierProvider<HabitCompletionsNotifier, HabitCompletion>((ref) {
   final repo = ref.watch(habitRepoProvider);
   final date = ref.watch(dateStringProvider);
-  return HabitCompletionsNotifier(repo, date);
+  return HabitCompletionsNotifier(repo, date, ref);
 });
 
 // ── Body Stats Providers ──
@@ -195,11 +213,25 @@ final latestBodyStatsProvider = Provider<BodyStats?>((ref) {
 class ProfileNotifier extends StateNotifier<UserProfile> {
   final ProfileRepository _repo;
 
-  ProfileNotifier(this._repo) : super(_repo.getProfile());
+  ProfileNotifier(this._repo) : super(_repo.getProfile()) {
+    _loadSecureData();
+  }
+
+  Future<void> _loadSecureData() async {
+    final key = await _repo.getSecureGeminiKey();
+    if (key != null && key.isNotEmpty) {
+      state = state.copyWith(geminiApiKey: key);
+    }
+  }
 
   Future<void> updateProfile(UserProfile profile) async {
     await _repo.saveProfile(profile);
     state = profile;
+  }
+
+  Future<void> updateGeminiKey(String key) async {
+    await _repo.saveSecureGeminiKey(key);
+    state = state.copyWith(geminiApiKey: key);
   }
 
   Future<void> toggleUnit() async {
@@ -227,6 +259,25 @@ final dailyLogsRangeProvider =
     Provider.family<List<DailyLog>, (String, String)>((ref, range) {
   final (start, end) = range;
   return ref.watch(dailyLogRepoProvider).getLogsInRange(start, end);
+});
+
+final dailyMealLogsRangeProvider =
+    Provider.family<List<DailyMealLog>, (String, String)>((ref, range) {
+  final (start, end) = range;
+  final mealRepo = ref.watch(mealRepoProvider);
+  
+  // Calculate days difference
+  final startDate = DateTime.parse(start);
+  final endDate = DateTime.parse(end);
+  final daysDiff = endDate.difference(startDate).inDays;
+  
+  final logs = <DailyMealLog>[];
+  for (int i = 0; i <= daysDiff; i++) {
+    final d = startDate.add(Duration(days: i));
+    final dateStr = '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    logs.add(mealRepo.getDailyLog(dateStr));
+  }
+  return logs;
 });
 
 // ── Refresh trigger ──

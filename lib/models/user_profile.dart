@@ -4,7 +4,7 @@ class UserProfile {
   final double height; // in cm
   final double? targetWeight; // in kg
   final bool useKg;
-  final String? activeMealPlan;
+  final int targetCalories;
   final String? activeWorkoutPlan;
   final List<Map<String, dynamic>> customHabits;
   final String? geminiApiKey;
@@ -16,7 +16,7 @@ class UserProfile {
     this.height = 160,
     this.targetWeight,
     this.useKg = true,
-    this.activeMealPlan,
+    this.targetCalories = 1397,
     this.activeWorkoutPlan,
     this.customHabits = const [],
     this.geminiApiKey,
@@ -49,7 +49,7 @@ class UserProfile {
       height: (json['height'] as num?)?.toDouble() ?? 160,
       targetWeight: (json['targetWeight'] as num?)?.toDouble(),
       useKg: json['useKg'] as bool? ?? true,
-      activeMealPlan: json['activeMealPlan'] as String?,
+      targetCalories: (json['targetCalories'] as num?)?.toInt() ?? 1397,
       activeWorkoutPlan: json['activeWorkoutPlan'] as String?,
       customHabits: (json['customHabits'] as List?)
               ?.map((h) => Map<String, dynamic>.from(h as Map))
@@ -65,7 +65,7 @@ class UserProfile {
         'height': height,
         if (targetWeight != null) 'targetWeight': targetWeight,
         'useKg': useKg,
-        if (activeMealPlan != null) 'activeMealPlan': activeMealPlan,
+        'targetCalories': targetCalories,
         if (activeWorkoutPlan != null) 'activeWorkoutPlan': activeWorkoutPlan,
         'customHabits': customHabits,
         if (geminiApiKey != null) 'geminiApiKey': geminiApiKey,
@@ -77,7 +77,7 @@ class UserProfile {
     double? height,
     double? targetWeight,
     bool? useKg,
-    String? activeMealPlan,
+    int? targetCalories,
     String? activeWorkoutPlan,
     List<Map<String, dynamic>>? customHabits,
     String? geminiApiKey,
@@ -88,7 +88,7 @@ class UserProfile {
       height: height ?? this.height,
       targetWeight: targetWeight ?? this.targetWeight,
       useKg: useKg ?? this.useKg,
-      activeMealPlan: activeMealPlan ?? this.activeMealPlan,
+      targetCalories: targetCalories ?? this.targetCalories,
       activeWorkoutPlan: activeWorkoutPlan ?? this.activeWorkoutPlan,
       customHabits: customHabits ?? this.customHabits,
       geminiApiKey: geminiApiKey ?? this.geminiApiKey,

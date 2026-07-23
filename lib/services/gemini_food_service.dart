@@ -20,16 +20,28 @@ class GeminiFoodService {
     }
 
     final prompt = '''
-Analyze this food image and estimate its nutritional content. 
+Analyze this food image and estimate its nutritional content. Note that the cuisine is often South Indian home cooking (e.g., rice, curries, dosa, idli, curd, dal).
 Return ONLY a JSON object with the exact following structure and types. Do NOT include markdown blocks or any other text.
 {
-  "name": "Name of the dish (string)",
-  "calories": 0, // integer, estimated total calories for the whole plate
-  "protein": 0.0, // double, grams of protein
-  "carbs": 0.0, // double, grams of carbs
-  "fat": 0.0 // double, grams of fat
+  "items": [
+    {
+      "name": "Name of the dish (string)",
+      "portion": "Estimated portion size (e.g. 1 bowl, 2 pieces)",
+      "calories": 0, // integer
+      "protein_g": 0.0, // double
+      "carbs_g": 0.0, // double
+      "fat_g": 0.0 // double
+    }
+  ],
+  "total": {
+    "calories": 0, // integer
+    "protein_g": 0.0, // double
+    "carbs_g": 0.0, // double
+    "fat_g": 0.0 // double
+  },
+  "confidence": "high|medium|low"
 }
-If you cannot identify the food, provide a generic "Unknown Food" response with 0 values.
+If you cannot identify the food, provide a generic "Unknown Food" response with 0 values and low confidence.
 ''';
 
     final modelsToTry = [

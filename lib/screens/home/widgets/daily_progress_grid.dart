@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../weight_entry_dialog.dart';
+import '../steps_entry_dialog.dart';
 
 class DailyProgressGrid extends ConsumerWidget {
   const DailyProgressGrid({super.key});
@@ -11,6 +12,12 @@ class DailyProgressGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyLog = ref.watch(dailyLogProvider);
+    
+    final selectedDateStr = ref.watch(dateStringProvider);
+    final selectedDate = DateTime.parse(selectedDateStr);
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final isFuture = selectedDate.isAfter(today);
+    final isToday = selectedDate.isAtSameMomentAs(today);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -52,15 +59,17 @@ class DailyProgressGrid extends ConsumerWidget {
                   iconColor: AppColors.primary,
                   subtitle: dailyLog.weight != null
                       ? '${dailyLog.weight!.toStringAsFixed(1)} kg'
-                      : 'Tap to log',
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => const WeightEntryDialog(),
-                    );
-                  },
+                      : (isFuture ? 'No data' : 'Tap to log'),
+                  onTap: isFuture
+                      ? () {}
+                      : () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => const WeightEntryDialog(),
+                          );
+                        },
                 ),
               ),
               const SizedBox(width: 12),
@@ -72,91 +81,22 @@ class DailyProgressGrid extends ConsumerWidget {
                   iconColor: AppColors.mintIcon,
                   subtitle: dailyLog.steps != null
                       ? '${dailyLog.steps!} steps'
-                      : 'Tap to log',
-                  onTap: () {
-                    _showStepsDialog(context, ref);
-                  },
+                      : (isToday ? 'Tap to log' : '0 steps'),
+                  onTap: isFuture
+                      ? () {}
+                      : () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => const StepsEntryDialog(),
+                          );
+                        },
                 ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _showStepsDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
-    final dailyLog = ref.read(dailyLogProvider);
-    if (dailyLog.steps != null) {
-      controller.text = dailyLog.steps.toString();
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Log Steps',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Enter step count',
-                  suffixText: 'steps',
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final steps = int.tryParse(controller.text);
-                    if (steps != null && steps > 0) {
-                      ref.read(dailyLogProvider.notifier).updateSteps(steps);
-                      Navigator.of(ctx).pop();
-                    }
-                  },
-                  child: const Text('Save'),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
       ),
     );
   }

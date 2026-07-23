@@ -4,18 +4,49 @@ import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 
-class WeekCalendarStrip extends ConsumerWidget {
+class WeekCalendarStrip extends ConsumerStatefulWidget {
   const WeekCalendarStrip({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeekCalendarStrip> createState() => _WeekCalendarStripState();
+}
+
+class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
+  late PageController _pageController;
+  final int _basePage = 10000;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use the initial week offset if any
+    final initialOffset = ref.read(weekOffsetProvider);
+    _pageController = PageController(initialPage: _basePage + initialOffset);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-
-    // Get the week starting from Monday
-    final weekStart = today.subtract(Duration(days: today.weekday - 1));
-    final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+    
+    ref.listen<int>(weekOffsetProvider, (prev, next) {
+      if (_pageController.hasClients) {
+        final targetPage = _basePage + next;
+        if (_pageController.page?.round() != targetPage) {
+          _pageController.animateToPage(
+            targetPage,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
 
     return Column(
       children: [
@@ -28,6 +59,7 @@ class WeekCalendarStrip extends ConsumerWidget {
               GestureDetector(
                 onTap: () {
                   ref.read(selectedDateProvider.notifier).state = today;
+                  ref.read(weekOffsetProvider.notifier).state = 0;
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -77,6 +109,12 @@ class WeekCalendarStrip extends ConsumerWidget {
                   );
                   if (picked != null) {
                     ref.read(selectedDateProvider.notifier).state = picked;
+                    // Calculate week offset between today and picked date
+                    final pickedWeekStart = picked.subtract(Duration(days: picked.weekday - 1));
+                    final todayWeekStart = today.subtract(Duration(days: today.weekday - 1));
+                    final diffDays = pickedWeekStart.difference(todayWeekStart).inDays;
+                    final weekOffset = (diffDays / 7).round();
+                    ref.read(weekOffsetProvider.notifier).state = weekOffset;
                   }
                 },
                 child: Container(
@@ -99,19 +137,36 @@ class WeekCalendarStrip extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // Week day circles
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: weekDays.map((day) {
-              return _DayCircle(
-                date: day,
-                isSelected: _isSameDay(day, selectedDate),
-                isToday: _isSameDay(day, today),
-                isFuture: day.isAfter(today),
-                ref: ref,
+        SizedBox(
+          height: 75,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (idx) {
+              ref.read(weekOffsetProvider.notifier).state = idx - _basePage;
+            },
+            itemBuilder: (context, index) {
+              final weekOffset = index - _basePage;
+              final weekStart = today
+                  .subtract(Duration(days: today.weekday - 1))
+                  .add(Duration(days: weekOffset * 7));
+              final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: weekDays.map((day) {
+                    return _DayCircle(
+                      date: day,
+                      isSelected: _isSameDay(day, selectedDate),
+                      isToday: _isSameDay(day, today),
+                      isFuture: day.isAfter(today),
+                      ref: ref,
+                    );
+                  }).toList(),
+                ),
               );
-            }).toList(),
+            },
           ),
         ),
       ],
@@ -145,7 +200,10 @@ class _DayCircle extends StatelessWidget {
 
     // Check if there's activity on this day
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
-    final hasActivity = ref.watch(dailyLogRepoProvider).hasActivityOnDate(dateStr);
+    
+    // Watch the refresh trigger to rebuild when activity is logged
+    ref.watch(refreshTriggerProvider);
+    final hasActivity = ref.read(dailyLogRepoProvider).hasActivityOnDate(dateStr);
 
     return GestureDetector(
       onTap: () {
@@ -194,15 +252,13 @@ class _DayCircle extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          // Activity dot
+          // Activity dot (every day gets a dot)
           Container(
             width: 6,
             height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isFuture
-                  ? Colors.transparent
-                  : (hasActivity ? AppColors.green : AppColors.textLight.withValues(alpha: 0.4)),
+              color: hasActivity ? AppColors.green : const Color(0xFFD1D5DB),
             ),
           ),
         ],

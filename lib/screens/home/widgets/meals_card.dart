@@ -3,35 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
-import 'photo_calorie_scanner_sheet.dart';
 
 class MealsCard extends ConsumerWidget {
   const MealsCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mealPlan = ref.watch(mealPlanWithCompletionsProvider);
+    final dailyLog = ref.watch(dailyMealLogProvider);
+    final profile = ref.watch(profileProvider);
+    
+    final selectedDateStr = ref.watch(dateStringProvider);
+    final selectedDate = DateTime.parse(selectedDateStr);
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final isFuture = selectedDate.isAfter(today);
 
-    if (mealPlan == null) {
-      return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: Text(
-              'No meal plan assigned',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final completedMeals = mealPlan.completedMeals;
-    final totalMeals = mealPlan.meals.length;
-    final completedCal = mealPlan.completedCalories;
-    final totalCal = mealPlan.totalCalories;
-    final progress = totalMeals > 0 ? completedMeals / totalMeals : 0.0;
+    final completedMeals = dailyLog.loggedSlotsCount;
+    final totalMeals = 4;
+    final completedCal = dailyLog.totalCalories;
+    final totalCal = profile.targetCalories;
+    final progress = (completedCal / totalCal).clamp(0.0, 1.0);
+    final isOverTarget = completedCal > totalCal;
 
     return GestureDetector(
       onTap: () => context.go('/home/meals'),
@@ -72,7 +63,7 @@ class MealsCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          mealPlan.planName,
+                          'Daily Nutrition',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
@@ -91,7 +82,7 @@ class MealsCard extends ConsumerWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: AppColors.lavender,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.green),
+                  valueColor: AlwaysStoppedAnimation<Color>(isOverTarget ? AppColors.orange : AppColors.green),
                   minHeight: 8,
                 ),
               ),
@@ -105,43 +96,39 @@ class MealsCard extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => const PhotoCalorieScannerSheet(),
-                      );
-                    },
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.center_focus_strong_rounded,
-                            size: 14,
-                            color: AppColors.primary,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Scan Food',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                  if (!isFuture)
+                    GestureDetector(
+                      onTap: () {
+                         context.go('/home/meals'); // Just go to meals screen where they can tap "Scan" on any slot
+                      },
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.center_focus_strong_rounded,
+                              size: 14,
                               color: AppColors.primary,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 4),
+                            Text(
+                              'Log Food',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],

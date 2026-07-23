@@ -102,12 +102,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               // Menu items
               _MenuCard(
-                icon: Icons.show_chart_rounded,
-                title: 'My Progress',
-                subtitle: 'View weight, steps, and more',
-                onTap: () => context.go('/profile/progress'),
-              ),
-              _MenuCard(
                 icon: Icons.edit_rounded,
                 title: 'Edit Profile',
                 subtitle: 'Name, height, target weight',
@@ -164,6 +158,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         TextEditingController(text: profile.height.toStringAsFixed(0));
     final targetController = TextEditingController(
         text: profile.targetWeight?.toStringAsFixed(1) ?? '');
+    final caloriesController = TextEditingController(
+        text: profile.targetCalories.toString());
 
     showModalBottomSheet(
       context: context,
@@ -229,6 +225,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   prefixIcon: Icon(Icons.flag_rounded),
                 ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: caloriesController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Target Daily Calories',
+                  prefixIcon: Icon(Icons.restaurant_rounded),
+                ),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -240,6 +245,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       height: double.tryParse(heightController.text) ??
                           profile.height,
                       targetWeight: double.tryParse(targetController.text),
+                      targetCalories: int.tryParse(caloriesController.text) ?? 
+                          profile.targetCalories,
                     );
                     ref.read(profileProvider.notifier).updateProfile(updated);
                     Navigator.of(ctx).pop();
@@ -319,10 +326,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    final updated = profile.copyWith(
-                      geminiApiKey: keyController.text.trim().isEmpty ? null : keyController.text.trim(),
-                    );
-                    ref.read(profileProvider.notifier).updateProfile(updated);
+                    final key = keyController.text.trim();
+                    ref.read(profileProvider.notifier).updateGeminiKey(key);
                     Navigator.of(ctx).pop();
                   },
                   child: const Text('Save API Key'),

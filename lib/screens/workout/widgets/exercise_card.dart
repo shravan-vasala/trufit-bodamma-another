@@ -47,7 +47,7 @@ class ExerciseCard extends ConsumerWidget {
                   onTap: () {
                     final videoId = exercise.youtubeVideoId;
                     if (videoId != null && videoId != 'XXXX') {
-                      context.go(
+                      context.push(
                         '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.name)}',
                       );
                     }
@@ -271,7 +271,7 @@ class ExerciseCard extends ConsumerWidget {
                     height: 36,
                     child: OutlinedButton(
                       onPressed: () {
-                        context.go(
+                        context.push(
                           '/exercise-progress?name=${Uri.encodeComponent(exercise.name)}',
                         );
                       },
