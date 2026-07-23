@@ -8,6 +8,7 @@ import '../repositories/body_stats_repository.dart';
 import '../repositories/media_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/exercise_log_repository.dart';
+import '../services/health_connect_service.dart';
 import '../models/workout_plan.dart';
 import '../models/daily_meal_log.dart';
 import '../models/daily_log.dart';
@@ -63,6 +64,13 @@ final profileRepoProvider = Provider<ProfileRepository>((ref) {
 final exerciseLogRepoProvider = Provider<ExerciseLogRepository>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
+
+final healthConnectServiceProvider = Provider<HealthConnectService>((ref) {
+  throw UnimplementedError('Must be overridden in main');
+});
+
+// Tracks whether the current step value is from HC sync, manual, or nothing
+final stepsSourceProvider = StateProvider<StepsSource>((ref) => StepsSource.none);
 
 // ── Workout Providers ──
 
@@ -142,9 +150,11 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
     _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
-  Future<void> updateSteps(int steps) async {
-    await _repo.updateSteps(state.date, steps);
+  Future<void> updateSteps(int steps, {String? source}) async {
+    await _repo.updateSteps(state.date, steps, source: source ?? 'manual');
     state = _repo.getOrCreate(state.date);
+    _ref.read(stepsSourceProvider.notifier).state = 
+        (source == 'healthConnect') ? StepsSource.healthConnect : StepsSource.manual;
     _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
@@ -171,6 +181,7 @@ final dailyLogProvider =
     StateNotifierProvider<DailyLogNotifier, DailyLog>((ref) {
   final repo = ref.watch(dailyLogRepoProvider);
   final date = ref.watch(dateStringProvider);
+  ref.watch(refreshTriggerProvider);
   return DailyLogNotifier(repo, date, ref);
 });
 
@@ -199,6 +210,7 @@ final habitCompletionsProvider =
     StateNotifierProvider<HabitCompletionsNotifier, HabitCompletion>((ref) {
   final repo = ref.watch(habitRepoProvider);
   final date = ref.watch(dateStringProvider);
+  ref.watch(refreshTriggerProvider);
   return HabitCompletionsNotifier(repo, date, ref);
 });
 

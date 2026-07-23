@@ -3,73 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 
-class ManagePlansScreen extends ConsumerStatefulWidget {
+class ManagePlansScreen extends ConsumerWidget {
   const ManagePlansScreen({super.key});
 
   @override
-  ConsumerState<ManagePlansScreen> createState() => _ManagePlansScreenState();
-}
-
-class _ManagePlansScreenState extends ConsumerState<ManagePlansScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Manage Plans'),
+        title: const Text('Manage Workout Plans'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textLight,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-          tabs: const [
-            Tab(text: 'Workout Plans'),
-            Tab(text: 'Meal Plans'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _PlanEditor(
-            type: 'workout',
-            getKeys: () => ref.read(workoutRepoProvider).getPlanKeys(),
-            getRawJson: (key) => ref.read(workoutRepoProvider).getRawPlanJson(key),
-            saveJson: (key, json) =>
-                ref.read(workoutRepoProvider).savePlanJson(key, json),
-          ),
-          _PlanEditor(
-            type: 'meal',
-            getKeys: () => ref.read(mealRepoProvider).getPlanKeys(),
-            getRawJson: (key) => ref.read(mealRepoProvider).getRawPlanJson(key),
-            saveJson: (key, json) =>
-                ref.read(mealRepoProvider).savePlanJson(key, json),
-          ),
-        ],
+      body: _PlanEditor(
+        type: 'workout',
+        getKeys: () => ref.read(workoutRepoProvider).getPlanKeys(),
+        getRawJson: (key) => ref.read(workoutRepoProvider).getRawPlanJson(key),
+        saveJson: (key, json) =>
+            ref.read(workoutRepoProvider).savePlanJson(key, json),
       ),
     );
   }

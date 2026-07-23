@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../weight_entry_dialog.dart';
@@ -18,6 +19,20 @@ class DailyProgressGrid extends ConsumerWidget {
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
     final isToday = selectedDate.isAtSameMomentAs(today);
+
+    // Determine steps source hint
+    String stepsSubtitle;
+    String? sourceHint;
+    if (dailyLog.steps != null) {
+      stepsSubtitle = '${dailyLog.steps!} steps';
+      if (dailyLog.stepsSource == 'healthConnect') {
+        sourceHint = 'via Samsung Health';
+      } else if (dailyLog.stepsSource == 'manual') {
+        sourceHint = 'manual';
+      }
+    } else {
+      stepsSubtitle = isToday ? 'Tap to log' : '0 steps';
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -74,29 +89,223 @@ class DailyProgressGrid extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _ProgressCard(
-                  title: 'Steps',
-                  icon: Icons.directions_walk_rounded,
-                  color: AppColors.mint,
-                  iconColor: AppColors.mintIcon,
-                  subtitle: dailyLog.steps != null
-                      ? '${dailyLog.steps!} steps'
-                      : (isToday ? 'Tap to log' : '0 steps'),
-                  onTap: isFuture
-                      ? () {}
-                      : () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const StepsEntryDialog(),
-                          );
-                        },
+                child: _StepsCard(
+                  steps: dailyLog.steps,
+                  subtitle: stepsSubtitle,
+                  sourceHint: sourceHint,
+                  isFuture: isFuture,
+                  isToday: isToday,
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Special Steps card that handles the Health Connect first-run CTA.
+class _StepsCard extends ConsumerStatefulWidget {
+  const _StepsCard({
+    required this.steps,
+    required this.subtitle,
+    required this.isFuture,
+    required this.isToday,
+    this.sourceHint,
+  });
+
+  final int? steps;
+  final String subtitle;
+  final String? sourceHint;
+  final bool isFuture;
+  final bool isToday;
+
+  @override
+  ConsumerState<_StepsCard> createState() => _StepsCardState();
+}
+
+class _StepsCardState extends ConsumerState<_StepsCard> {
+  bool _showSyncCta = false;
+  bool _checkingPermission = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkHealthConnectStatus();
+  }
+
+  Future<void> _checkHealthConnectStatus() async {
+    final hcService = ref.read(healthConnectServiceProvider);
+    final isAuth = await hcService.isAuthorized();
+    if (mounted) {
+      setState(() {
+        _showSyncCta = !isAuth && widget.isToday;
+        _checkingPermission = false;
+      });
+    }
+  }
+
+  Future<void> _handleSyncTap() async {
+    final hcService = ref.read(healthConnectServiceProvider);
+    
+    // Check if Health Connect is installed
+    final available = await hcService.isAvailable();
+    if (!available) {
+      // Deep link to Play Store
+      final uri = Uri.parse('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
+    }
+
+    // Request permission
+    final granted = await hcService.requestPermission();
+    if (granted) {
+      setState(() => _showSyncCta = false);
+      
+      // Trigger sync
+      final dailyLogRepo = ref.read(dailyLogRepoProvider);
+      final habitRepo = ref.read(habitRepoProvider);
+      await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+      await hcService.syncLast7Days(dailyLogRepo, habitRepo);
+      
+      // Backfill in background
+      if (!hcService.isBackfillDone) {
+        hcService.backfillLast90Days(dailyLogRepo, habitRepo).then((_) {
+          ref.read(refreshTriggerProvider.notifier).state++;
+        });
+      }
+      
+      ref.read(refreshTriggerProvider.notifier).state++;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Show the sync CTA card if permission not granted (today only)
+    if (_showSyncCta && !_checkingPermission) {
+      return GestureDetector(
+        onTap: _handleSyncTap,
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.sync_rounded, color: Colors.white, size: 22),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Sync Steps',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'from Samsung Health',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Normal steps card
+    return GestureDetector(
+      onTap: widget.isFuture
+          ? () {}
+          : () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const StepsEntryDialog(),
+              );
+            },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.mint,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.mintIcon.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.directions_walk_rounded, color: AppColors.mintIcon, size: 22),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Steps',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMedium,
+              ),
+            ),
+            if (widget.sourceHint != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                widget.sourceHint!,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: widget.sourceHint == 'via Samsung Health'
+                      ? AppColors.green
+                      : AppColors.textLight,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

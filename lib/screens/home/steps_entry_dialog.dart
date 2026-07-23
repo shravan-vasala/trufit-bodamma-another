@@ -114,7 +114,7 @@ class _StepsEntryDialogState extends ConsumerState<StepsEntryDialog> {
                   onPressed: () {
                     final steps = int.tryParse(_controller.text);
                     if (steps != null && steps > 0) {
-                      ref.read(dailyLogProvider.notifier).updateSteps(steps);
+                      ref.read(dailyLogProvider.notifier).updateSteps(steps, source: 'manual');
                       Navigator.of(context).pop();
                     }
                   },

@@ -12,7 +12,9 @@ class AppColors {
   // Backgrounds
   static const Color lavender = Color(0xFFF3EFFC);
   static const Color scaffoldBg = Color(0xFFF8F7FC);
+  static const Color background = scaffoldBg;
   static const Color white = Color(0xFFFFFFFF);
+  static const Color orange = Color(0xFFF97316);
 
   // Accent
   static const Color green = Color(0xFF22C55E);

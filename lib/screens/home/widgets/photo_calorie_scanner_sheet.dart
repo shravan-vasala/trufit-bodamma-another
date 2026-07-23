@@ -56,8 +56,11 @@ class _PhotoCalorieScannerSheetState
     try {
       final imageBytes = await picked.readAsBytes();
       String mimeType = picked.mimeType ?? 'image/jpeg';
-      if (picked.path.toLowerCase().endsWith('.png')) mimeType = 'image/png';
-      else if (picked.path.toLowerCase().endsWith('.webp')) mimeType = 'image/webp';
+      if (picked.path.toLowerCase().endsWith('.png')) {
+        mimeType = 'image/png';
+      } else if (picked.path.toLowerCase().endsWith('.webp')) {
+        mimeType = 'image/webp';
+      }
 
       final geminiService = ref.read(geminiFoodServiceProvider);
       final result = await geminiService.analyzeFoodImage(imageBytes, mimeType);
@@ -355,7 +358,7 @@ class _PhotoCalorieScannerSheetState
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
                 itemCount: _items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (_, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   return Container(

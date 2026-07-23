@@ -2,6 +2,7 @@ class DailyLog {
   final String date; // yyyy-MM-dd
   final double? weight;
   final int? steps;
+  final String? stepsSource; // 'healthConnect' | 'manual' | null
   final double? sleepHours;
   final double? bodyFat;
   final bool workoutCompleted;
@@ -11,6 +12,7 @@ class DailyLog {
     required this.date,
     this.weight,
     this.steps,
+    this.stepsSource,
     this.sleepHours,
     this.bodyFat,
     this.workoutCompleted = false,
@@ -22,6 +24,7 @@ class DailyLog {
       date: json['date'] as String,
       weight: (json['weight'] as num?)?.toDouble(),
       steps: json['steps'] as int?,
+      stepsSource: json['stepsSource'] as String?,
       sleepHours: (json['sleepHours'] as num?)?.toDouble(),
       bodyFat: (json['bodyFat'] as num?)?.toDouble(),
       workoutCompleted: json['workoutCompleted'] as bool? ?? false,
@@ -33,6 +36,7 @@ class DailyLog {
         'date': date,
         if (weight != null) 'weight': weight,
         if (steps != null) 'steps': steps,
+        if (stepsSource != null) 'stepsSource': stepsSource,
         if (sleepHours != null) 'sleepHours': sleepHours,
         if (bodyFat != null) 'bodyFat': bodyFat,
         'workoutCompleted': workoutCompleted,
@@ -42,6 +46,7 @@ class DailyLog {
   DailyLog copyWith({
     double? weight,
     int? steps,
+    String? stepsSource,
     double? sleepHours,
     double? bodyFat,
     bool? workoutCompleted,
@@ -51,6 +56,7 @@ class DailyLog {
       date: date,
       weight: weight ?? this.weight,
       steps: steps ?? this.steps,
+      stepsSource: stepsSource ?? this.stepsSource,
       sleepHours: sleepHours ?? this.sleepHours,
       bodyFat: bodyFat ?? this.bodyFat,
       workoutCompleted: workoutCompleted ?? this.workoutCompleted,

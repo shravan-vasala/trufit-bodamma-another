@@ -24,6 +24,7 @@ class SharedChartCard extends StatelessWidget {
     required this.statValues,
     this.timeFormat = ChartTimeFormat.monthly,
     this.emptyMessage = 'No data available for this period',
+    this.targetValue,
   });
 
   final String title;
@@ -36,6 +37,7 @@ class SharedChartCard extends StatelessWidget {
   final List<String> statValues;
   final ChartTimeFormat timeFormat;
   final String emptyMessage;
+  final double? targetValue;
 
   @override
   Widget build(BuildContext context) {

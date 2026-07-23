@@ -30,9 +30,9 @@ class DailyLogRepository {
     await saveLog(log.copyWith(weight: weight));
   }
 
-  Future<void> updateSteps(String date, int steps) async {
+  Future<void> updateSteps(String date, int steps, {String? source}) async {
     final log = getOrCreate(date);
-    await saveLog(log.copyWith(steps: steps));
+    await saveLog(log.copyWith(steps: steps, stepsSource: source));
   }
 
   Future<void> updateSleep(String date, double hours) async {

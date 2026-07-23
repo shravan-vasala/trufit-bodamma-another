@@ -247,6 +247,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           return l.weight != null;
         case MetricType.bodyFat:
           return l.bodyFat != null;
+        case MetricType.calories:
+          return false;
       }
     }).toList();
 
@@ -282,6 +284,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               break;
             case MetricType.bodyFat:
               val = log.bodyFat!;
+              break;
+            case MetricType.calories:
+              val = 0;
               break;
           }
           data.add(ChartDataPoint(d, val));

@@ -53,4 +53,13 @@ class HabitRepository {
   int getCompletedCount(String date) {
     return getCompletions(date).completedCount;
   }
+
+  Future<void> setCompletion(String date, String habitId, bool completed) async {
+    final completion = getCompletions(date);
+    if (completion.isCompleted(habitId) == completed) return; // No change needed
+    final newCompletions = Map<String, bool>.from(completion.completions);
+    newCompletions[habitId] = completed;
+    final updated = HabitCompletion(date: date, completions: newCompletions);
+    await _completionBox.put(date, jsonEncode(updated.toJson()));
+  }
 }
