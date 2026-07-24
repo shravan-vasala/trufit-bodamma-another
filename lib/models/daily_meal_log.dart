@@ -1,98 +1,63 @@
 class DailyMealLog {
   final String date; // yyyy-MM-dd
-  final MealSlotLog? breakfast;
-  final MealSlotLog? lunch;
-  final MealSlotLog? snack;
-  final MealSlotLog? dinner;
+  final Map<String, MealSlotLog> customSlots;
 
   DailyMealLog({
     required this.date,
-    this.breakfast,
-    this.lunch,
-    this.snack,
-    this.dinner,
+    this.customSlots = const {},
   });
 
-  int get totalCalories =>
-      (breakfast?.totalCalories ?? 0) +
-      (lunch?.totalCalories ?? 0) +
-      (snack?.totalCalories ?? 0) +
-      (dinner?.totalCalories ?? 0);
+  int get totalCalories => customSlots.values.fold(0, (sum, slot) => sum + slot.totalCalories);
 
-  double get totalProtein =>
-      (breakfast?.totalProtein ?? 0) +
-      (lunch?.totalProtein ?? 0) +
-      (snack?.totalProtein ?? 0) +
-      (dinner?.totalProtein ?? 0);
+  double get totalProtein => customSlots.values.fold(0, (sum, slot) => sum + slot.totalProtein);
 
-  double get totalCarbs =>
-      (breakfast?.totalCarbs ?? 0) +
-      (lunch?.totalCarbs ?? 0) +
-      (snack?.totalCarbs ?? 0) +
-      (dinner?.totalCarbs ?? 0);
+  double get totalCarbs => customSlots.values.fold(0, (sum, slot) => sum + slot.totalCarbs);
 
-  double get totalFat =>
-      (breakfast?.totalFat ?? 0) +
-      (lunch?.totalFat ?? 0) +
-      (snack?.totalFat ?? 0) +
-      (dinner?.totalFat ?? 0);
+  double get totalFat => customSlots.values.fold(0, (sum, slot) => sum + slot.totalFat);
 
-  int get loggedSlotsCount {
-    int count = 0;
-    if (breakfast != null) count++;
-    if (lunch != null) count++;
-    if (snack != null) count++;
-    if (dinner != null) count++;
-    return count;
-  }
+  int get loggedSlotsCount => customSlots.values.where((s) => s.items.isNotEmpty || s.photoPath != null || s.totalCalories > 0).length;
 
   factory DailyMealLog.fromJson(Map<String, dynamic> json) {
+    final Map<String, MealSlotLog> slots = {};
+
+    // Legacy fields migration
+    if (json['breakfast'] != null) slots['breakfast'] = MealSlotLog.fromJson(json['breakfast'] as Map<String, dynamic>);
+    if (json['lunch'] != null) slots['lunch'] = MealSlotLog.fromJson(json['lunch'] as Map<String, dynamic>);
+    if (json['snack'] != null) slots['snack'] = MealSlotLog.fromJson(json['snack'] as Map<String, dynamic>);
+    if (json['dinner'] != null) slots['dinner'] = MealSlotLog.fromJson(json['dinner'] as Map<String, dynamic>);
+
+    // New format
+    if (json['customSlots'] != null) {
+      final map = json['customSlots'] as Map<String, dynamic>;
+      for (final entry in map.entries) {
+        slots[entry.key] = MealSlotLog.fromJson(entry.value as Map<String, dynamic>);
+      }
+    }
+
     return DailyMealLog(
       date: json['date'] as String,
-      breakfast: json['breakfast'] != null
-          ? MealSlotLog.fromJson(json['breakfast'] as Map<String, dynamic>)
-          : null,
-      lunch: json['lunch'] != null
-          ? MealSlotLog.fromJson(json['lunch'] as Map<String, dynamic>)
-          : null,
-      snack: json['snack'] != null
-          ? MealSlotLog.fromJson(json['snack'] as Map<String, dynamic>)
-          : null,
-      dinner: json['dinner'] != null
-          ? MealSlotLog.fromJson(json['dinner'] as Map<String, dynamic>)
-          : null,
+      customSlots: slots,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'date': date,
-        if (breakfast != null) 'breakfast': breakfast!.toJson(),
-        if (lunch != null) 'lunch': lunch!.toJson(),
-        if (snack != null) 'snack': snack!.toJson(),
-        if (dinner != null) 'dinner': dinner!.toJson(),
+        'customSlots': customSlots.map((k, v) => MapEntry(k, v.toJson())),
       };
 
   DailyMealLog copyWith({
-    MealSlotLog? breakfast,
-    MealSlotLog? lunch,
-    MealSlotLog? snack,
-    MealSlotLog? dinner,
-    bool clearBreakfast = false,
-    bool clearLunch = false,
-    bool clearSnack = false,
-    bool clearDinner = false,
+    Map<String, MealSlotLog>? customSlots,
   }) {
     return DailyMealLog(
       date: date,
-      breakfast: clearBreakfast ? null : (breakfast ?? this.breakfast),
-      lunch: clearLunch ? null : (lunch ?? this.lunch),
-      snack: clearSnack ? null : (snack ?? this.snack),
-      dinner: clearDinner ? null : (dinner ?? this.dinner),
+      customSlots: customSlots ?? this.customSlots,
     );
   }
 }
 
 class MealSlotLog {
+  final String? name;
+  final String? emoji;
   final String? photoPath;
   final List<MealItemLog> items;
   final int totalCalories;
@@ -102,6 +67,8 @@ class MealSlotLog {
   final String? confidence; // "high", "medium", "low"
 
   MealSlotLog({
+    this.name,
+    this.emoji,
     this.photoPath,
     required this.items,
     required this.totalCalories,
@@ -113,6 +80,8 @@ class MealSlotLog {
 
   factory MealSlotLog.fromJson(Map<String, dynamic> json) {
     return MealSlotLog(
+      name: json['name'] as String?,
+      emoji: json['emoji'] as String?,
       photoPath: json['photoPath'] as String?,
       items: (json['items'] as List?)
               ?.map((i) => MealItemLog.fromJson(i as Map<String, dynamic>))
@@ -127,6 +96,8 @@ class MealSlotLog {
   }
 
   Map<String, dynamic> toJson() => {
+        if (name != null) 'name': name,
+        if (emoji != null) 'emoji': emoji,
         if (photoPath != null) 'photoPath': photoPath,
         'items': items.map((i) => i.toJson()).toList(),
         'totalCalories': totalCalories,

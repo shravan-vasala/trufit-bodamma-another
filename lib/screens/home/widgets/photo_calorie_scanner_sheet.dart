@@ -9,10 +9,11 @@ import '../../../services/gemini_food_service.dart';
 import '../../../models/daily_meal_log.dart';
 
 class PhotoCalorieScannerSheet extends ConsumerStatefulWidget {
-  final String slotName;
+  final String slotId;
+  final String slotDisplayName;
   final bool isManualEntry;
 
-  const PhotoCalorieScannerSheet({super.key, required this.slotName, this.isManualEntry = false});
+  const PhotoCalorieScannerSheet({super.key, required this.slotId, required this.slotDisplayName, this.isManualEntry = false});
 
   @override
   ConsumerState<PhotoCalorieScannerSheet> createState() =>
@@ -206,14 +207,13 @@ class _PhotoCalorieScannerSheetState
       totalFat: _totalFat,
       confidence: _confidence,
     );
-
-    await ref.read(dailyMealLogProvider.notifier).saveMealSlot(widget.slotName, slotLog);
+    await ref.read(dailyMealLogProvider.notifier).saveMealSlot(widget.slotId, slotLog);
 
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Logged $_totalCalories Kcal for ${widget.slotName}! 🥗'),
+          content: Text('Logged $_totalCalories Kcal for ${widget.slotDisplayName}! 🥗'),
           backgroundColor: AppColors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -253,7 +253,7 @@ class _PhotoCalorieScannerSheetState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Log ${widget.slotName[0].toUpperCase()}${widget.slotName.substring(1)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                    Text('Log ${widget.slotDisplayName}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
                     const Text('Snap a food picture to count calories & macros', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
                   ],
                 ),

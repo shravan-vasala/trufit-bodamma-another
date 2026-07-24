@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../repositories/workout_repository.dart';
@@ -9,7 +11,9 @@ import '../repositories/media_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/exercise_log_repository.dart';
 import '../services/health_connect_service.dart';
+import '../services/backup_service.dart';
 import '../models/workout_plan.dart';
+import '../models/meal_plan.dart';
 import '../models/daily_meal_log.dart';
 import '../models/daily_log.dart';
 import '../models/habit.dart';
@@ -69,6 +73,10 @@ final healthConnectServiceProvider = Provider<HealthConnectService>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService();
+});
+
 // Tracks whether the current step value is from HC sync, manual, or nothing
 final stepsSourceProvider = StateProvider<StepsSource>((ref) => StepsSource.none);
 
@@ -107,6 +115,11 @@ final exerciseCompletionsProvider = StateNotifierProvider.family<
 });
 
 // ── Meal Providers ──
+
+final mealPlanProvider = FutureProvider<MealPlan>((ref) async {
+  final jsonStr = await rootBundle.loadString('assets/data/seed_meal_plan.json');
+  return MealPlan.fromJson(jsonDecode(jsonStr));
+});
 
 class DailyMealLogNotifier extends StateNotifier<DailyMealLog> {
   final MealRepository _repo;
@@ -200,7 +213,13 @@ class HabitCompletionsNotifier extends StateNotifier<HabitCompletion> {
       : super(_repo.getCompletions(_date));
 
   Future<void> toggle(String habitId) async {
-    await _repo.toggleCompletion(_date, habitId);
+    await _repo.toggleCheckboxCompletion(_date, habitId);
+    state = _repo.getCompletions(_date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
+  }
+
+  Future<void> updateProgress(String habitId, double progress) async {
+    await _repo.updateProgress(_date, habitId, progress);
     state = _repo.getCompletions(_date);
     _ref.read(refreshTriggerProvider.notifier).state++;
   }

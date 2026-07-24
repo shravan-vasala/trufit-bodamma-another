@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import '../../../models/habit.dart';
+import 'past_day_summary_sheet.dart';
 
 class WeekCalendarStrip extends ConsumerStatefulWidget {
   const WeekCalendarStrip({super.key});
@@ -204,10 +206,33 @@ class _DayCircle extends StatelessWidget {
     // Watch the refresh trigger to rebuild when activity is logged
     ref.watch(refreshTriggerProvider);
     final hasActivity = ref.read(dailyLogRepoProvider).hasActivityOnDate(dateStr);
+    final mealLog = ref.read(mealRepoProvider).getDailyLog(dateStr);
+    final habitCompletions = ref.read(habitRepoProvider).getCompletions(dateStr);
+    
+    final habits = ref.read(habitRepoProvider).getHabits();
+    final applicableHabits = habits.where((h) {
+      final habitDate = DateTime(h.createdAt.year, h.createdAt.month, h.createdAt.day);
+      final sDate = DateTime(date.year, date.month, date.day);
+      return !habitDate.isAfter(sDate);
+    }).toList();
+    
+    final dailyLog = ref.read(dailyLogRepoProvider).getOrCreate(dateStr);
+    final completedHabits = applicableHabits.where((h) => isHabitCompleted(h, habitCompletions, dailyLog)).length;
+    
+    final showDot = hasActivity || mealLog.loggedSlotsCount > 0 || completedHabits > 0;
 
     return GestureDetector(
       onTap: () {
-        ref.read(selectedDateProvider.notifier).state = date;
+        if (isFuture || isToday) {
+          ref.read(selectedDateProvider.notifier).state = date;
+        } else {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => PastDaySummarySheet(date: date),
+          );
+        }
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -258,7 +283,7 @@ class _DayCircle extends StatelessWidget {
             height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: hasActivity ? AppColors.green : const Color(0xFFD1D5DB),
+              color: showDot ? AppColors.green : const Color(0xFFD1D5DB),
             ),
           ),
         ],

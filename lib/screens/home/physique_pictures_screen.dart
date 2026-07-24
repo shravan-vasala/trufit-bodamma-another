@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
+import 'photo_viewer_screen.dart';
+import 'photo_compare_screen.dart';
 
 class PhysiquePicturesScreen extends ConsumerStatefulWidget {
   const PhysiquePicturesScreen({super.key});
@@ -19,6 +21,65 @@ class _PhysiquePicturesScreenState
     extends ConsumerState<PhysiquePicturesScreen> {
   final _picker = ImagePicker();
 
+  bool _isSelectionMode = false;
+  final Set<String> _selectedPhotos = {};
+
+  void _toggleSelection(String path) {
+    setState(() {
+      if (_selectedPhotos.contains(path)) {
+        _selectedPhotos.remove(path);
+        if (_selectedPhotos.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedPhotos.add(path);
+      }
+    });
+  }
+
+  void _deleteSelected(Map<String, List<String>> photosByDate) {
+    if (_selectedPhotos.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Photos?'),
+        content: Text('Delete ${_selectedPhotos.length} photo(s)? This can\'t be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              
+              // Map selected paths back to their dates
+              final toDelete = <String, List<String>>{};
+              for (final path in _selectedPhotos) {
+                // Find date for this path
+                for (final entry in photosByDate.entries) {
+                  if (entry.value.contains(path)) {
+                    toDelete.putIfAbsent(entry.key, () => []).add(path);
+                    break;
+                  }
+                }
+              }
+
+              await ref.read(mediaRepoProvider).deletePhotos(toDelete);
+              setState(() {
+                _selectedPhotos.clear();
+                _isSelectionMode = false;
+              });
+              ref.read(refreshTriggerProvider.notifier).state++;
+            },
+            child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaRepo = ref.watch(mediaRepoProvider);
@@ -27,11 +88,39 @@ class _PhysiquePicturesScreenState
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Physique Pictures'),
+        title: Text(_isSelectionMode ? '${_selectedPhotos.length} Selected' : 'Physique Pictures'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(_isSelectionMode ? Icons.close_rounded : Icons.arrow_back_ios_rounded),
+          onPressed: () {
+            if (_isSelectionMode) {
+              setState(() {
+                _isSelectionMode = false;
+                _selectedPhotos.clear();
+              });
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
+        actions: [
+          if (_isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+              onPressed: () {
+                final Map<String, List<String>> photosByDate = {};
+                for (final entry in allPhotos) {
+                  photosByDate[entry.key] = entry.value;
+                }
+                _deleteSelected(photosByDate);
+              },
+            )
+          else if (allPhotos.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _openCompareMode(allPhotos),
+              icon: const Icon(Icons.compare_rounded, color: AppColors.primary),
+              label: const Text('Compare', style: TextStyle(color: AppColors.primary)),
+            ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addPhoto,
@@ -106,58 +195,90 @@ class _PhysiquePicturesScreenState
                         final photoPath = photos[i];
                         final poseTag = ref.read(mediaRepoProvider).getPoseTag(photoPath);
 
-                        return Stack(
-                          children: [
-                            Positioned.fill(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: kIsWeb
-                                    ? Image.network(
-                                        photoPath,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, e, s) => Container(
-                                          color: AppColors.lavender,
-                                          child: const Icon(
-                                            Icons.broken_image_rounded,
-                                            color: AppColors.textLight,
+                        final isSelected = _selectedPhotos.contains(photoPath);
+
+                        return GestureDetector(
+                          onLongPress: () {
+                            if (!_isSelectionMode) {
+                              setState(() {
+                                _isSelectionMode = true;
+                                _selectedPhotos.add(photoPath);
+                              });
+                            }
+                          },
+                          onTap: () {
+                            if (_isSelectionMode) {
+                              _toggleSelection(photoPath);
+                            } else {
+                              _openViewer(allPhotos, index, i);
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: kIsWeb
+                                      ? Image.network(
+                                          photoPath,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, e, s) => Container(
+                                            color: AppColors.lavender,
+                                            child: const Icon(
+                                              Icons.broken_image_rounded,
+                                              color: AppColors.textLight,
+                                            ),
+                                          ),
+                                        )
+                                      : Image.file(
+                                          File(photoPath),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, e, s) => Container(
+                                            color: AppColors.lavender,
+                                            child: const Icon(
+                                              Icons.broken_image_rounded,
+                                              color: AppColors.textLight,
+                                            ),
                                           ),
                                         ),
-                                      )
-                                    : Image.file(
-                                        File(photoPath),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, e, s) => Container(
-                                          color: AppColors.lavender,
-                                          child: const Icon(
-                                            Icons.broken_image_rounded,
-                                            color: AppColors.textLight,
-                                          ),
-                                        ),
-                                      ),
+                                ),
                               ),
-                            ),
-                            if (poseTag != 'none')
-                              Positioned(
-                                bottom: 4,
-                                left: 4,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.6),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _poseLabel(poseTag),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.white,
+                              if (poseTag != 'none')
+                                Positioned(
+                                  bottom: 4,
+                                  left: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _poseLabel(poseTag),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
+                              if (isSelected)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppColors.primary, width: 3),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.check_circle_rounded, color: AppColors.white, size: 32),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -180,6 +301,49 @@ class _PhysiquePicturesScreenState
       default:
         return tag;
     }
+  }
+
+  void _openViewer(List<MapEntry<String, List<String>>> allPhotos, int dateIndex, int photoIndex) {
+    // Flatten all photos into a list of PhotoItems
+    final List<PhotoItem> flatPhotos = [];
+    int initialIndex = 0;
+    
+    for (int d = 0; d < allPhotos.length; d++) {
+      final date = allPhotos[d].key;
+      final photos = allPhotos[d].value;
+      
+      for (int p = 0; p < photos.length; p++) {
+        final path = photos[p];
+        final poseTag = ref.read(mediaRepoProvider).getPoseTag(path);
+        
+        if (d == dateIndex && p == photoIndex) {
+          initialIndex = flatPhotos.length;
+        }
+        
+        flatPhotos.add(PhotoItem(path: path, date: date, poseTag: poseTag));
+      }
+    }
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PhotoViewerScreen(
+          photos: flatPhotos,
+          initialIndex: initialIndex,
+        ),
+      ),
+    ).then((_) {
+      // Re-fetch in case a photo was deleted
+      setState(() {});
+      ref.read(refreshTriggerProvider.notifier).state++;
+    });
+  }
+
+  void _openCompareMode(List<MapEntry<String, List<String>>> allPhotos) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const PhotoCompareScreen(), // Will implement next
+      ),
+    );
   }
 
   String _formatDate(String dateStr) {

@@ -11,14 +11,29 @@ class MealsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
+    final mealPlanAsync = ref.watch(mealPlanProvider);
+    final planName = mealPlanAsync.valueOrNull?.planName ?? 'Meals Plan';
+    final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
     
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
+    final isToday = selectedDate.isAtSameMomentAs(today);
+
+    final defaultIds = profile.customMealSlots.where((s) => s['isDefault'] == true).map((s) => s['id'] as String).toSet();
+    final loggedIds = dailyLog.customSlots.keys.toSet();
+    
+    int totalMeals = defaultIds.length;
+    if (isFuture || isToday) {
+      final recurringIds = profile.customMealSlots.map((s) => s['id'] as String).toSet();
+      totalMeals = recurringIds.union(loggedIds).length;
+    } else {
+      final customLoggedCount = loggedIds.difference(defaultIds).length;
+      totalMeals = defaultIds.length + customLoggedCount;
+    }
 
     final completedMeals = dailyLog.loggedSlotsCount;
-    final totalMeals = 4;
     final completedCal = dailyLog.totalCalories;
     final totalCal = profile.targetCalories;
     final progress = (completedCal / totalCal).clamp(0.0, 1.0);
@@ -63,7 +78,7 @@ class MealsCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Daily Nutrition',
+                          title,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],

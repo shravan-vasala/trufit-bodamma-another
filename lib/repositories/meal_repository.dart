@@ -39,12 +39,13 @@ class MealRepository {
               );
             }
 
-            final newLog = existingLog.copyWith(
-              breakfast: existingLog.breakfast ?? makeDummySlot(completions['breakfast'] == true),
-              lunch: existingLog.lunch ?? makeDummySlot(completions['lunch'] == true),
-              snack: existingLog.snack ?? makeDummySlot(completions['snack'] == true),
-              dinner: existingLog.dinner ?? makeDummySlot(completions['dinner'] == true),
-            );
+            final slots = Map<String, MealSlotLog>.from(existingLog.customSlots);
+            if (completions['breakfast'] == true && !slots.containsKey('breakfast')) slots['breakfast'] = makeDummySlot(true)!;
+            if (completions['lunch'] == true && !slots.containsKey('lunch')) slots['lunch'] = makeDummySlot(true)!;
+            if (completions['snack'] == true && !slots.containsKey('snack')) slots['snack'] = makeDummySlot(true)!;
+            if (completions['dinner'] == true && !slots.containsKey('dinner')) slots['dinner'] = makeDummySlot(true)!;
+
+            final newLog = existingLog.copyWith(customSlots: slots);
 
             await saveDailyLog(newLog);
           } catch (_) {
@@ -72,47 +73,21 @@ class MealRepository {
     await _dailyLogsBox.put(log.date, jsonEncode(log.toJson()));
   }
 
-  Future<void> saveMealSlot(String date, String slotName, MealSlotLog slotLog) async {
+  Future<void> saveMealSlot(String date, String slotId, MealSlotLog slotLog) async {
     final currentLog = getDailyLog(date);
-    DailyMealLog updated;
-    switch (slotName) {
-      case 'breakfast':
-        updated = currentLog.copyWith(breakfast: slotLog);
-        break;
-      case 'lunch':
-        updated = currentLog.copyWith(lunch: slotLog);
-        break;
-      case 'snack':
-        updated = currentLog.copyWith(snack: slotLog);
-        break;
-      case 'dinner':
-        updated = currentLog.copyWith(dinner: slotLog);
-        break;
-      default:
-        return;
-    }
+    final updatedSlots = Map<String, MealSlotLog>.from(currentLog.customSlots);
+    updatedSlots[slotId] = slotLog;
+    
+    final updated = currentLog.copyWith(customSlots: updatedSlots);
     await saveDailyLog(updated);
   }
 
-  Future<void> clearMealSlot(String date, String slotName) async {
+  Future<void> clearMealSlot(String date, String slotId) async {
     final currentLog = getDailyLog(date);
-    DailyMealLog updated;
-    switch (slotName) {
-      case 'breakfast':
-        updated = currentLog.copyWith(clearBreakfast: true);
-        break;
-      case 'lunch':
-        updated = currentLog.copyWith(clearLunch: true);
-        break;
-      case 'snack':
-        updated = currentLog.copyWith(clearSnack: true);
-        break;
-      case 'dinner':
-        updated = currentLog.copyWith(clearDinner: true);
-        break;
-      default:
-        return;
-    }
+    final updatedSlots = Map<String, MealSlotLog>.from(currentLog.customSlots);
+    updatedSlots.remove(slotId);
+    
+    final updated = currentLog.copyWith(customSlots: updatedSlots);
     await saveDailyLog(updated);
   }
 }

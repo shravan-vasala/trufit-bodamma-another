@@ -6,22 +6,56 @@ import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/daily_meal_log.dart';
 import 'widgets/photo_calorie_scanner_sheet.dart';
+import 'widgets/add_meal_slot_dialog.dart';
 
 class MealDetailScreen extends ConsumerWidget {
   const MealDetailScreen({super.key});
+
+  void _openAddSlotDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const AddMealSlotDialog(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
+    final mealPlanAsync = ref.watch(mealPlanProvider);
+    final planName = mealPlanAsync.valueOrNull?.planName ?? 'Meals Plan';
+    final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
+    
     final targetCalories = profile.targetCalories;
     final isOverTarget = dailyLog.totalCalories > targetCalories;
     final progressRatio = (dailyLog.totalCalories / targetCalories).clamp(0.0, 1.0);
 
+    // Compute dynamic slots to display
+    final List<({String id, String name, String emoji})> slotsToDisplay = [];
+    final recurringIds = <String>{};
+
+    for (final s in profile.customMealSlots) {
+      final id = s['id'] as String;
+      recurringIds.add(id);
+      slotsToDisplay.add((id: id, name: s['name'] as String, emoji: s['emoji'] as String));
+    }
+
+    for (final entry in dailyLog.customSlots.entries) {
+      if (!recurringIds.contains(entry.key)) {
+        final id = entry.key;
+        final log = entry.value;
+        slotsToDisplay.add((
+          id: id, 
+          name: log.name ?? 'Meal', 
+          emoji: log.emoji ?? '🍽️'
+        ));
+      }
+    }
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Daily Meals'),
+        title: Text(title),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
@@ -87,10 +121,25 @@ class MealDetailScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Meal Slots
-          _MealSlotCard(slotName: 'breakfast', slotLog: dailyLog.breakfast),
-          _MealSlotCard(slotName: 'lunch', slotLog: dailyLog.lunch),
-          _MealSlotCard(slotName: 'snack', slotLog: dailyLog.snack),
-          _MealSlotCard(slotName: 'dinner', slotLog: dailyLog.dinner),
+          ...slotsToDisplay.map((s) => _MealSlotCard(
+                slotId: s.id,
+                slotName: s.name,
+                slotEmoji: s.emoji,
+                slotLog: dailyLog.customSlots[s.id],
+              )),
+
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+             onPressed: () => _openAddSlotDialog(context),
+             icon: const Icon(Icons.add_rounded, size: 18),
+             label: const Text('Add another meal', style: TextStyle(fontWeight: FontWeight.w600)),
+             style: OutlinedButton.styleFrom(
+               foregroundColor: AppColors.textMedium,
+               side: BorderSide(color: AppColors.border),
+               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+               padding: const EdgeInsets.symmetric(vertical: 16),
+             ),
+          ),
         ],
       ),
     );
@@ -112,15 +161,23 @@ class _MacroInfo extends StatelessWidget {
   }
 }
 
-class _MealSlotCard extends StatelessWidget {
-  const _MealSlotCard({required this.slotName, this.slotLog});
+class _MealSlotCard extends ConsumerWidget {
+  const _MealSlotCard({
+    required this.slotId, 
+    required this.slotName, 
+    required this.slotEmoji, 
+    this.slotLog
+  });
+  
+  final String slotId;
   final String slotName;
+  final String slotEmoji;
   final MealSlotLog? slotLog;
 
   @override
-  Widget build(BuildContext context) {
-    final hasLog = slotLog != null;
-    final title = '${slotName[0].toUpperCase()}${slotName.substring(1)}';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasLog = slotLog != null && (slotLog!.items.isNotEmpty || slotLog!.photoPath != null || slotLog!.totalCalories > 0);
+    final title = '$slotEmoji $slotName';
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -143,6 +200,17 @@ class _MealSlotCard extends StatelessWidget {
                 if (hasLog) ...[
                   const SizedBox(width: 8),
                   const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 20),
+                ] else if (slotLog != null) ...[
+                  // Slot exists but is empty (e.g. one-off slot created but not logged yet)
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textMedium),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                       // Delete one-off slot
+                       ref.read(dailyMealLogProvider.notifier).clearMealSlot(slotId);
+                    },
+                  )
                 ]
               ],
             ),
@@ -218,7 +286,11 @@ class _MealSlotCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => PhotoCalorieScannerSheet(slotName: slotName, isManualEntry: isManualEntry),
+      builder: (_) => PhotoCalorieScannerSheet(
+        slotId: slotId, 
+        slotDisplayName: slotName,
+        isManualEntry: isManualEntry
+      ),
     );
   }
 }

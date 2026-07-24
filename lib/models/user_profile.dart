@@ -7,11 +7,12 @@ class UserProfile {
   final int targetCalories;
   final String? activeWorkoutPlan;
   final List<Map<String, dynamic>> customHabits;
+  final List<Map<String, dynamic>> customMealSlots;
   final String? geminiApiKey;
 
 
   UserProfile({
-    this.name = 'Mamatha',
+    this.name = '',
     this.photoPath,
     this.height = 160,
     this.targetWeight,
@@ -19,6 +20,12 @@ class UserProfile {
     this.targetCalories = 1397,
     this.activeWorkoutPlan,
     this.customHabits = const [],
+    this.customMealSlots = const [
+      {'id': 'breakfast', 'name': 'Breakfast', 'emoji': '🍳', 'isDefault': true},
+      {'id': 'lunch', 'name': 'Lunch', 'emoji': '🍛', 'isDefault': true},
+      {'id': 'snack', 'name': 'Snack', 'emoji': '🍎', 'isDefault': true},
+      {'id': 'dinner', 'name': 'Dinner', 'emoji': '🍽️', 'isDefault': true},
+    ],
     this.geminiApiKey,
   });
 
@@ -44,7 +51,7 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      name: json['name'] as String? ?? 'Mamatha',
+      name: json['name'] as String? ?? '',
       photoPath: json['photoPath'] as String?,
       height: (json['height'] as num?)?.toDouble() ?? 160,
       targetWeight: (json['targetWeight'] as num?)?.toDouble(),
@@ -55,6 +62,15 @@ class UserProfile {
               ?.map((h) => Map<String, dynamic>.from(h as Map))
               .toList() ??
           [],
+      customMealSlots: (json['customMealSlots'] as List?)
+              ?.map((h) => Map<String, dynamic>.from(h as Map))
+              .toList() ??
+          [
+            {'id': 'breakfast', 'name': 'Breakfast', 'emoji': '🍳', 'isDefault': true},
+            {'id': 'lunch', 'name': 'Lunch', 'emoji': '🍛', 'isDefault': true},
+            {'id': 'snack', 'name': 'Snack', 'emoji': '🍎', 'isDefault': true},
+            {'id': 'dinner', 'name': 'Dinner', 'emoji': '🍽️', 'isDefault': true},
+          ],
       geminiApiKey: json['geminiApiKey'] as String?,
     );
   }
@@ -68,6 +84,7 @@ class UserProfile {
         'targetCalories': targetCalories,
         if (activeWorkoutPlan != null) 'activeWorkoutPlan': activeWorkoutPlan,
         'customHabits': customHabits,
+        'customMealSlots': customMealSlots,
         if (geminiApiKey != null) 'geminiApiKey': geminiApiKey,
       };
 
@@ -80,6 +97,7 @@ class UserProfile {
     int? targetCalories,
     String? activeWorkoutPlan,
     List<Map<String, dynamic>>? customHabits,
+    List<Map<String, dynamic>>? customMealSlots,
     String? geminiApiKey,
   }) {
     return UserProfile(
@@ -91,6 +109,7 @@ class UserProfile {
       targetCalories: targetCalories ?? this.targetCalories,
       activeWorkoutPlan: activeWorkoutPlan ?? this.activeWorkoutPlan,
       customHabits: customHabits ?? this.customHabits,
+      customMealSlots: customMealSlots ?? this.customMealSlots,
       geminiApiKey: geminiApiKey ?? this.geminiApiKey,
     );
   }

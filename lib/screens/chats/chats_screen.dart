@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/app_providers.dart';
 import '../../theme/app_colors.dart';
 
-class ChatsScreen extends StatelessWidget {
+class ChatsScreen extends ConsumerWidget {
   const ChatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider);
+    final nameStr = profile.name.isNotEmpty ? ', ${profile.name}' : '';
+    
     final messages = [
       _ChatMessage(
-        text: "Welcome to TruFit, Mamatha! 💪 I'm your fitness coach. Let's start your journey together!",
+        text: "Welcome to TruFit$nameStr! 💪 I'm your fitness coach. Let's start your journey together!",
         isCoach: true,
         time: '9:00 AM',
         date: 'Today',

@@ -103,4 +103,35 @@ class MediaRepository {
     }
     return count;
   }
+
+  Future<void> deletePhoto(String date, String photoPath) async {
+    // 1. Remove from photos list
+    final photos = getProgressPhotos(date);
+    photos.remove(photoPath);
+    if (photos.isEmpty) {
+      await _box.delete('photos_$date');
+    } else {
+      await _box.put('photos_$date', jsonEncode(photos));
+    }
+
+    // 2. Remove pose tag
+    await _box.delete('pose_$photoPath');
+
+    // 3. Delete physical file (if not web)
+    if (!kIsWeb) {
+      final file = File(photoPath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+  }
+
+  Future<void> deletePhotos(Map<String, List<String>> photosByDate) async {
+    for (final entry in photosByDate.entries) {
+      final date = entry.key;
+      for (final path in entry.value) {
+        await deletePhoto(date, path);
+      }
+    }
+  }
 }

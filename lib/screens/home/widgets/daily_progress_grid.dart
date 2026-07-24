@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,6 +8,7 @@ import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../weight_entry_dialog.dart';
 import '../steps_entry_dialog.dart';
+import 'sync_status_sheet.dart';
 
 class DailyProgressGrid extends ConsumerWidget {
   const DailyProgressGrid({super.key});
@@ -19,19 +22,12 @@ class DailyProgressGrid extends ConsumerWidget {
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
     final isToday = selectedDate.isAtSameMomentAs(today);
-
-    // Determine steps source hint
-    String stepsSubtitle;
-    String? sourceHint;
-    if (dailyLog.steps != null) {
-      stepsSubtitle = '${dailyLog.steps!} steps';
-      if (dailyLog.stepsSource == 'healthConnect') {
-        sourceHint = 'via Samsung Health';
-      } else if (dailyLog.stepsSource == 'manual') {
-        sourceHint = 'manual';
-      }
-    } else {
-      stepsSubtitle = isToday ? 'Tap to log' : '0 steps';
+    
+    final mediaRepo = ref.watch(mediaRepoProvider);
+    final allPhotos = mediaRepo.getAllProgressPhotos();
+    String? latestPhotoPath;
+    if (allPhotos.isNotEmpty && allPhotos.first.value.isNotEmpty) {
+      latestPhotoPath = allPhotos.first.value.first;
     }
 
     return Padding(
@@ -57,7 +53,8 @@ class DailyProgressGrid extends ConsumerWidget {
                   icon: Icons.camera_alt_rounded,
                   color: AppColors.pink,
                   iconColor: AppColors.pinkIcon,
-                  subtitle: 'Progress photos',
+                  subtitle: latestPhotoPath != null ? 'Photos added' : 'Progress photos',
+                  thumbnailPath: latestPhotoPath,
                   onTap: () => context.go('/home/physique-pictures'),
                 ),
               ),
@@ -85,14 +82,12 @@ class DailyProgressGrid extends ConsumerWidget {
                             builder: (_) => const WeightEntryDialog(),
                           );
                         },
+                  onChartTap: () => context.go('/progress?metric=weight'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _StepsCard(
-                  steps: dailyLog.steps,
-                  subtitle: stepsSubtitle,
-                  sourceHint: sourceHint,
                   isFuture: isFuture,
                   isToday: isToday,
                 ),
@@ -108,16 +103,10 @@ class DailyProgressGrid extends ConsumerWidget {
 /// Special Steps card that handles the Health Connect first-run CTA.
 class _StepsCard extends ConsumerStatefulWidget {
   const _StepsCard({
-    required this.steps,
-    required this.subtitle,
     required this.isFuture,
     required this.isToday,
-    this.sourceHint,
   });
 
-  final int? steps;
-  final String subtitle;
-  final String? sourceHint;
   final bool isFuture;
   final bool isToday;
 
@@ -128,6 +117,7 @@ class _StepsCard extends ConsumerStatefulWidget {
 class _StepsCardState extends ConsumerState<_StepsCard> {
   bool _showSyncCta = false;
   bool _checkingPermission = true;
+  bool _isAuth = false;
 
   @override
   void initState() {
@@ -140,6 +130,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
     final isAuth = await hcService.isAuthorized();
     if (mounted) {
       setState(() {
+        _isAuth = isAuth;
         _showSyncCta = !isAuth && widget.isToday;
         _checkingPermission = false;
       });
@@ -243,16 +234,46 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
     }
 
     // Normal steps card
+    final dailyLog = ref.watch(dailyLogProvider);
+
+    // Determine subtitle
+    String stepsSubtitle;
+    String? sourceHint;
+
+    if (dailyLog.steps != null) {
+      stepsSubtitle = '${dailyLog.steps!} steps';
+      if (dailyLog.stepsSource == 'healthConnect') {
+        sourceHint = 'Synced via Samsung Health';
+      } else if (dailyLog.stepsSource == 'manual') {
+        sourceHint = 'manual';
+      }
+    } else {
+      stepsSubtitle = '0 steps';
+      if (_isAuth) {
+        sourceHint = 'Synced';
+      } else {
+        sourceHint = widget.isToday ? 'Tap to log' : null;
+      }
+    }
+
     return GestureDetector(
       onTap: widget.isFuture
           ? () {}
           : () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const StepsEntryDialog(),
-              );
+              if (_isAuth) {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const SyncStatusSheet(),
+                );
+              } else {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const StepsEntryDialog(),
+                );
+              }
             },
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -263,14 +284,31 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.mintIcon.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.directions_walk_rounded, color: AppColors.mintIcon, size: 22),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.mintIcon.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.directions_walk_rounded, color: AppColors.mintIcon, size: 22),
+                ),
+                GestureDetector(
+                  onTap: () => context.go('/progress?metric=steps'),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.show_chart_rounded, color: AppColors.mintIcon, size: 18),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             const Text(
@@ -284,21 +322,20 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
             ),
             const SizedBox(height: 4),
             Text(
-              widget.subtitle,
+              stepsSubtitle,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textMedium,
               ),
             ),
-            if (widget.sourceHint != null) ...[
+            if (sourceHint != null) ...[
               const SizedBox(height: 2),
               Text(
-                widget.sourceHint!,
+                sourceHint,
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: widget.sourceHint == 'via Samsung Health'
+                  color: sourceHint == 'Synced via Samsung Health' || sourceHint == 'Synced'
                       ? AppColors.green
                       : AppColors.textLight,
                 ),
@@ -319,6 +356,8 @@ class _ProgressCard extends StatelessWidget {
     required this.iconColor,
     required this.subtitle,
     required this.onTap,
+    this.thumbnailPath,
+    this.onChartTap,
   });
 
   final String title;
@@ -327,6 +366,8 @@ class _ProgressCard extends StatelessWidget {
   final Color iconColor;
   final String subtitle;
   final VoidCallback onTap;
+  final String? thumbnailPath;
+  final VoidCallback? onChartTap;
 
   @override
   Widget build(BuildContext context) {
@@ -341,14 +382,42 @@ class _ProgressCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    image: thumbnailPath != null
+                        ? DecorationImage(
+                            image: kIsWeb
+                                ? NetworkImage(thumbnailPath!) as ImageProvider
+                                : FileImage(File(thumbnailPath!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: thumbnailPath != null
+                      ? null
+                      : Icon(icon, color: iconColor, size: 22),
+                ),
+                if (onChartTap != null)
+                  GestureDetector(
+                    onTap: onChartTap,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.show_chart_rounded, color: iconColor, size: 18),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 14),
             Text(

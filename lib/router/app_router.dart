@@ -10,6 +10,7 @@ import '../screens/workout/exercise_progress_screen.dart';
 import '../screens/progress/progress_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/manage_plans_screen.dart';
+import '../screens/profile/backup_restore_screen.dart';
 import '../theme/app_colors.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -100,6 +101,10 @@ final appRouter = GoRouter(
                   path: 'manage-plans',
                   builder: (context, state) => const ManagePlansScreen(),
                 ),
+                GoRoute(
+                  path: 'backup-restore',
+                  builder: (context, state) => const BackupRestoreScreen(),
+                ),
               ],
             ),
           ],
@@ -113,7 +118,8 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final videoId = state.uri.queryParameters['videoId'] ?? '';
         final title = state.uri.queryParameters['title'] ?? '';
-        return YoutubePlayerScreen(videoId: videoId, title: title);
+        final reps = state.uri.queryParameters['reps'] ?? '';
+        return YoutubePlayerScreen(videoId: videoId, title: title, reps: reps);
       },
     ),
     GoRoute(

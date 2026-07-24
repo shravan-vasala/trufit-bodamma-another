@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -16,7 +17,10 @@ class SharedChartCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.data,
+    required this.startDate,
+    required this.endDate,
     this.isSteps = false,
+    this.isCalories = false,
     this.showKgLbToggle = false,
     this.useKg = true,
     this.onToggleUnit,
@@ -25,11 +29,15 @@ class SharedChartCard extends StatelessWidget {
     this.timeFormat = ChartTimeFormat.monthly,
     this.emptyMessage = 'No data available for this period',
     this.targetValue,
+    this.onPointLongPress,
   });
 
   final String title;
   final List<ChartDataPoint> data;
+  final DateTime startDate;
+  final DateTime endDate;
   final bool isSteps;
+  final bool isCalories;
   final bool showKgLbToggle;
   final bool useKg;
   final VoidCallback? onToggleUnit;
@@ -38,6 +46,7 @@ class SharedChartCard extends StatelessWidget {
   final ChartTimeFormat timeFormat;
   final String emptyMessage;
   final double? targetValue;
+  final void Function(DateTime date, double value)? onPointLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +113,7 @@ class SharedChartCard extends StatelessWidget {
                             fontSize: 14,
                             color: AppColors.textLight,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       )
                     : _buildLineChart(),
@@ -146,6 +156,7 @@ class SharedChartCard extends StatelessWidget {
                                 color: AppColors.textLight,
                                 letterSpacing: 1,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -155,6 +166,7 @@ class SharedChartCard extends StatelessWidget {
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textDark,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -176,26 +188,36 @@ class SharedChartCard extends StatelessWidget {
   }
 
   Widget _buildLineChart() {
-    final spots = data.asMap().entries.map((e) {
-      return FlSpot(e.key.toDouble(), e.value.value);
+    final spots = data.map((d) {
+      final x = d.date.difference(startDate).inDays.toDouble();
+      return FlSpot(x, d.value);
     }).toList();
 
-    double minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b);
-    double maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    double minY = spots.map((s) => s.y).reduce(min);
+    double maxY = spots.map((s) => s.y).reduce(max);
     
     if (minY == maxY) {
-      minY -= 1;
-      maxY += 1;
+      if (minY == 0) {
+        maxY = 10;
+      } else {
+        minY -= 1;
+        maxY += 1;
+      }
     } else {
       final padding = (maxY - minY) * 0.1;
       minY -= padding;
       maxY += padding;
     }
-    // Prevent negative steps or weight if not applicable
-    if (minY < 0 && isSteps) minY = 0;
+    
+    final bool isCount = isSteps || isCalories;
+    if (isCount && minY < 0) minY = 0;
+
+    final maxXValue = endDate.difference(startDate).inDays.toDouble();
 
     return LineChart(
       LineChartData(
+        minX: 0,
+        maxX: maxXValue,
         minY: minY,
         maxY: maxY,
         gridData: FlGridData(
@@ -212,25 +234,32 @@ class SharedChartCard extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              interval: 1,
               getTitlesWidget: (value, meta) {
-                final idx = value.toInt();
-                if (idx < 0 || idx >= data.length) {
-                  return const SizedBox.shrink();
-                }
-                
-                // Thin out labels for longer datasets
-                if (data.length > 14 && idx % (data.length ~/ 6) != 0) {
+                final int daysOffset = value.toInt();
+                if (daysOffset < 0 || daysOffset > maxXValue) {
                   return const SizedBox.shrink();
                 }
 
+                final date = startDate.add(Duration(days: daysOffset));
                 String label;
-                final date = data[idx].date;
+
                 if (timeFormat == ChartTimeFormat.weekly) {
-                  label = DateFormat('E').format(date); // Mon, Tue, etc.
+                  label = DateFormat('E').format(date); // Mon, Tue...
                 } else if (timeFormat == ChartTimeFormat.monthly) {
-                  label = DateFormat('MMM dd').format(date); // Apr 14
+                  // Show roughly every 5 days without repeating
+                  if (date.day == 1 || date.day % 5 == 0) {
+                    label = date.day.toString();
+                  } else {
+                    return const SizedBox.shrink();
+                  }
                 } else {
-                  label = DateFormat('MMM yyyy').format(date); // Apr 2026
+                  // sixMonths
+                  if (date.day == 1) {
+                    label = DateFormat('MMM').format(date);
+                  } else {
+                    return const SizedBox.shrink();
+                  }
                 }
 
                 return Padding(
@@ -251,9 +280,22 @@ class SharedChartCard extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               getTitlesWidget: (value, meta) {
-                // Ensure 4-5 labels max
+                if (isCount && value < 0) return const SizedBox.shrink();
+                
+                String label;
+                if (isCount) {
+                  if (value >= 1000) {
+                    final kVal = value / 1000;
+                    label = '${kVal.toStringAsFixed(value % 1000 == 0 ? 0 : 1)}k';
+                  } else {
+                    label = value.toInt().toString();
+                  }
+                } else {
+                  label = value.toStringAsFixed(1);
+                }
+
                 return Text(
-                  value.toStringAsFixed(isSteps ? 0 : 1),
+                  label,
                   style: const TextStyle(
                     fontSize: 10,
                     color: AppColors.textLight,
@@ -267,14 +309,25 @@ class SharedChartCard extends StatelessWidget {
         ),
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
+          touchCallback: (FlTouchEvent event, LineTouchResponse? response) {
+            if (response != null && response.lineBarSpots != null && response.lineBarSpots!.isNotEmpty) {
+              if (event is FlLongPressEnd || event is FlLongPressMoveUpdate) {
+                 if (event is FlLongPressEnd && onPointLongPress != null) {
+                    final spot = response.lineBarSpots!.first;
+                    final date = startDate.add(Duration(days: spot.x.toInt()));
+                    onPointLongPress!(date, spot.y);
+                 }
+              }
+            }
+          },
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (touchedSpot) => AppColors.textDark,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
-                final idx = spot.x.toInt();
-                if (idx < 0 || idx >= data.length) return null;
-                final dateStr = DateFormat('dd MMM yyyy').format(data[idx].date);
-                final valStr = spot.y.toStringAsFixed(isSteps ? 0 : 1);
+                final date = startDate.add(Duration(days: spot.x.toInt()));
+                final dateStr = DateFormat('dd MMM yyyy').format(date);
+                final valStr = spot.y.toStringAsFixed(isCount ? 0 : 1);
                 return LineTooltipItem(
                   '$dateStr\n$valStr',
                   const TextStyle(
@@ -293,10 +346,12 @@ class SharedChartCard extends StatelessWidget {
             isCurved: true,
             color: const Color(0xFF8B5CF6),
             barWidth: 2.5,
-            dotData: const FlDotData(show: false),
+            dotData: FlDotData(
+              show: spots.length == 1,
+            ),
             belowBarData: BarAreaData(
               show: true,
-              gradient: isSteps
+              gradient: isCount
                   ? null
                   : const LinearGradient(
                       begin: Alignment.topCenter,
@@ -306,7 +361,7 @@ class SharedChartCard extends StatelessWidget {
                         Color(0x00C4B5FD),
                       ],
                     ),
-              color: isSteps ? const Color(0xCCC4B5FD) : null,
+              color: isCount ? const Color(0xCCC4B5FD) : null,
             ),
           ),
         ],

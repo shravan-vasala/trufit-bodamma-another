@@ -48,7 +48,7 @@ class ExerciseCard extends ConsumerWidget {
                     final videoId = exercise.youtubeVideoId;
                     if (videoId != null && videoId != 'XXXX') {
                       context.push(
-                        '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.name)}',
+                        '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.name)}&reps=${Uri.encodeComponent(exercise.repsDisplay)}',
                       );
                     }
                   },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 
@@ -13,6 +13,23 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = 'v${info.version}';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
@@ -56,16 +73,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                       child: Center(
-                        child: Text(
-                          profile.name.isNotEmpty
-                              ? profile.name[0].toUpperCase()
-                              : 'M',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.white,
-                          ),
-                        ),
+                        child: profile.name.isNotEmpty
+                            ? Text(
+                                profile.name[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : const Icon(Icons.person, size: 40, color: AppColors.white),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -128,21 +145,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 },
               ),
               _MenuCard(
-                icon: Icons.download_rounded,
-                title: 'Export Data',
-                subtitle: 'Backup all data & photos',
+                icon: Icons.backup_rounded,
+                title: 'Backup & Restore',
+                subtitle: 'Export or restore all data & photos',
                 onTap: () {
-                  _showBackupSummary(context, ref);
+                  context.go('/profile/backup-restore');
                 },
               ),
               const SizedBox(height: 16),
               Text(
-                'TruFit Bodamma v1.0',
+                'Made with ❤️ for Bodamma',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textLight,
                 ),
               ),
+              if (_appVersion.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _appVersion,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textLight.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
             ],
           ),
@@ -341,99 +368,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showBackupSummary(BuildContext context, WidgetRef ref) {
-    final dailyLogRepo = ref.read(dailyLogRepoProvider);
-    final mediaRepo = ref.read(mediaRepoProvider);
 
-    // Count data entries
-    final allLogs = dailyLogRepo.getLogsInRange('2020-01-01', '2099-12-31');
-    final weightEntries = allLogs.where((l) => l.weight != null).length;
-    final photoCount = mediaRepo.getAllPhotoCount();
-    final dateStr = DateFormat('dd MMM yyyy').format(DateTime.now());
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.lavender,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.backup_rounded,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Backup Summary',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.lavender,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  '$weightEntries weight entries, $photoCount photos\n— from $dateStr',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Backup saved! 📦'),
-                        backgroundColor: AppColors.green,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.download_rounded,
-                      color: AppColors.white, size: 20),
-                  label: const Text('Export JSON Backup'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _MenuCard extends StatelessWidget {

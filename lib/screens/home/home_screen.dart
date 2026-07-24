@@ -22,7 +22,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Initial sync when screen first loads
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncSteps());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncSteps();
+      final profile = ref.read(profileProvider);
+      if (profile.name.isEmpty) {
+        _showNamePrompt();
+      }
+    });
+  }
+
+  void _showNamePrompt() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.white,
+        title: const Text("What's your name?", style: TextStyle(color: AppColors.textDark)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: AppColors.textDark),
+          decoration: const InputDecoration(
+            hintText: 'Enter your name',
+            hintStyle: TextStyle(color: AppColors.textLight),
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                final profile = ref.read(profileProvider);
+                ref.read(profileProvider.notifier).updateProfile(profile.copyWith(name: name));
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Save', style: TextStyle(color: AppColors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -65,6 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
     final plan = ref.watch(workoutPlanProvider);
+    final profile = ref.watch(profileProvider);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -88,7 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hey Mamatha! 💪',
+                              profile.name.isEmpty ? 'Hey there! 💪' : 'Hey ${profile.name}! 💪',
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 4),

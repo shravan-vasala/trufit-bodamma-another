@@ -53,6 +53,9 @@ class ExerciseProgressScreen extends ConsumerWidget {
       ];
     }
 
+    final startDate = sortedLogs.isNotEmpty ? DateTime.parse(sortedLogs.first.date) : DateTime.now();
+    final endDate = DateTime.now();
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
@@ -102,6 +105,8 @@ class ExerciseProgressScreen extends ConsumerWidget {
                   statLabels: const ['BEST', 'LAST', 'AVERAGE'],
                   statValues: maxWeightStats,
                   timeFormat: ChartTimeFormat.allTime,
+                  startDate: startDate,
+                  endDate: endDate,
                   emptyMessage: 'No data logged yet',
                 ),
                 const SizedBox(height: 16),
@@ -111,6 +116,8 @@ class ExerciseProgressScreen extends ConsumerWidget {
                   statLabels: const ['BEST', 'LAST', 'AVERAGE'],
                   statValues: totalVolumeStats,
                   timeFormat: ChartTimeFormat.allTime,
+                  startDate: startDate,
+                  endDate: endDate,
                   emptyMessage: 'No data logged yet',
                 ),
                 const SizedBox(height: 20),

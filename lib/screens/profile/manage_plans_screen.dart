@@ -8,22 +8,173 @@ class ManagePlansScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
-      appBar: AppBar(
-        title: const Text('Manage Workout Plans'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.scaffoldBg,
+        appBar: AppBar(
+          title: const Text('Manage Plans'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          bottom: const TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textMedium,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(text: 'Workout Plans'),
+              Tab(text: 'Meal Slots'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _PlanEditor(
+              type: 'workout',
+              getKeys: () => ref.read(workoutRepoProvider).getPlanKeys(),
+              getRawJson: (key) => ref.read(workoutRepoProvider).getRawPlanJson(key),
+              saveJson: (key, json) =>
+                  ref.read(workoutRepoProvider).savePlanJson(key, json),
+            ),
+            const _MealSlotsEditor(),
+          ],
         ),
       ),
-      body: _PlanEditor(
-        type: 'workout',
-        getKeys: () => ref.read(workoutRepoProvider).getPlanKeys(),
-        getRawJson: (key) => ref.read(workoutRepoProvider).getRawPlanJson(key),
-        saveJson: (key, json) =>
-            ref.read(workoutRepoProvider).savePlanJson(key, json),
+    );
+  }
+}
+
+class _MealSlotsEditor extends ConsumerStatefulWidget {
+  const _MealSlotsEditor();
+  @override
+  ConsumerState<_MealSlotsEditor> createState() => _MealSlotsEditorState();
+}
+
+class _MealSlotsEditorState extends ConsumerState<_MealSlotsEditor> {
+  void _deleteSlot(Map<String, dynamic> slot) {
+    final profile = ref.read(profileProvider);
+    final updatedSlots = profile.customMealSlots.where((s) => s['id'] != slot['id']).toList();
+    ref.read(profileRepoProvider).saveProfile(profile.copyWith(customMealSlots: updatedSlots));
+  }
+
+  void _editSlot(Map<String, dynamic> slot, int index) {
+    final nameCtrl = TextEditingController(text: slot['name'] as String);
+    String selectedEmoji = slot['emoji'] as String;
+    final emojis = ['🍴', '🥤', '🍌', '🥜', '🍚', '🫖', '🍪', '🥩', '🥑', '🥪', '🥣', '🥗', '🍳', '🍛', '🍎', '🍽️'];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Edit Meal Slot'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 16),
+              const Text('Emoji:'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: emojis.map((e) {
+                  final isSelected = e == selectedEmoji;
+                  return GestureDetector(
+                    onTap: () => setStateDialog(() => selectedEmoji = e),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                        borderRadius: BorderRadius.circular(8),
+                        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
+                      ),
+                      child: Text(e, style: const TextStyle(fontSize: 20)),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                final profile = ref.read(profileProvider);
+                final updatedSlots = List<Map<String, dynamic>>.from(profile.customMealSlots);
+                updatedSlots[index] = {
+                  ...slot,
+                  'name': nameCtrl.text.trim(),
+                  'emoji': selectedEmoji,
+                };
+                ref.read(profileRepoProvider).saveProfile(profile.copyWith(customMealSlots: updatedSlots));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = ref.watch(profileProvider);
+    final slots = profile.customMealSlots;
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: slots.length,
+      itemBuilder: (context, index) {
+        final slot = slots[index];
+        final isDefault = slot['isDefault'] == true;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Text(slot['emoji'] as String, style: const TextStyle(fontSize: 24)),
+            title: Text(slot['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(isDefault ? 'Default Slot' : 'Custom Recurring Slot'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+                  onPressed: () => _editSlot(slot, index),
+                ),
+                if (!isDefault)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Slot?'),
+                          content: const Text('Removing this recurring slot means it will no longer appear on future days. Previously logged food will still be kept.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () {
+                                _deleteSlot(slot);
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
