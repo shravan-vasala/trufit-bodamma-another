@@ -112,20 +112,18 @@ class HealthConnectService {
     bool isToday,
   ) async {
     await dailyLogRepo.updateSteps(dateStr, steps, source: 'healthConnect');
-    
-    const walkHabitId = 'walk';
-    const walkTarget = 8000;
-    if (steps >= walkTarget) {
-      await habitRepo.setCompletion(dateStr, walkHabitId, true);
-    } else if (isToday) {
-      await habitRepo.setCompletion(dateStr, walkHabitId, false);
-    }
   }
 
   /// Backfill the last 90 days of step data into Hive.
   /// Skips days that already have manually-entered steps.
   Future<int> backfillLast90Days(DailyLogRepository dailyLogRepo, HabitRepository habitRepo) async {
     if (isBackfillDone) return 0;
+
+    final hasAuth = await isAuthorized();
+    if (!hasAuth) {
+      final granted = await requestPermission();
+      if (!granted) return 0;
+    }
 
     // Try to request history access for >30 days
     await requestHistoryAccess();

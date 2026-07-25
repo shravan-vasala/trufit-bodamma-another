@@ -4,6 +4,8 @@ import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BackupVerificationResult {
   final bool isValid;
@@ -66,6 +68,20 @@ class BackupService {
               }
             } catch (_) {}
           }
+        }
+      }
+
+      // Add profile photo if present
+      if (manifest.containsKey('user_profile')) {
+        final profileBox = manifest['user_profile']!;
+        final profileJsonStr = profileBox['profile'];
+        if (profileJsonStr != null) {
+          try {
+            final Map<String, dynamic> profileMap = jsonDecode(profileJsonStr);
+            if (profileMap['photoPath'] != null) {
+              photosToBackup.add(profileMap['photoPath'] as String);
+            }
+          } catch (_) {}
         }
       }
 
@@ -167,14 +183,6 @@ class BackupService {
       // To correctly map paths, we must place them exactly where they were, or update the manifest.
       // Since photos are saved to the app's documents directory, we can recreate them there.
       final docDir = await getApplicationDocumentsDirectory();
-      for (final file in archive) {
-        if (file.isFile && file.name.startsWith('photos/')) {
-          // Photo files are handled below for path mapping.
-        }
-      }
-      
-      // Wait, we need to map old paths to new paths if the device changed.
-      // Let's do that!
       final oldPathMap = <String, String>{};
       for (final file in archive) {
         if (file.isFile && file.name.startsWith('photos/')) {
@@ -234,10 +242,87 @@ class BackupService {
         }
       }
 
+      // Fix profile photo path
+      if (manifest.containsKey('user_profile')) {
+        final profileBox = await Hive.openBox<String>('user_profile');
+        final profileJsonStr = profileBox.get('profile');
+        if (profileJsonStr != null) {
+          try {
+            final Map<String, dynamic> profileMap = jsonDecode(profileJsonStr);
+            if (profileMap['photoPath'] != null) {
+              final oldPath = profileMap['photoPath'] as String;
+              final fileName = File(oldPath).uri.pathSegments.last;
+              if (oldPathMap.containsKey(fileName)) {
+                profileMap['photoPath'] = oldPathMap[fileName];
+                await profileBox.put('profile', jsonEncode(profileMap));
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
       return true;
     } catch (e) {
       debugPrint('Restore error: $e');
       return false;
+    }
+  }
+
+  /// Creates a data-only backup and maintains the latest 4 in getExternalStorageDirectory.
+  Future<void> autoBackup() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastAutoStr = prefs.getString('last_auto_backup_date');
+      final now = DateTime.now();
+      
+      if (lastAutoStr != null) {
+        final lastAuto = DateTime.tryParse(lastAutoStr);
+        if (lastAuto != null && now.difference(lastAuto).inDays < 7) {
+          return;
+        }
+      }
+
+      final manifest = <String, Map<String, dynamic>>{};
+      for (final boxName in _boxesToBackup) {
+        final box = await Hive.openBox<String>(boxName);
+        final boxData = <String, dynamic>{};
+        for (final key in box.keys) {
+          boxData[key.toString()] = box.get(key);
+        }
+        manifest[boxName] = boxData;
+      }
+
+      final archive = Archive();
+      final manifestBytes = utf8.encode(jsonEncode(manifest));
+      archive.addFile(ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
+
+      final zipEncoder = ZipEncoder();
+      final zipBytes = zipEncoder.encode(archive);
+
+      final extDir = await getExternalStorageDirectory();
+      if (extDir == null) return;
+      
+      final backupsDir = Directory('${extDir.path}/AutoBackups');
+      if (!await backupsDir.exists()) {
+        await backupsDir.create(recursive: true);
+      }
+
+      final timestamp = now.millisecondsSinceEpoch;
+      final zipFile = File('${backupsDir.path}/trufit_auto_$timestamp.zip');
+      await zipFile.writeAsBytes(zipBytes);
+
+      final files = backupsDir.listSync().whereType<File>().where((f) => f.path.endsWith('.zip')).toList();
+      files.sort((a, b) => a.lastModifiedSync().compareTo(b.lastModifiedSync()));
+      
+      while (files.length > 4) {
+        final oldest = files.removeAt(0);
+        if (await oldest.exists()) await oldest.delete();
+      }
+
+      await prefs.setString('last_auto_backup_date', now.toIso8601String());
+      await prefs.setString('last_auto_backup_display', DateFormat('MMM dd, yyyy · HH:mm').format(now));
+    } catch (e) {
+      debugPrint('Auto-backup error: $e');
     }
   }
 }

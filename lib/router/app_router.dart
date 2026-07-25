@@ -118,8 +118,9 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final videoId = state.uri.queryParameters['videoId'] ?? '';
         final title = state.uri.queryParameters['title'] ?? '';
+        final subtitle = state.uri.queryParameters['subtitle'] ?? '';
         final reps = state.uri.queryParameters['reps'] ?? '';
-        return YoutubePlayerScreen(videoId: videoId, title: title, reps: reps);
+        return YoutubePlayerScreen(videoId: videoId, title: title, subtitle: subtitle, reps: reps);
       },
     ),
     GoRoute(

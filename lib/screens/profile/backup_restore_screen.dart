@@ -18,6 +18,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
   bool _isLoading = false;
   String _lastBackupDate = 'Never';
   String _lastBackupSize = '';
+  String _lastAutoBackupDate = 'Never';
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
     setState(() {
       _lastBackupDate = prefs.getString('last_backup_date') ?? 'Never';
       _lastBackupSize = prefs.getString('last_backup_size') ?? '';
+      _lastAutoBackupDate = prefs.getString('last_auto_backup_display') ?? 'Never';
     });
   }
 
@@ -179,10 +181,14 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
                 if (success) {
                   ref.read(refreshTriggerProvider.notifier).state++;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Backup restored successfully! 🎉'), backgroundColor: AppColors.green),
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => const AlertDialog(
+                      title: Text('Restore Complete 🎉', style: TextStyle(color: AppColors.green)),
+                      content: Text('Restore complete — please restart the app.'),
+                    ),
                   );
-                  Navigator.pop(context);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Failed to restore backup.'), backgroundColor: AppColors.red),
@@ -242,6 +248,18 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                             style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        const Divider(color: AppColors.border),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Last Auto-Backup (Weekly)',
+                          style: TextStyle(fontSize: 14, color: AppColors.textMedium),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _lastAutoBackupDate,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                        ),
                       ],
                     ),
                   ),

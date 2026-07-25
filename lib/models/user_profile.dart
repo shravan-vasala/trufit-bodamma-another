@@ -85,7 +85,6 @@ class UserProfile {
         if (activeWorkoutPlan != null) 'activeWorkoutPlan': activeWorkoutPlan,
         'customHabits': customHabits,
         'customMealSlots': customMealSlots,
-        if (geminiApiKey != null) 'geminiApiKey': geminiApiKey,
       };
 
   UserProfile copyWith({

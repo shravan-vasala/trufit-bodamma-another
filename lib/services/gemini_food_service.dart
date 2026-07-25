@@ -47,7 +47,6 @@ If you cannot identify the food, provide a generic "Unknown Food" response with 
     final modelsToTry = [
       'gemini-flash-latest',
       'gemini-2.5-flash',
-      'gemini-3.5-flash',
       'gemini-2.0-flash',
     ];
 

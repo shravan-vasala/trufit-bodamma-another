@@ -132,7 +132,7 @@ class _HabitListTile extends ConsumerWidget {
       case HabitType.autoSteps:
         return 'Auto from Steps (Target: ${h.target})';
       case HabitType.autoSleep:
-        return 'Auto from Sleep (Target: ${h.target} hrs)';
+        return 'From sleep log (Target: ${h.target} hrs)';
     }
   }
 }

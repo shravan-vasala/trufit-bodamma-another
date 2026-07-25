@@ -11,6 +11,7 @@ import 'repositories/media_repository.dart';
 import 'repositories/profile_repository.dart';
 import 'repositories/exercise_log_repository.dart';
 import 'services/health_connect_service.dart';
+import 'services/backup_service.dart';
 import 'providers/app_providers.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -57,6 +58,9 @@ Future<void> main() async {
     exerciseLogRepo.init(),
     healthConnectService.init(),
   ]);
+
+  // Run weekly auto-backup (non-blocking)
+  BackupService().autoBackup();
 
   runApp(
     ProviderScope(

@@ -14,6 +14,18 @@ class ProfileRepository {
     _box = await Hive.openBox<String>(_boxName);
     if (!_box.containsKey(_profileKey)) {
       await saveProfile(UserProfile());
+    } else {
+      // Migration: strip geminiApiKey from stored JSON
+      final jsonStr = _box.get(_profileKey)!;
+      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      if (map.containsKey('geminiApiKey')) {
+        final key = map['geminiApiKey'] as String?;
+        if (key != null && key.isNotEmpty) {
+          await saveSecureGeminiKey(key);
+        }
+        map.remove('geminiApiKey');
+        await _box.put(_profileKey, jsonEncode(map));
+      }
     }
   }
 

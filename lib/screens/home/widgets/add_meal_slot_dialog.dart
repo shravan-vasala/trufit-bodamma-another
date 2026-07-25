@@ -39,7 +39,7 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
           'emoji': _selectedEmoji,
           'isDefault': false,
         });
-      ref.read(profileRepoProvider).saveProfile(profile.copyWith(customMealSlots: updatedSlots));
+      ref.read(profileProvider.notifier).updateProfile(profile.copyWith(customMealSlots: updatedSlots));
     }
     
     // Create an empty log entry for today so it immediately appears (and persists name/emoji)
