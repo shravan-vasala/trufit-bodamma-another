@@ -13,14 +13,35 @@ import '../screens/profile/manage_plans_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
 import '../theme/app_colors.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final _progressNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'progress');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/home',
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Page Not Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => context.go('/home'),
+            child: const Text('Go Home'),
+          ),
+        ],
+      ),
+    ),
+  ),
+  redirect: (context, state) {
+    if (state.uri.path == '/' || state.uri.path.isEmpty) {
+      return '/home';
+    }
+    return null;
+  },
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -114,7 +135,7 @@ final appRouter = GoRouter(
     // Full-screen routes (outside bottom nav)
     GoRoute(
       path: '/youtube-player',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) {
         final videoId = state.uri.queryParameters['videoId'] ?? '';
         final title = state.uri.queryParameters['title'] ?? '';
@@ -125,7 +146,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/exercise-progress',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) {
         final exerciseName = state.uri.queryParameters['name'] ?? '';
         return ExerciseProgressScreen(exerciseName: exerciseName);

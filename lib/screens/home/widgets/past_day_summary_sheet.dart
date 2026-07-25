@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
+import '../../../router/app_router.dart';
 
 class PastDaySummarySheet extends ConsumerWidget {
   final DateTime date;
@@ -42,6 +43,7 @@ class PastDaySummarySheet extends ConsumerWidget {
     int totalExercises = 0;
     int completedExercises = 0;
     String workoutDayName = "Rest Day";
+    String? currentWorkoutDayId;
 
     if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
       final dayIndex = (date.weekday - 1).clamp(0, workoutPlan.days.length - 1);
@@ -50,8 +52,8 @@ class PastDaySummarySheet extends ConsumerWidget {
       if (date.weekday != DateTime.sunday && workoutDay.sections.isNotEmpty) {
         isRestDay = false;
         workoutDayName = workoutDay.label ?? 'Workout Day';
-        final workoutDayId = dailyLog.workoutDayId ?? workoutDay.dayId;
-        final exCompletions = ref.read(workoutRepoProvider).getExerciseCompletions(dateStr, workoutDayId);
+        currentWorkoutDayId = dailyLog.workoutDayId ?? workoutDay.dayId;
+        final exCompletions = ref.read(workoutRepoProvider).getExerciseCompletions(dateStr, currentWorkoutDayId);
         
         totalExercises = workoutDay.sections.expand((s) => s.exercises).length;
         completedExercises = exCompletions.values.where((v) => v).length;
@@ -194,9 +196,11 @@ class PastDaySummarySheet extends ConsumerWidget {
                         : '$completedExercises/$totalExercises exercises done',
                     isDone: dailyLog.workoutCompleted,
                     onTap: () {
+                      if (isRestDay || currentWorkoutDayId == null) return;
                       ref.read(selectedDateProvider.notifier).state = date;
+                      final parentContext = rootNavigatorKey.currentContext!;
                       Navigator.of(context).pop();
-                      context.go('/home/workout');
+                      parentContext.go('/home/workout/$currentWorkoutDayId');
                     },
                   ),
                   const SizedBox(height: 12),
@@ -210,8 +214,9 @@ class PastDaySummarySheet extends ConsumerWidget {
                     isDone: completedMeals == totalMealsTarget,
                     onTap: () {
                       ref.read(selectedDateProvider.notifier).state = date;
+                      final parentContext = rootNavigatorKey.currentContext!;
                       Navigator.of(context).pop();
-                      context.go('/home/meals');
+                      parentContext.go('/home/meals');
                     },
                   ),
                   const SizedBox(height: 12),
@@ -225,7 +230,9 @@ class PastDaySummarySheet extends ConsumerWidget {
                     isDone: completedHabits == totalHabitsTarget,
                     onTap: () {
                       ref.read(selectedDateProvider.notifier).state = date;
+                      final parentContext = rootNavigatorKey.currentContext!;
                       Navigator.of(context).pop();
+                      parentContext.go('/home');
                     },
                   ),
                 ],
@@ -296,7 +303,9 @@ class PastDaySummarySheet extends ConsumerWidget {
                   ),
                   onPressed: () {
                     ref.read(selectedDateProvider.notifier).state = date;
+                    final parentContext = rootNavigatorKey.currentContext!;
                     Navigator.of(context).pop();
+                    parentContext.go('/home');
                   },
                   child: const Text(
                     'Open full day',
