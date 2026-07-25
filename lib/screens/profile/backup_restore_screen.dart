@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
@@ -58,44 +59,35 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
   Future<void> _handleCreateBackup() async {
     setState(() => _isLoading = true);
-    final backupService = ref.read(backupServiceProvider);
-    
-    final zipPath = await backupService.createBackup();
-    
-    if (zipPath != null && mounted) {
-      final String? outputFile = await FilePicker.saveFile(
-        dialogTitle: 'Save Backup',
-        fileName: 'trufit_backup_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.zip',
-        type: FileType.custom,
-        allowedExtensions: ['zip'],
-      );
-
-      if (outputFile != null) {
-        try {
-          final file = await File(zipPath).copy(outputFile);
-          await _saveMetadata(await file.length());
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup created successfully! 📦'), backgroundColor: AppColors.green),
-            );
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error saving backup: $e'), backgroundColor: AppColors.red),
-            );
-          }
+    try {
+      final backupService = ref.read(backupServiceProvider);
+      
+      final zipPath = await backupService.createBackup();
+      
+      if (zipPath != null && mounted) {
+        final file = File(zipPath);
+        await _saveMetadata(await file.length());
+        
+        await Share.shareXFiles(
+          [XFile(zipPath)],
+          text: 'TruFit Bodamma Backup',
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to create backup'), backgroundColor: AppColors.red),
+          );
         }
       }
-    } else {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create backup'), backgroundColor: AppColors.red),
+          SnackBar(content: Text('Error saving backup: $e'), backgroundColor: AppColors.red),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _handleVerifyBackup() async {
@@ -106,34 +98,50 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
     if (result != null && result.files.single.path != null) {
       setState(() => _isLoading = true);
-      final backupService = ref.read(backupServiceProvider);
-      final verify = await backupService.verifyBackup(result.files.single.path!);
-      setState(() => _isLoading = false);
+      try {
+        final backupService = ref.read(backupServiceProvider);
+        final verify = await backupService.verifyBackup(result.files.single.path!);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (verify.isValid) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Backup Verified ✨', style: TextStyle(color: AppColors.green)),
-            content: Text('Backup OK — ${verify.totalEntries} entries, ${verify.photoCount} photos.\n\nYour current data was not touched.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Awesome')),
-            ],
-          ),
-        );
-      } else {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Verification Failed', style: TextStyle(color: AppColors.red)),
-            content: Text(verify.errorMessage ?? 'Invalid backup file.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
-            ],
-          ),
-        );
+        if (verify.isValid) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Backup Verified ✨', style: TextStyle(color: AppColors.green)),
+              content: Text('Backup OK — ${verify.totalEntries} entries, ${verify.photoCount} photos.\n\nYour current data was not touched.'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Awesome')),
+              ],
+            ),
+          );
+        } else {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Verification Failed', style: TextStyle(color: AppColors.red)),
+              content: Text(verify.errorMessage ?? 'Invalid backup file.'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+              ],
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Verification Error', style: TextStyle(color: AppColors.red)),
+              content: Text('An error occurred while verifying the backup: $e'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+              ],
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -147,59 +155,81 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
     if (result != null && result.files.single.path != null) {
       final path = result.files.single.path!;
       setState(() => _isLoading = true);
-      final backupService = ref.read(backupServiceProvider);
-      final verify = await backupService.verifyBackup(path);
-      setState(() => _isLoading = false);
-      
-      if (!mounted) return;
+      try {
+        final backupService = ref.read(backupServiceProvider);
+        final verify = await backupService.verifyBackup(path);
+        
+        if (!mounted) return;
 
-      if (!verify.isValid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid backup file.'), backgroundColor: AppColors.red),
-        );
-        return;
-      }
+        if (!verify.isValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid backup file.'), backgroundColor: AppColors.red),
+          );
+          return;
+        }
 
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Restore Backup?'),
-          content: Text(
-            'This backup contains ${verify.totalEntries} entries and ${verify.photoCount} photos.\n\n'
-            'WARNING: Restoring will completely overwrite all your current data. This cannot be undone.'
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                setState(() => _isLoading = true);
-                final success = await backupService.restoreBackup(path);
-                
-                if (!mounted) return;
-                setState(() => _isLoading = false);
-
-                if (success) {
-                  ref.read(refreshTriggerProvider.notifier).state++;
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (ctx) => const AlertDialog(
-                      title: Text('Restore Complete 🎉', style: TextStyle(color: AppColors.green)),
-                      content: Text('Restore complete — please restart the app.'),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to restore backup.'), backgroundColor: AppColors.red),
-                  );
-                }
-              },
-              child: const Text('Restore', style: TextStyle(color: AppColors.red)),
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Restore Backup?'),
+            content: Text(
+              'This backup contains ${verify.totalEntries} entries and ${verify.photoCount} photos.\n\n'
+              'WARNING: Restoring will completely overwrite all your current data. This cannot be undone.'
             ),
-          ],
-        ),
-      );
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  setState(() => _isLoading = true);
+                  try {
+                    final success = await backupService.restoreBackup(path);
+                    
+                    if (!mounted) return;
+
+                    if (success) {
+                      ref.read(refreshTriggerProvider.notifier).state++;
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => const AlertDialog(
+                          title: Text('Restore Complete 🎉', style: TextStyle(color: AppColors.green)),
+                          content: Text('Restore complete — please restart the app.'),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to restore backup.'), backgroundColor: AppColors.red),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Restore error: $e'), backgroundColor: AppColors.red),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isLoading = false);
+                  }
+                },
+                child: const Text('Restore', style: TextStyle(color: AppColors.red)),
+              ),
+            ],
+          ),
+        ).then((_) {
+          // If dialog was dismissed without restoring, loading should be cleared,
+          // but we only set _isLoading = false if we didn't start the restore.
+          // Let's just handle it securely here.
+          if (mounted) setState(() => _isLoading = false);
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification error: $e'), backgroundColor: AppColors.red),
+          );
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 

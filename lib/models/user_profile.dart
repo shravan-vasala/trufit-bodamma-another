@@ -98,10 +98,11 @@ class UserProfile {
     List<Map<String, dynamic>>? customHabits,
     List<Map<String, dynamic>>? customMealSlots,
     String? geminiApiKey,
+    bool clearPhoto = false,
   }) {
     return UserProfile(
       name: name ?? this.name,
-      photoPath: photoPath ?? this.photoPath,
+      photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       height: height ?? this.height,
       targetWeight: targetWeight ?? this.targetWeight,
       useKg: useKg ?? this.useKg,
