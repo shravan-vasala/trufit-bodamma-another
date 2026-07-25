@@ -25,74 +25,77 @@ class DailyProgressGrid extends ConsumerWidget {
     
     final mediaRepo = ref.watch(mediaRepoProvider);
     final allPhotos = mediaRepo.getAllProgressPhotos();
-    String? latestPhotoPath;
-    if (allPhotos.isNotEmpty && allPhotos.first.value.isNotEmpty) {
-      latestPhotoPath = allPhotos.first.value.first;
-    }
+    final flattenedPhotos = allPhotos.expand((e) => e.value).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _ProgressCard(
-                  title: 'Body Stats',
-                  icon: Icons.straighten_rounded,
-                  color: AppColors.pink,
-                  iconColor: AppColors.pinkIcon,
-                  subtitle: 'Tap to view',
-                  onTap: () => context.go('/home/body-stats'),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ProgressCard(
+                    title: 'Body Stats',
+                    icon: Icons.straighten_rounded,
+                    color: AppColors.pink,
+                    iconColor: AppColors.pinkIcon,
+                    subtitle: 'Tap to view',
+                    onTap: () => context.go('/home/body-stats'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ProgressCard(
-                  title: 'Physique\nPictures',
-                  icon: Icons.camera_alt_rounded,
-                  color: AppColors.pink,
-                  iconColor: AppColors.pinkIcon,
-                  subtitle: latestPhotoPath != null ? 'Photos added' : 'Progress photos',
-                  thumbnailPath: latestPhotoPath,
-                  onTap: () => context.go('/home/physique-pictures'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ProgressCard(
+                    title: 'Physique\nPictures',
+                    icon: Icons.camera_alt_rounded,
+                    color: AppColors.pink,
+                    iconColor: AppColors.pinkIcon,
+                    subtitle: 'Progress photos',
+                    thumbnails: flattenedPhotos,
+                    onTap: () => context.go('/home/physique-pictures'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _ProgressCard(
-                  title: 'Body Weight',
-                  icon: Icons.monitor_weight_rounded,
-                  color: AppColors.lavenderCard,
-                  iconColor: AppColors.primary,
-                  subtitle: dailyLog.weight != null
-                      ? '${dailyLog.weight!.toStringAsFixed(1)} kg'
-                      : (isFuture ? 'No data' : 'Tap to log'),
-                  onTap: isFuture
-                      ? () {}
-                      : () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const WeightEntryDialog(),
-                          );
-                        },
-                  onChartTap: () => context.go('/progress?metric=weight'),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ProgressCard(
+                    title: 'Body Weight',
+                    icon: Icons.monitor_weight_rounded,
+                    color: AppColors.lavenderCard,
+                    iconColor: AppColors.primary,
+                    subtitle: dailyLog.weight != null
+                        ? '${dailyLog.weight!.toStringAsFixed(1)} kg'
+                        : (isFuture ? 'No data' : 'Tap to log'),
+                    onTap: isFuture
+                        ? () {}
+                        : () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const WeightEntryDialog(),
+                            );
+                          },
+                    onChartTap: () => context.push('/progress?metric=weight'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StepsCard(
-                  isFuture: isFuture,
-                  isToday: isToday,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StepsCard(
+                    isFuture: isFuture,
+                    isToday: isToday,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -298,7 +301,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                   child: const Icon(Icons.directions_walk_rounded, color: AppColors.mintIcon, size: 22),
                 ),
                 GestureDetector(
-                  onTap: () => context.go('/progress?metric=steps'),
+                  onTap: () => context.push('/progress?metric=steps'),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -356,7 +359,7 @@ class _ProgressCard extends StatelessWidget {
     required this.iconColor,
     required this.subtitle,
     required this.onTap,
-    this.thumbnailPath,
+    this.thumbnails,
     this.onChartTap,
   });
 
@@ -366,7 +369,7 @@ class _ProgressCard extends StatelessWidget {
   final Color iconColor;
   final String subtitle;
   final VoidCallback onTap;
-  final String? thumbnailPath;
+  final List<String>? thumbnails;
   final VoidCallback? onChartTap;
 
   @override
@@ -392,18 +395,8 @@ class _ProgressCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: iconColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    image: thumbnailPath != null
-                        ? DecorationImage(
-                            image: kIsWeb
-                                ? NetworkImage(thumbnailPath!) as ImageProvider
-                                : FileImage(File(thumbnailPath!)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
                   ),
-                  child: thumbnailPath != null
-                      ? null
-                      : Icon(icon, color: iconColor, size: 22),
+                  child: Icon(icon, color: iconColor, size: 22),
                 ),
                 if (onChartTap != null)
                   GestureDetector(
@@ -422,7 +415,7 @@ class _ProgressCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textDark,
@@ -430,14 +423,59 @@ class _ProgressCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textMedium,
+            if (thumbnails != null && thumbnails!.isNotEmpty)
+              Row(
+                children: [
+                  ...thumbnails!.take(3).map((path) => Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: kIsWeb
+                              ? Image.network(
+                                  path,
+                                  width: 32,
+                                  height: 32,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(path),
+                                  width: 32,
+                                  height: 32,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 96,
+                                  cacheHeight: 96,
+                                ),
+                        ),
+                      )),
+                  if (thumbnails!.length > 3)
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.lavender,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '+${thumbnails!.length - 3}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              )
+            else
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMedium,
+                ),
               ),
-            ),
           ],
         ),
       ),

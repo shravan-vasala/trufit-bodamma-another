@@ -66,6 +66,7 @@ class WorkoutSection {
 
 class Exercise {
   final String name;
+  final String? displayName;
   final String youtubeUrl;
   final List<int> reps;
   final String note;
@@ -74,6 +75,7 @@ class Exercise {
 
   Exercise({
     required this.name,
+    this.displayName,
     required this.youtubeUrl,
     required this.reps,
     this.note = '',
@@ -120,6 +122,7 @@ class Exercise {
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
       name: json['name'] as String,
+      displayName: json['displayName'] as String?,
       youtubeUrl: json['youtubeUrl'] as String? ?? '',
       reps: (json['reps'] as List).map((r) => r as int).toList(),
       note: json['note'] as String? ?? '',
@@ -130,6 +133,7 @@ class Exercise {
 
   Map<String, dynamic> toJson() => {
         'name': name,
+        if (displayName != null) 'displayName': displayName,
         'youtubeUrl': youtubeUrl,
         'reps': reps,
         'note': note,

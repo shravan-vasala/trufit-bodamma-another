@@ -4,6 +4,7 @@ import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
 import '../../profile/manage_habits_screen.dart';
+import '../sleep_entry_dialog.dart';
 
 class HabitsCard extends ConsumerWidget {
   const HabitsCard({super.key});
@@ -107,52 +108,70 @@ class _HabitItem extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          // Completion Indicator (Checkbox or Circle)
-          GestureDetector(
-            onTap: isFuture || habit.type != HabitType.checkbox
-                ? null
-                : () {
-                    ref.read(habitCompletionsProvider.notifier).toggle(habit.id);
-                  },
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isCompleted ? AppColors.green : (isFuture ? AppColors.textLight.withValues(alpha: 0.1) : Colors.transparent),
-                border: isCompleted || isFuture
-                    ? null
-                    : Border.all(color: AppColors.border, width: 2),
-              ),
-              child: isCompleted
-                  ? const Icon(Icons.check, color: AppColors.white, size: 16)
-                  : (isFuture ? Icon(Icons.lock_outline_rounded, color: AppColors.textLight.withValues(alpha: 0.5), size: 14) : null),
-            ),
-          ),
-          const SizedBox(width: 14),
-          
-          // Habit Name & Progress
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  habit.name,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: isCompleted ? AppColors.textLight : AppColors.textDark,
-                    decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+            child: GestureDetector(
+              onTap: isFuture ? null : () => _handleTap(context, ref),
+              onLongPress: isFuture ? null : () => _handleLongPress(context, ref),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted ? AppColors.green : (isFuture ? AppColors.textLight.withValues(alpha: 0.1) : Colors.transparent),
+                      border: isCompleted || isFuture
+                          ? null
+                          : Border.all(color: AppColors.border, width: 2),
+                    ),
+                    child: isCompleted
+                        ? const Icon(Icons.check, color: AppColors.white, size: 16)
+                        : (isFuture ? Icon(Icons.lock_outline_rounded, color: AppColors.textLight.withValues(alpha: 0.5), size: 14) : null),
                   ),
-                ),
-                if (habit.type != HabitType.checkbox)
-                  Text(
-                    _formatProgress(),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                  const SizedBox(width: 14),
+                  
+                  // Habit Name & Progress
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          habit.name,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: isCompleted ? AppColors.textLight : AppColors.textDark,
+                            decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                          ),
+                        ),
+                        if (habit.type != HabitType.checkbox)
+                          GestureDetector(
+                            onTap: (habit.type == HabitType.autoSleep && !isFuture)
+                                ? () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) => const SleepEntryDialog(),
+                                    );
+                                  }
+                                : null,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2, bottom: 2, right: 8),
+                              child: Text(
+                                _formatProgress(),
+                                style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
           
@@ -189,6 +208,47 @@ class _HabitItem extends ConsumerWidget {
     String pStr = progress == progress.toInt() ? progress.toInt().toString() : progress.toStringAsFixed(1);
     String tStr = habit.target == habit.target.toInt() ? habit.target.toInt().toString() : habit.target.toStringAsFixed(1);
     return '$pStr / $tStr ${habit.unit}';
+  }
+
+  void _handleTap(BuildContext context, WidgetRef ref) {
+    if (habit.type == HabitType.checkbox) {
+      ref.read(habitCompletionsProvider.notifier).toggle(habit.id);
+      return;
+    }
+    
+    final override = ref.read(habitCompletionsProvider).overrides[habit.id];
+    final isSyncCompleted = isCompleted && override == null;
+    
+    if ((habit.type == HabitType.autoSteps || habit.type == HabitType.autoSleep) && isSyncCompleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completed from Samsung Health. Long press to override as not done.')),
+      );
+      return;
+    }
+
+    String? newOverride;
+    if (isCompleted) {
+      if (override == 'done') {
+        newOverride = null; 
+      } else {
+        newOverride = 'notDone'; 
+      }
+    } else {
+      newOverride = 'done';
+    }
+    
+    ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, newOverride);
+  }
+
+  void _handleLongPress(BuildContext context, WidgetRef ref) {
+    if (habit.type != HabitType.autoSteps && habit.type != HabitType.autoSleep) return;
+    
+    final override = ref.read(habitCompletionsProvider).overrides[habit.id];
+    final isSyncCompleted = isCompleted && override == null;
+    
+    if (isSyncCompleted) {
+      ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, 'notDone');
+    }
   }
 }
 

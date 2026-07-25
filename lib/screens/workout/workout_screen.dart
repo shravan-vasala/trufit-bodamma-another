@@ -166,7 +166,7 @@ class WorkoutScreen extends ConsumerWidget {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: () => _finishWorkout(context, ref, dayId),
+                    onPressed: () => _finishWorkout(context, ref, dayId, completedExercises, totalExercises),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -200,7 +200,68 @@ class WorkoutScreen extends ConsumerWidget {
     );
   }
 
-  void _finishWorkout(BuildContext context, WidgetRef ref, String dayId) {
+  void _finishWorkout(BuildContext context, WidgetRef ref, String dayId, int completed, int total) {
+    if (completed < total) {
+      if (completed == 0) {
+        _showSkipConfirmation(context, ref, dayId);
+      } else {
+        _showPartialConfirmation(context, ref, dayId, completed, total);
+      }
+    } else {
+      _executeFinish(context, ref, dayId);
+    }
+  }
+
+  void _showPartialConfirmation(BuildContext context, WidgetRef ref, String dayId, int completed, int total) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Finish early?'),
+        content: Text('Only $completed of $total exercises done — finish anyway?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Keep going'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _executeFinish(context, ref, dayId);
+            },
+            child: const Text('Finish'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSkipConfirmation(BuildContext context, WidgetRef ref, String dayId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Skip workout?'),
+        content: const Text('Nothing checked — mark this workout as skipped instead?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Keep going'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final dateStr = ref.read(dateStringProvider);
+              ref.read(workoutRepoProvider).finishWorkout(dateStr, dayId);
+              // Do NOT mark as completed in daily log so it doesn't get the green dot
+              context.go('/home');
+            },
+            child: const Text('Skip Workout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _executeFinish(BuildContext context, WidgetRef ref, String dayId) {
     final dateStr = ref.read(dateStringProvider);
     ref.read(workoutRepoProvider).finishWorkout(dateStr, dayId);
     ref.read(dailyLogProvider.notifier).markWorkoutCompleted(dayId);

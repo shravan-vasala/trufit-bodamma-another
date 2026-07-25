@@ -108,7 +108,13 @@ class HabitRepository {
 
     final newCompletions = Map<String, dynamic>.from(completion.completions);
     newCompletions[habitId] = completed;
-    final updated = HabitCompletion(date: date, completions: newCompletions);
+    final updated = HabitCompletion(date: date, completions: newCompletions, overrides: completion.overrides);
+    await saveCompletion(updated);
+  }
+
+  Future<void> setOverride(String date, String habitId, String? overrideValue) async {
+    final completion = getCompletions(date);
+    final updated = completion.setOverride(habitId, overrideValue);
     await saveCompletion(updated);
   }
 }

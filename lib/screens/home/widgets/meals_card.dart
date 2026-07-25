@@ -33,6 +33,20 @@ class MealsCard extends ConsumerWidget {
       totalMeals = defaultIds.length + customLoggedCount;
     }
 
+    final List<String> loggedEmojis = [];
+    for (final slotId in loggedIds) {
+      final log = dailyLog.customSlots[slotId];
+      if (log != null && (log.items.isNotEmpty || log.photoPath != null || log.totalCalories > 0)) {
+        if (log.emoji != null) {
+          loggedEmojis.add(log.emoji!);
+        } else {
+          final profileSlot = profile.customMealSlots.firstWhere((s) => s['id'] == slotId, orElse: () => {});
+          if (profileSlot.isNotEmpty) loggedEmojis.add(profileSlot['emoji'] as String);
+        }
+      }
+    }
+    final emojiPrefix = loggedEmojis.isNotEmpty ? '${loggedEmojis.join(' ')} · ' : '';
+
     final completedMeals = dailyLog.loggedSlotsCount;
     final completedCal = dailyLog.totalCalories;
     final totalCal = profile.targetCalories;
@@ -106,7 +120,7 @@ class MealsCard extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
+                    '$emojiPrefix$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),

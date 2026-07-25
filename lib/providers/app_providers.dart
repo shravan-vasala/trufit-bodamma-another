@@ -15,8 +15,8 @@ import '../services/backup_service.dart';
 import '../models/workout_plan.dart';
 import '../models/meal_plan.dart';
 import '../models/daily_meal_log.dart';
-import '../models/daily_log.dart';
 import '../models/habit.dart';
+import '../models/daily_log.dart';
 import '../models/body_stats.dart';
 import '../models/exercise_log.dart';
 import '../models/user_profile.dart';
@@ -171,9 +171,35 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
     _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
-  Future<void> updateSleep(double hours) async {
-    await _repo.updateSleep(state.date, hours);
+  Future<void> updateSleep(double hours, {String? source}) async {
+    await _repo.updateSleep(state.date, hours, source: source ?? 'manual');
     state = _repo.getOrCreate(state.date);
+
+    // Auto-complete sleep habits
+    final habitRepo = _ref.read(habitRepoProvider);
+    final allHabits = habitRepo.getHabits();
+    for (final habit in allHabits.where((h) => h.type == HabitType.autoSleep)) {
+      if (hours >= habit.target) {
+        await habitRepo.setCompletion(state.date, habit.id, true);
+      } else {
+        await habitRepo.setCompletion(state.date, habit.id, false);
+      }
+    }
+
+    _ref.read(refreshTriggerProvider.notifier).state++;
+  }
+
+  Future<void> clearSleep() async {
+    await _repo.clearSleep(state.date);
+    state = _repo.getOrCreate(state.date);
+    
+    // Un-complete sleep habits if they were completed by this
+    final habitRepo = _ref.read(habitRepoProvider);
+    final allHabits = habitRepo.getHabits();
+    for (final habit in allHabits.where((h) => h.type == HabitType.autoSleep)) {
+      await habitRepo.setCompletion(state.date, habit.id, false);
+    }
+    
     _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
@@ -220,6 +246,12 @@ class HabitCompletionsNotifier extends StateNotifier<HabitCompletion> {
 
   Future<void> updateProgress(String habitId, double progress) async {
     await _repo.updateProgress(_date, habitId, progress);
+    state = _repo.getCompletions(_date);
+    _ref.read(refreshTriggerProvider.notifier).state++;
+  }
+
+  Future<void> setOverride(String habitId, String? overrideValue) async {
+    await _repo.setOverride(_date, habitId, overrideValue);
     state = _repo.getCompletions(_date);
     _ref.read(refreshTriggerProvider.notifier).state++;
   }

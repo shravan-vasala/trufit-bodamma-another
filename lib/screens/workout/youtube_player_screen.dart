@@ -8,11 +8,13 @@ class YoutubePlayerScreen extends StatefulWidget {
     super.key,
     required this.videoId,
     required this.title,
+    required this.subtitle,
     required this.reps,
   });
 
   final String videoId;
   final String title;
+  final String subtitle;
   final String reps;
 
   @override
@@ -123,10 +125,20 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (widget.subtitle.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            style: TextStyle(
+                              color: AppColors.white.withValues(alpha: 0.6),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         if (widget.reps.isNotEmpty)
                           Text(
-                            widget.reps,
+                            'Reps: ${widget.reps}',
                             style: TextStyle(
                               color: AppColors.white.withValues(alpha: 0.7),
                               fontSize: 16,

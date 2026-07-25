@@ -48,7 +48,7 @@ class ExerciseCard extends ConsumerWidget {
                     final videoId = exercise.youtubeVideoId;
                     if (videoId != null && videoId != 'XXXX') {
                       context.push(
-                        '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.name)}&reps=${Uri.encodeComponent(exercise.repsDisplay)}',
+                        '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.displayName ?? exercise.name)}&subtitle=${Uri.encodeComponent(exercise.name)}&reps=${Uri.encodeComponent(exercise.repsDisplay)}',
                       );
                     }
                   },
@@ -120,7 +120,7 @@ class ExerciseCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        exercise.name,
+                        exercise.displayName ?? exercise.name,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,

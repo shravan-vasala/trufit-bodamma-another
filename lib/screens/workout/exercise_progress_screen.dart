@@ -14,6 +14,22 @@ class ExerciseProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logs = ref.watch(exerciseHistoryProvider(exerciseName));
+    
+    final plan = ref.watch(workoutPlanProvider);
+    String displayTitle = exerciseName;
+    if (plan != null) {
+      for (final day in plan.days) {
+        for (final sec in day.sections) {
+          for (final ex in sec.exercises) {
+            if (ex.name == exerciseName) {
+              displayTitle = ex.displayName ?? exerciseName;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     // Sort logs by date to ensure proper charting
     final sortedLogs = List<ExerciseLog>.from(logs)..sort((a, b) => a.date.compareTo(b.date));
 
@@ -59,7 +75,7 @@ class ExerciseProgressScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        title: Text(exerciseName),
+        title: Text(displayTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),

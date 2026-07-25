@@ -7,6 +7,7 @@ import '../../models/daily_log.dart';
 import 'widgets/shared_chart_card.dart';
 import '../home/weight_entry_dialog.dart';
 import '../home/steps_entry_dialog.dart';
+import '../home/sleep_entry_dialog.dart';
 
 enum MetricType { weight, steps, sleep, bmi, bodyFat, calories }
 enum TimeRange { weekly, monthly, sixMonths }
@@ -126,9 +127,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => const WeightEntryDialog());
     } else if (_selectedMetric == MetricType.steps) {
       showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => const StepsEntryDialog());
-    } else {
-      // Generic simple dialog for Sleep or Calories if not fully supported elsewhere
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Manual entry for ${_metricLabel(_selectedMetric)} coming soon.')));
+    } else if (_selectedMetric == MetricType.sleep) {
+      showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => const SleepEntryDialog());
     }
   }
 
@@ -143,18 +143,20 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
         title: const Text('My Progress'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      floatingActionButton: _selectedMetric != MetricType.bmi
-          ? FloatingActionButton(
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_rounded),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        actions: [
+          if (_selectedMetric != MetricType.bmi && _selectedMetric != MetricType.calories)
+            IconButton(
+              icon: const Icon(Icons.add_rounded),
               onPressed: _openManualEntry,
-              backgroundColor: AppColors.primary,
-              child: const Icon(Icons.add_rounded, color: AppColors.white),
-            )
-          : null,
+            ),
+        ],
+      ),
       body: Column(
         children: [
           // Time range segmented control

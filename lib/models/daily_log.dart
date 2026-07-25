@@ -4,6 +4,7 @@ class DailyLog {
   final int? steps;
   final String? stepsSource; // 'healthConnect' | 'manual' | null
   final double? sleepHours;
+  final String? sleepSource; // 'healthConnect' | 'manual' | null
   final double? bodyFat;
   final bool workoutCompleted;
   final String? workoutDayId;
@@ -14,6 +15,7 @@ class DailyLog {
     this.steps,
     this.stepsSource,
     this.sleepHours,
+    this.sleepSource,
     this.bodyFat,
     this.workoutCompleted = false,
     this.workoutDayId,
@@ -26,6 +28,7 @@ class DailyLog {
       steps: json['steps'] as int?,
       stepsSource: json['stepsSource'] as String?,
       sleepHours: (json['sleepHours'] as num?)?.toDouble(),
+      sleepSource: json['sleepSource'] as String?,
       bodyFat: (json['bodyFat'] as num?)?.toDouble(),
       workoutCompleted: json['workoutCompleted'] as bool? ?? false,
       workoutDayId: json['workoutDayId'] as String?,
@@ -38,6 +41,7 @@ class DailyLog {
         if (steps != null) 'steps': steps,
         if (stepsSource != null) 'stepsSource': stepsSource,
         if (sleepHours != null) 'sleepHours': sleepHours,
+        if (sleepSource != null) 'sleepSource': sleepSource,
         if (bodyFat != null) 'bodyFat': bodyFat,
         'workoutCompleted': workoutCompleted,
         if (workoutDayId != null) 'workoutDayId': workoutDayId,
@@ -48,6 +52,7 @@ class DailyLog {
     int? steps,
     String? stepsSource,
     double? sleepHours,
+    String? sleepSource,
     double? bodyFat,
     bool? workoutCompleted,
     String? workoutDayId,
@@ -58,9 +63,24 @@ class DailyLog {
       steps: steps ?? this.steps,
       stepsSource: stepsSource ?? this.stepsSource,
       sleepHours: sleepHours ?? this.sleepHours,
+      sleepSource: sleepSource ?? this.sleepSource,
       bodyFat: bodyFat ?? this.bodyFat,
       workoutCompleted: workoutCompleted ?? this.workoutCompleted,
       workoutDayId: workoutDayId ?? this.workoutDayId,
+    );
+  }
+
+  DailyLog clearSleep() {
+    return DailyLog(
+      date: date,
+      weight: weight,
+      steps: steps,
+      stepsSource: stepsSource,
+      sleepHours: null,
+      sleepSource: null,
+      bodyFat: bodyFat,
+      workoutCompleted: workoutCompleted,
+      workoutDayId: workoutDayId,
     );
   }
 

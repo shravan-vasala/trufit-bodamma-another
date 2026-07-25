@@ -113,11 +113,14 @@ class Habit {
 class HabitCompletion {
   final String date;
   final Map<String, dynamic> completions; // habitId -> bool or num
+  final Map<String, String> overrides; // habitId -> 'done', 'notDone'
 
   HabitCompletion({
     required this.date,
     Map<String, dynamic>? completions,
-  }) : completions = completions ?? {};
+    Map<String, String>? overrides,
+  }) : completions = completions ?? {},
+       overrides = overrides ?? {};
 
   bool isCompleted(Habit habit) {
     final val = completions[habit.id];
@@ -139,13 +142,28 @@ class HabitCompletion {
     final newCompletions = Map<String, dynamic>.from(completions);
     final current = newCompletions[habitId];
     newCompletions[habitId] = current is bool ? !current : true;
-    return HabitCompletion(date: date, completions: newCompletions);
+    return HabitCompletion(date: date, completions: newCompletions, overrides: overrides);
   }
 
   HabitCompletion updateProgress(String habitId, double progress) {
     final newCompletions = Map<String, dynamic>.from(completions);
     newCompletions[habitId] = progress;
-    return HabitCompletion(date: date, completions: newCompletions);
+    // Clearing override if the user manually uses +/- buttons 
+    // to return to normal tracking.
+    final newOverrides = Map<String, String>.from(overrides);
+    newOverrides.remove(habitId);
+    
+    return HabitCompletion(date: date, completions: newCompletions, overrides: newOverrides);
+  }
+
+  HabitCompletion setOverride(String habitId, String? overrideValue) {
+    final newOverrides = Map<String, String>.from(overrides);
+    if (overrideValue == null) {
+      newOverrides.remove(habitId);
+    } else {
+      newOverrides[habitId] = overrideValue;
+    }
+    return HabitCompletion(date: date, completions: completions, overrides: newOverrides);
   }
 
   factory HabitCompletion.fromJson(Map<String, dynamic> json) {
@@ -155,17 +173,26 @@ class HabitCompletion {
             (k, v) => MapEntry(k, v),
           ) ??
           {},
+      overrides: (json['overrides'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, v as String),
+          ) ??
+          {},
     );
   }
 
   Map<String, dynamic> toJson() => {
         'date': date,
         'completions': completions,
+        'overrides': overrides,
       };
 }
 
 // Helpers
 double getHabitProgress(Habit habit, HabitCompletion completions, DailyLog dailyLog) {
+  final override = completions.overrides[habit.id];
+  if (override == 'done') return habit.target;
+  if (override == 'notDone') return 0.0;
+
   switch (habit.type) {
     case HabitType.checkbox:
     case HabitType.counter:
@@ -178,6 +205,10 @@ double getHabitProgress(Habit habit, HabitCompletion completions, DailyLog daily
 }
 
 bool isHabitCompleted(Habit habit, HabitCompletion completions, DailyLog dailyLog) {
+  final override = completions.overrides[habit.id];
+  if (override == 'done') return true;
+  if (override == 'notDone') return false;
+
   if (habit.type == HabitType.checkbox) {
     return completions.isCompleted(habit);
   }

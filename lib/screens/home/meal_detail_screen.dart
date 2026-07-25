@@ -177,7 +177,6 @@ class _MealSlotCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasLog = slotLog != null && (slotLog!.items.isNotEmpty || slotLog!.photoPath != null || slotLog!.totalCalories > 0);
-    final title = '$slotEmoji $slotName';
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -194,7 +193,9 @@ class _MealSlotCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark))),
+                Text(slotEmoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
+                Expanded(child: Text(slotName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark))),
                 if (hasLog)
                   Text('${slotLog!.totalCalories} Kcal', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
                 if (hasLog) ...[

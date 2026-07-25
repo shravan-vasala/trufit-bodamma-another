@@ -63,6 +63,20 @@ class PastDaySummarySheet extends ConsumerWidget {
     final loggedIds = mealLog.customSlots.keys.toSet();
     final customLoggedCount = loggedIds.difference(defaultIds).length;
     final totalMealsTarget = defaultIds.length + customLoggedCount;
+    
+    final List<String> loggedEmojis = [];
+    for (final slotId in loggedIds) {
+      final log = mealLog.customSlots[slotId];
+      if (log != null && (log.items.isNotEmpty || log.photoPath != null || log.totalCalories > 0)) {
+        if (log.emoji != null) {
+          loggedEmojis.add(log.emoji!);
+        } else {
+          final profileSlot = profile.customMealSlots.firstWhere((s) => s['id'] == slotId, orElse: () => {});
+          if (profileSlot.isNotEmpty) loggedEmojis.add(profileSlot['emoji'] as String);
+        }
+      }
+    }
+    final emojiPrefix = loggedEmojis.isNotEmpty ? '${loggedEmojis.join(' ')} · ' : '';
 
     final completedMeals = mealLog.loggedSlotsCount;
     final totalHabitsTarget = applicableHabits.length;
@@ -191,7 +205,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                   _SummaryRow(
                     icon: Icons.restaurant_rounded,
                     color: AppColors.green,
-                    title: '$completedMeals/$totalMealsTarget logged · ${mealLog.totalCalories} / ${profile.targetCalories} Kcal',
+                    title: '$emojiPrefix$completedMeals/$totalMealsTarget logged · ${mealLog.totalCalories} / ${profile.targetCalories} Kcal',
                     subtitle: 'P: ${mealLog.totalProtein}g   C: ${mealLog.totalCarbs}g   F: ${mealLog.totalFat}g',
                     isDone: completedMeals == totalMealsTarget,
                     onTap: () {
