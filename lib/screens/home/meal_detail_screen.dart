@@ -303,6 +303,7 @@ class _MealSlotCard extends ConsumerWidget {
   void _openScanner(BuildContext context, bool isManualEntry) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PhotoCalorieScannerSheet(

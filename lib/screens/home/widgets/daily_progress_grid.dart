@@ -305,12 +305,14 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
               if (_isAuth) {
                 showModalBottomSheet(
                   context: context,
+                  useRootNavigator: true,
                   backgroundColor: Colors.transparent,
                   builder: (_) => SyncStatusSheet(),
                 );
               } else {
                 showModalBottomSheet(
                   context: context,
+                  useRootNavigator: true,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
                   builder: (_) => StepsEntryDialog(),

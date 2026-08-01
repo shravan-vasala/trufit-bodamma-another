@@ -265,6 +265,7 @@ class _DayCircle extends StatelessWidget {
         } else {
           showModalBottomSheet(
             context: context,
+            useRootNavigator: true,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (_) => PastDaySummarySheet(date: date),
@@ -342,6 +343,7 @@ class _DailyScoreRing extends ConsumerWidget {
       onTap: scoreData.isFutureDate ? null : () {
         showModalBottomSheet(
           context: context,
+          useRootNavigator: true,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (ctx) => const DailyScoreSheet(),

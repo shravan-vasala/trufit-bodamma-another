@@ -192,6 +192,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                   Navigator.of(context).pop();
                   showModalBottomSheet(
                     context: context,
+                    useRootNavigator: true,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (_) => StepsEntryDialog(),

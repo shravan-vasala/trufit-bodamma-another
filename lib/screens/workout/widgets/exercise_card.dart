@@ -255,6 +255,7 @@ class ExerciseCard extends ConsumerWidget {
                     onTap: () {
                       showModalBottomSheet(
                         context: context,
+                        useRootNavigator: true,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
                         builder: (_) => LogDataDialog(exercise: exercise),
@@ -335,6 +336,7 @@ class ExerciseCard extends ConsumerWidget {
                       onPressed: () {
                         showModalBottomSheet(
                           context: context,
+                          useRootNavigator: true,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
                           builder: (_) => LogDataDialog(exercise: exercise),

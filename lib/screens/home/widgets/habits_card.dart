@@ -163,6 +163,7 @@ class _HabitItem extends ConsumerWidget {
                                       ? () {
                                           showModalBottomSheet(
                                             context: context,
+                                            useRootNavigator: true,
                                             isScrollControlled: true,
                                             backgroundColor: Colors.transparent,
                                             builder: (_) => SleepEntryDialog(),

@@ -44,7 +44,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: BouncingScrollPhysics(),
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 24),
           child: Column(
             children: [
               SizedBox(height: 8),
@@ -175,7 +175,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _MenuCard(
                 icon: Icons.dark_mode_rounded,
                 title: 'Theme',
-                subtitle: 'Currently: ${ref.watch(themeModeProvider).name}',
+                subtitle: 'Currently: ${_themeLabel(ref.watch(themeModeProvider))}',
                 onTap: () => _showThemeDialog(context, ref),
               ),
               _SettingsSwitch(
@@ -240,30 +240,128 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  String _themeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'System';
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+    }
+  }
+
   void _showThemeDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: context.colors.card,
-          title: Text('Select Theme', style: TextStyle(color: context.colors.textDark)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: ThemeMode.values.map((mode) {
-              return RadioListTile<ThemeMode>(
-                title: Text(mode.name, style: TextStyle(color: context.colors.textDark)),
-                value: mode,
-                groupValue: ref.watch(themeModeProvider),
-                activeColor: context.colors.primary,
-                onChanged: (val) {
-                  if (val != null) {
-                    ref.read(themeModeProvider.notifier).setThemeMode(val);
-                    Navigator.pop(ctx);
-                  }
-                },
-              );
-            }).toList(),
-          ),
+        return Consumer(
+          builder: (context, ref, _) {
+            final current = ref.watch(themeModeProvider);
+            final colors = context.colors;
+
+            String label(ThemeMode mode) {
+              switch (mode) {
+                case ThemeMode.system:
+                  return 'System';
+                case ThemeMode.light:
+                  return 'Light';
+                case ThemeMode.dark:
+                  return 'Dark';
+              }
+            }
+
+            String subtitle(ThemeMode mode) {
+              switch (mode) {
+                case ThemeMode.system:
+                  return 'Match phone settings';
+                case ThemeMode.light:
+                  return 'Always light';
+                case ThemeMode.dark:
+                  return 'Always dark';
+              }
+            }
+
+            IconData icon(ThemeMode mode) {
+              switch (mode) {
+                case ThemeMode.system:
+                  return Icons.brightness_auto_rounded;
+                case ThemeMode.light:
+                  return Icons.light_mode_rounded;
+                case ThemeMode.dark:
+                  return Icons.dark_mode_rounded;
+              }
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: colors.card,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.fromLTRB(8, 12, 8, MediaQuery.paddingOf(ctx).bottom + 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Text(
+                      'Select Theme',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textDark,
+                      ),
+                    ),
+                  ),
+                  ...ThemeMode.values.map((mode) {
+                    final selected = current == mode;
+                    return ListTile(
+                      leading: Icon(
+                        icon(mode),
+                        color: selected ? colors.primary : colors.textMedium,
+                      ),
+                      title: Text(
+                        label(mode),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textDark,
+                        ),
+                      ),
+                      subtitle: Text(
+                        subtitle(mode),
+                        style: TextStyle(color: colors.textMedium, fontSize: 13),
+                      ),
+                      trailing: Icon(
+                        selected
+                            ? Icons.check_circle_rounded
+                            : Icons.circle_outlined,
+                        color: selected ? colors.primary : colors.border,
+                      ),
+                      onTap: () async {
+                        await ref
+                            .read(themeModeProvider.notifier)
+                            .setThemeMode(mode);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
         );
       },
     );

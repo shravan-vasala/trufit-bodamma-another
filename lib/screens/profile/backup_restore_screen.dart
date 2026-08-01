@@ -330,7 +330,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
         title: Text('Backup & Restore'),
-        backgroundColor: context.colors.white,
+        backgroundColor: context.colors.scaffoldBg,
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())

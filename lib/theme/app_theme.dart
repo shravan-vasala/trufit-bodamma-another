@@ -161,9 +161,22 @@ class AppTheme {
           ),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColorsLight().card,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: AppColorsLight().card,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColorsLight().textDark,
+        contentTextStyle: GoogleFonts.inter(color: AppColorsLight().white),
+        behavior: SnackBarBehavior.floating,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColorsLight().lavender,
+        fillColor: AppColorsLight().inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
@@ -407,9 +420,22 @@ class AppTheme {
           ),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColorsDark().card,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: AppColorsDark().card,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColorsDark().surface,
+        contentTextStyle: GoogleFonts.inter(color: AppColorsDark().textDark),
+        behavior: SnackBarBehavior.floating,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColorsDark().scaffoldBg,
+        fillColor: AppColorsDark().inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,

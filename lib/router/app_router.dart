@@ -15,6 +15,7 @@ import '../screens/profile/backup_restore_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/profile/reminders_screen.dart';
 import '../theme/app_colors.dart';
+import '../theme/layout_insets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
 import '../providers/reminders_provider.dart';
@@ -28,7 +29,6 @@ class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   RouterNotifier(this._ref) {
     _ref.listen(onboardingCompletedProvider, (_, __) => notifyListeners());
-    _ref.listen(themeModeProvider, (_, __) => notifyListeners());
   }
 }
 
@@ -226,13 +226,21 @@ class ScaffoldWithNavBar extends ConsumerWidget {
         }
       },
       child: Scaffold(
+        // Floating pill nav paints over the body; inflate MediaQuery padding so
+        // SafeArea / scroll views leave room and content isn't trapped under it.
         extendBody: true,
-        body: Stack(
+        body: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            padding: MediaQuery.paddingOf(context).copyWith(
+              bottom: MediaQuery.paddingOf(context).bottom + kFloatingNavClearance,
+            ),
+          ),
+          child: Stack(
           children: [
             navigationShell,
             if (timerState.isActive)
               Positioned(
-                bottom: 100, // Above nav bar
+                bottom: kFloatingNavClearance,
                 left: 20,
                 right: 20,
                 child: Container(
@@ -329,16 +337,18 @@ class ScaffoldWithNavBar extends ConsumerWidget {
               ),
           ],
         ),
+        ),
         bottomNavigationBar: SafeArea(
           child: Container(
-            margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            margin: EdgeInsets.only(left: 20, right: 20, bottom: 12),
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: context.colors.card,
               borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: context.colors.border.withValues(alpha: 0.6)),
               boxShadow: [
                 BoxShadow(
-                  color: context.colors.textDark.withValues(alpha: 0.1),
+                  color: context.colors.textDark.withValues(alpha: 0.12),
                   blurRadius: 20,
                   offset: Offset(0, 10),
                 ),

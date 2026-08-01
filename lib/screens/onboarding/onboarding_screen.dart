@@ -1012,7 +1012,7 @@ class _AiSetupPage extends StatelessWidget {
               hintText: 'Paste your API key here...',
               hintStyle: TextStyle(color: context.colors.textLight),
               filled: true,
-              fillColor: context.colors.white,
+              fillColor: context.colors.inputFill,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(color: context.colors.border),
@@ -1196,7 +1196,7 @@ class _InputField extends StatelessWidget {
         hintText: hint,
         hintStyle: TextStyle(color: context.colors.textLight),
         filled: true,
-        fillColor: context.colors.white,
+        fillColor: context.colors.inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: context.colors.border),

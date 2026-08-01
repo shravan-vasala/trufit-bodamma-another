@@ -129,9 +129,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     if (_selectedMetric == MetricType.weight || _selectedMetric == MetricType.bodyFat || _selectedMetric == MetricType.bmi) {
       showModalBottomSheet(context: context, isScrollControlled: true, useRootNavigator: true, backgroundColor: Colors.transparent, builder: (_) => WeightEntryDialog());
     } else if (_selectedMetric == MetricType.steps) {
-      showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => StepsEntryDialog());
+      showModalBottomSheet(context: context, isScrollControlled: true, useRootNavigator: true, backgroundColor: Colors.transparent, builder: (_) => StepsEntryDialog());
     } else if (_selectedMetric == MetricType.sleep) {
-      showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => SleepEntryDialog());
+      showModalBottomSheet(context: context, isScrollControlled: true, useRootNavigator: true, backgroundColor: Colors.transparent, builder: (_) => SleepEntryDialog());
     }
   }
 
@@ -160,8 +160,43 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        top: false,
+        child: Column(
         children: [
+          // Metric chips at top (avoids fighting the floating shell nav)
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              itemCount: MetricType.values.length,
+              separatorBuilder: (_, __) => SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final metric = MetricType.values[index];
+                final isSelected = _selectedMetric == metric;
+                return ChoiceChip(
+                  label: Text(_metricLabel(metric)),
+                  selected: isSelected,
+                  onSelected: (_) => setState(() => _selectedMetric = metric),
+                  selectedColor: context.colors.primary.withValues(alpha: 0.18),
+                  backgroundColor: context.colors.lavender,
+                  side: BorderSide(
+                    color: isSelected ? context.colors.primary : context.colors.border,
+                  ),
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? context.colors.primary : context.colors.textMedium,
+                  ),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 12),
+
           // Time range segmented control
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
@@ -178,7 +213,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     child: GestureDetector(
                       onTap: () => setState(() {
                         _selectedRange = range;
-                        _currentReferenceDate = DateTime.now(); // reset to current date when swapping range
+                        _currentReferenceDate = DateTime.now();
                       }),
                       child: AnimatedContainer(
                         duration: Duration(milliseconds: 200),
@@ -244,13 +279,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               ],
             ),
           ),
-          
+
           Center(
             child: ActionChip(
               backgroundColor: context.colors.lavender,
               side: BorderSide.none,
               label: Text(
-                'This Week Summary ✨',
+                'This Week Summary',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -264,11 +299,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           ),
           SizedBox(height: 8),
 
-          // Chart card
           Expanded(
             child: SingleChildScrollView(
               physics: BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
               child: Column(
                 children: [
                   _selectedMetric == MetricType.calories
@@ -276,75 +310,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     : _selectedMetric == MetricType.macros
                       ? _buildMacrosChart(startStr, endStr, profile)
                       : _buildChart(logs, profile.useKg, profile),
-                  SizedBox(height: 80), // Fab spacing
                 ],
               ),
             ),
           ),
-
-          // Metric tab bar
-          Container(
-            padding: EdgeInsets.fromLTRB(8, 12, 8, 16),
-            decoration: BoxDecoration(
-              color: context.colors.card,
-              boxShadow: [
-                BoxShadow(
-                  color: context.colors.primary.withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: MetricType.values.map((metric) {
-                  final isSelected = _selectedMetric == metric;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedMetric = metric),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _metricIcon(metric),
-                          color: isSelected
-                              ? context.colors.primary
-                              : context.colors.textLight,
-                          size: 22,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          _metricLabel(metric),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight:
-                                isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected
-                                ? context.colors.primary
-                                : context.colors.textLight,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        AnimatedContainer(
-                          duration: Duration(milliseconds: 200),
-                          width: 20,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? context.colors.primary
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
         ],
+      ),
       ),
     );
   }
@@ -616,18 +587,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bodyFat: return 'Body Fat';
       case MetricType.calories: return 'Calories';
       case MetricType.macros: return 'Macros';
-    }
-  }
-
-  IconData _metricIcon(MetricType metric) {
-    switch (metric) {
-      case MetricType.weight: return Icons.monitor_weight_rounded;
-      case MetricType.steps: return Icons.directions_walk_rounded;
-      case MetricType.sleep: return Icons.bedtime_rounded;
-      case MetricType.bmi: return Icons.speed_rounded;
-      case MetricType.bodyFat: return Icons.water_drop_rounded;
-      case MetricType.calories: return Icons.restaurant_rounded;
-      case MetricType.macros: return Icons.pie_chart_rounded;
     }
   }
 }

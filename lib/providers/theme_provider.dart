@@ -25,7 +25,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    await _prefs.setString('themeMode', mode.name);
     state = mode;
+    await _prefs.setString('themeMode', mode.name);
   }
 }

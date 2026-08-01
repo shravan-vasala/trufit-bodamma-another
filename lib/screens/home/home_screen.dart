@@ -184,7 +184,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 _buildSectionHeader('DAILY PROGRESS', icon: Icons.show_chart_rounded),
                 SizedBox(height: 12),
                 DailyProgressGrid(),
-                SizedBox(height: 40),
+                SizedBox(height: 24),
               ],
             ),
           ),
