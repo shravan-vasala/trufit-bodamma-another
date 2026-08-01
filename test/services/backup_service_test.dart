@@ -134,6 +134,23 @@ void main() {
     expect(restoredBox.get('Squat'), 150.0);
   });
 
+  test('backup includes meal_plans box', () async {
+    final mealPlans = await Hive.openBox<String>('meal_plans');
+    const customPlan = '{"planName":"Custom Plan","meals":[]}';
+    await mealPlans.put('custom_plan', customPlan);
+
+    final backupPath = await backupService.createBackup();
+    expect(backupPath, isNotNull);
+
+    await mealPlans.clear();
+    expect(mealPlans.isEmpty, isTrue);
+
+    await backupService.restoreBackup(backupPath!);
+
+    final restored = await Hive.openBox<String>('meal_plans');
+    expect(restored.get('custom_plan'), customPlan);
+  });
+
   test('encrypted backup create + restore with password', () async {
     final box = await Hive.openBox<String>('habit_config');
     await box.put('test_habit', '{"id":"test_habit"}');

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'app_providers.dart';
 import '../models/daily_log.dart';
 import '../models/habit.dart';
+import '../utils/workout_completion.dart';
 
 class WeeklySummary {
   final int workoutsCompleted;
@@ -88,28 +89,30 @@ final weeklySummaryProvider = Provider<WeeklySummary>((ref) {
   if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
     for (int i = 0; i < 7; i++) {
       final d = startOfWeek.add(Duration(days: i));
-      final currentWeekday = d.weekday;
-      final isSunday = currentWeekday == DateTime.sunday;
-      final dayIndex = isSunday ? 0 : (currentWeekday - 1).clamp(0, workoutPlan.days.length - 1);
-      final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
-      
-      final workoutDay = workoutPlan.days.firstWhere((wd) => wd.dayId == dayIdTarget, orElse: () => workoutPlan.days[dayIndex]);
-      final sectionsTotal = (isSunday || workoutDay.sections.isEmpty) ? 1 : workoutDay.sections.length;
+      final workoutDay = WorkoutCompletion.resolveWorkoutDay(workoutPlan, d);
+      final isRest = WorkoutCompletion.isRestDay(workoutDay, d);
+      final sectionsTotal = isRest ? 1 : workoutDay.sections.length;
       wTotal += sectionsTotal;
       
       final dateStr = DateFormat('yyyy-MM-dd').format(d);
       final log = dailyLogs.firstWhere((dl) => dl.date == dateStr, orElse: () => DailyLog(date: dateStr));
       
-      if (isSunday || workoutDay.sections.isEmpty) {
-        if (log.workoutCompleted) wCompleted++;
-      } else {
-        int sectionsCompleted = 0;
-        for (final sec in workoutDay.sections) {
-          if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => exerciseLogRepo.hasLog(dateStr, ex.name))) {
-            sectionsCompleted++;
-          }
+      if (isRest) {
+        if (WorkoutCompletion.isDayWorkoutDone(
+          date: dateStr,
+          day: workoutDay,
+          dateTime: d,
+          hasLog: exerciseLogRepo.hasLog,
+          dailyLog: log,
+        )) {
+          wCompleted++;
         }
-        wCompleted += sectionsCompleted;
+      } else {
+        wCompleted += WorkoutCompletion.completedSectionCount(
+          dateStr,
+          workoutDay,
+          exerciseLogRepo.hasLog,
+        );
       }
     }
   } else {

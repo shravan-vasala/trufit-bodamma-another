@@ -46,6 +46,7 @@ class BackupService {
     'health_connect_meta',
     'workout_plans',
     'workout_sessions',
+    'meal_plans',
     'user_profile',
     'scanned_photo_meals',
     'media_metadata',

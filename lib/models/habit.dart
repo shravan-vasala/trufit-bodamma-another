@@ -99,12 +99,12 @@ class Habit {
         order: 1),
     Habit(
         id: 'water',
-        name: 'Drink 3 ltr of water',
+        name: 'Drink 3 L of water',
         icon: '💧',
-        type: HabitType.counter,
+        type: HabitType.checkbox,
         unit: 'L',
         target: 3.0,
-        step: 0.25,
+        step: 1.0,
         createdAt: DateTime.parse('2020-01-01'),
         order: 2),
   ];

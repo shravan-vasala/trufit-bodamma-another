@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
+import '../../services/health_connect_service.dart';
 import '../../models/habit.dart';
+import '../../utils/workout_completion.dart';
 import '../profile/manage_habits_screen.dart';
 import 'widgets/week_calendar_strip.dart';
 import 'widgets/meals_card.dart';
@@ -48,42 +50,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final habitRepo = ref.read(habitRepoProvider);
     final prefs = ref.read(sharedPreferencesProvider);
 
-    // Always invalidate immediately to refresh manual entries on resume
+    // Refresh local state immediately (covers cached Hive values on cold start)
     ref.invalidate(dailyLogProvider);
     ref.invalidate(habitCompletionsProvider);
-    
-    // Always fetch coach notes (force if manual refresh)
+
     ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
 
-    final isAuth = await hcService.isAuthorized();
-    if (isAuth) {
-      final lastSyncStr = prefs.getString('last_hc_sync_time');
-      final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
-      final now = DateTime.now();
-      
-      final shouldFullSync = isManualRefresh || lastSync == null || now.difference(lastSync).inMinutes >= 15;
+    final available = await hcService.isAvailable();
+    if (!available) return;
 
-      // Sync today's steps (always do this if it's cheap, or do everything inside the debounce?)
-      // Actually, syncTodayAndAutoCompleteHabit is also a HC sync, we should debounce it all or just the expensive parts?
-      // "only full sync if last sync > 15 minutes ago" implies the whole sync.
-      if (shouldFullSync) {
-        await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
-        await hcService.syncLast7Days(dailyLogRepo, habitRepo);
-  
-        if (!hcService.isBackfillDone) {
-          await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
-        }
-        
-        await prefs.setString('last_hc_sync_time', now.toIso8601String());
-      }
-      
-      // Invalidate again after sync completes so the synced data appears
+    final now = DateTime.now();
+    final lastSyncStr = prefs.getString('last_hc_sync_time');
+    final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
+    final everConnected = prefs.getBool('hc_connected') ?? false;
+
+    // Always refresh TODAY on open/resume.
+    // Do NOT gate on hasPermissions — it often returns false after the app is killed
+    // even when Health Connect access was already granted.
+    final todaySteps = await hcService.syncTodayAndAutoCompleteHabit(
+      dailyLogRepo,
+      habitRepo,
+    );
+
+    if (todaySteps != null) {
+      await prefs.setBool('hc_connected', true);
+      ref.read(stepsSourceProvider.notifier).state = StepsSource.healthConnect;
+    } else if (!everConnected) {
+      // First-run: Steps card will show the Sync CTA
       ref.invalidate(dailyLogProvider);
       ref.invalidate(habitCompletionsProvider);
+      return;
     }
+
+    // Heavier historical sync — manual pull or every 15 minutes
+    final shouldFullSync = isManualRefresh ||
+        lastSync == null ||
+        now.difference(lastSync).inMinutes >= 15;
+
+    if (shouldFullSync) {
+      await hcService.syncLast7Days(dailyLogRepo, habitRepo);
+      if (!hcService.isBackfillDone) {
+        await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
+      }
+      await prefs.setString('last_hc_sync_time', now.toIso8601String());
+    }
+
+    ref.invalidate(dailyLogProvider);
+    ref.invalidate(habitCompletionsProvider);
   }
 
-  Widget _buildSectionHeader(String title, {IconData? icon}) {
+  Widget _buildSectionHeader(
+    String title, {
+    IconData? icon,
+    Widget? trailing,
+    Widget? countLabel,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -101,6 +122,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               fontSize: 13,
             ),
           ),
+          if (countLabel != null) ...[
+            SizedBox(width: 6),
+            countLabel,
+          ],
+          Spacer(),
+          if (trailing != null) trailing,
         ],
       ),
     );
@@ -139,11 +166,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
                 // Meals Section
                 _buildSectionHeader('MEALS'),
+                SizedBox(height: 12),
                 MealsCard(),
                 SizedBox(height: 24),
 
                 // Habits Section
-                _HabitsSectionHeader(),
+                _buildSectionHeader(
+                  'HABITS',
+                  trailing: _HabitsEditButton(),
+                  countLabel: _HabitsCountLabel(),
+                ),
+                SizedBox(height: 12),
                 HabitsCard(),
                 SizedBox(height: 24),
 
@@ -161,38 +194,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 }
 
-class _HabitsSectionHeader extends ConsumerWidget {
-  const _HabitsSectionHeader();
+class _HabitsCountLabel extends ConsumerWidget {
+  const _HabitsCountLabel();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final habits = ref.watch(habitsProvider);
     final completions = ref.watch(habitCompletionsProvider);
     final dailyLog = ref.watch(dailyLogProvider);
-    final completedCount = habits.where((h) => isHabitCompleted(h, completions, dailyLog)).length;
-    
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'HABITS ($completedCount/${habits.length})',
-            style: TextStyle(
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w800,
-              color: context.colors.primary,
-              fontSize: 13,
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => ManageHabitsScreen()));
-            },
-            child: Icon(Icons.edit_rounded, color: context.colors.primary, size: 18),
-          ),
-        ],
+    final completedCount =
+        habits.where((h) => isHabitCompleted(h, completions, dailyLog)).length;
+
+    return Text(
+      '($completedCount/${habits.length})',
+      style: TextStyle(
+        letterSpacing: 1.2,
+        fontWeight: FontWeight.w800,
+        color: context.colors.primary,
+        fontSize: 13,
       ),
+    );
+  }
+}
+
+class _HabitsEditButton extends StatelessWidget {
+  const _HabitsEditButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(builder: (_) => ManageHabitsScreen()),
+        );
+      },
+      child: Icon(Icons.edit_rounded, color: context.colors.primary, size: 18),
     );
   }
 }
@@ -209,30 +245,30 @@ class _WorkoutsSection extends ConsumerWidget {
     if (workoutPlan == null || workoutPlan.days.isEmpty) return SizedBox();
 
     final dateStr = ref.watch(dateStringProvider);
-    final weekday = DateTime.parse(dateStr).weekday;
     
     final selectedDate = DateTime.parse(dateStr);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final isFuture = selectedDate.isAfter(today);
 
-    final isSunday = weekday == DateTime.sunday;
-    final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlan.days.length - 1);
-    
-    // Find the correct day object
-    final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
-    final day = workoutPlan.days.firstWhere(
-        (d) => d.dayId == dayIdTarget,
-        orElse: () => workoutPlan.days[dayIndex]);
+    final day = WorkoutCompletion.resolveWorkoutDay(workoutPlan, selectedDate);
+    final isRest = WorkoutCompletion.isRestDay(day, selectedDate);
     
     final logRepo = ref.watch(exerciseLogRepoProvider);
     ref.watch(exerciseLogsUpdateProvider); // Rebuild when logs are saved
-    final isWholeDayCompleted = ref.watch(dailyLogProvider).workoutCompleted;
+    final dailyLog = ref.watch(dailyLogProvider);
+    final isWholeDayCompleted = WorkoutCompletion.isDayWorkoutDoneWithRepo(
+      date: dateStr,
+      day: day,
+      dateTime: selectedDate,
+      repo: logRepo,
+      dailyLog: dailyLog,
+    );
     
     List<Widget> cards = [];
     int completedCount = 0;
     
-    if (isSunday || day.sections.isEmpty) {
+    if (isRest) {
       cards.add(_buildCard(
         context,
         title: 'Rest Day',
@@ -246,10 +282,11 @@ class _WorkoutsSection extends ConsumerWidget {
       for (int i = 0; i < day.sections.length; i++) {
         final sec = day.sections[i];
         
-        bool isCompleted = false;
-        if (sec.exercises.isNotEmpty) {
-          isCompleted = sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name));
-        }
+        final isCompleted = WorkoutCompletion.isSectionCompleteWithRepo(
+          dateStr,
+          sec,
+          logRepo,
+        );
         if (isCompleted) completedCount++;
         
         String title = (i == 0) ? day.dayId : sec.title;
@@ -274,7 +311,7 @@ class _WorkoutsSection extends ConsumerWidget {
       }
     }
     
-    final total = (isSunday || day.sections.isEmpty) ? 1 : day.sections.length;
+    final total = isRest ? 1 : day.sections.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,6 +357,7 @@ class _WorkoutsSection extends ConsumerWidget {
             ],
           ),
         ),
+        SizedBox(height: 12),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Column(children: cards),

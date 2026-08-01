@@ -14,6 +14,7 @@ class HabitRepository {
     _completionBox = await Hive.openBox<String>(_completionBoxName);
     await _seedIfEmpty();
     await _migrateLegacyConfig();
+    await _migrateWaterToCheckbox();
   }
 
   Future<void> _seedIfEmpty() async {
@@ -23,6 +24,39 @@ class HabitRepository {
         await _configBox.put(habit.id, jsonEncode(habit.toJson()));
       }
     }
+  }
+
+  /// Water is a one-tap habit with a customizable daily goal (litres).
+  Future<void> _migrateWaterToCheckbox() async {
+    final waterStr = _configBox.get('water');
+    if (waterStr == null) return;
+    try {
+      final map = jsonDecode(waterStr) as Map<String, dynamic>;
+      final habit = Habit.fromJson(map);
+
+      final needsTypeFix = habit.type == HabitType.counter;
+      final needsGoalFix = habit.unit.isEmpty ||
+          habit.name.toLowerCase().contains('ltr') ||
+          habit.name == 'Drink water';
+
+      if (!needsTypeFix && !needsGoalFix) return;
+
+      final target = (habit.target > 0 && habit.name != 'Drink water')
+          ? habit.target
+          : 3.0;
+      final unit = habit.unit.isNotEmpty ? habit.unit : 'L';
+      final targetLabel = target == target.roundToDouble()
+          ? target.toInt().toString()
+          : target.toString();
+
+      await saveHabit(habit.copyWith(
+        type: HabitType.checkbox,
+        unit: unit,
+        target: target,
+        step: 1.0,
+        name: 'Drink $targetLabel $unit of water',
+      ));
+    } catch (_) {}
   }
 
   Future<void> _migrateLegacyConfig() async {

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import '../../../services/health_connect_service.dart';
 import '../weight_entry_dialog.dart';
 import '../steps_entry_dialog.dart';
 import 'sync_status_sheet.dart';
@@ -86,6 +87,7 @@ class DailyProgressGrid extends ConsumerWidget {
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
+                              useRootNavigator: true,
                               backgroundColor: Colors.transparent,
                               builder: (_) => WeightEntryDialog(),
                             );
@@ -136,11 +138,23 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
 
   Future<void> _checkHealthConnectStatus() async {
     final hcService = ref.read(healthConnectServiceProvider);
-    final isAuth = await hcService.isAuthorized();
+    final prefs = ref.read(sharedPreferencesProvider);
+    final everConnected = prefs.getBool('hc_connected') ?? false;
+
+    // hasPermissions is flaky on Android after process death — also trust
+    // a prior successful sync, and probe read access when unsure.
+    var connected = everConnected || await hcService.isAuthorized();
+    if (!connected) {
+      connected = await hcService.canReadSteps();
+      if (connected) {
+        await prefs.setBool('hc_connected', true);
+      }
+    }
+
     if (mounted) {
       setState(() {
-        _isAuth = isAuth;
-        _showSyncCta = !isAuth && widget.isToday;
+        _isAuth = connected;
+        _showSyncCta = !connected && widget.isToday;
         _checkingPermission = false;
       });
     }
@@ -148,6 +162,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
 
   Future<void> _handleSyncTap() async {
     final hcService = ref.read(healthConnectServiceProvider);
+    final prefs = ref.read(sharedPreferencesProvider);
     
     // Check if Health Connect is installed
     final available = await hcService.isAvailable();
@@ -162,32 +177,51 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
 
     // Request permission
     final granted = await hcService.requestPermission();
-    if (granted) {
-      setState(() => _showSyncCta = false);
-      
-      // Trigger sync
-      final dailyLogRepo = ref.read(dailyLogRepoProvider);
-      final habitRepo = ref.read(habitRepoProvider);
-      await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
-      await hcService.syncLast7Days(dailyLogRepo, habitRepo);
-      
-      // Backfill in background
-      if (!hcService.isBackfillDone) {
-        hcService.backfillLast90Days(dailyLogRepo, habitRepo).then((_) {
-          ref.invalidate(dailyLogProvider);
-          ref.invalidate(habitCompletionsProvider);
-        });
-      }
-      
-      ref.invalidate(dailyLogProvider);
-      ref.invalidate(habitCompletionsProvider);
+    if (!granted) return;
+
+    // Trigger sync
+    final dailyLogRepo = ref.read(dailyLogRepoProvider);
+    final habitRepo = ref.read(habitRepoProvider);
+    final steps = await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+    await hcService.syncLast7Days(dailyLogRepo, habitRepo);
+
+    await prefs.setBool('hc_connected', true);
+    await prefs.setString('last_hc_sync_time', DateTime.now().toIso8601String());
+    if (steps != null) {
+      ref.read(stepsSourceProvider.notifier).state = StepsSource.healthConnect;
     }
+
+    if (mounted) {
+      setState(() {
+        _isAuth = true;
+        _showSyncCta = false;
+      });
+    }
+    
+    // Backfill in background
+    if (!hcService.isBackfillDone) {
+      hcService.backfillLast90Days(dailyLogRepo, habitRepo).then((_) {
+        ref.invalidate(dailyLogProvider);
+        ref.invalidate(habitCompletionsProvider);
+      });
+    }
+    
+    ref.invalidate(dailyLogProvider);
+    ref.invalidate(habitCompletionsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    final steps = ref.watch(dailyLogProvider.select((l) => l.steps));
+    final stepsSource = ref.watch(dailyLogProvider.select((l) => l.stepsSource));
+
+    // Hide Sync CTA once we have Health Connect data (covers race with async permission check)
+    final showSyncCta = _showSyncCta &&
+        !_checkingPermission &&
+        !(steps != null && stepsSource == 'healthConnect');
+
     // Show the sync CTA card if permission not granted (today only)
-    if (_showSyncCta && !_checkingPermission) {
+    if (showSyncCta) {
       return GestureDetector(
         onTap: _handleSyncTap,
         child: Container(
@@ -243,12 +277,6 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
         ),
       );
     }
-
-    // Watches:
-    // - dailyLogProvider.select((l) => l.steps)
-    // - dailyLogProvider.select((l) => l.stepsSource)
-    final steps = ref.watch(dailyLogProvider.select((l) => l.steps));
-    final stepsSource = ref.watch(dailyLogProvider.select((l) => l.stepsSource));
 
     // Determine subtitle
     String stepsSubtitle;

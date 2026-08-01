@@ -30,6 +30,10 @@ class _WeightEntryDialogState extends ConsumerState<WeightEntryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final fill = Theme.of(context).brightness == Brightness.dark
+        ? context.colors.scaffoldBg
+        : context.colors.lavender;
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -66,7 +70,11 @@ class _WeightEntryDialogState extends ConsumerState<WeightEntryDialog> {
             SizedBox(height: 8),
             Text(
               'Enter your weight for today',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: context.colors.textMedium,
+              ),
             ),
             SizedBox(height: 20),
             TextField(
@@ -76,15 +84,18 @@ class _WeightEntryDialogState extends ConsumerState<WeightEntryDialog> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: context.colors.primary,
+                color: context.colors.textDark,
               ),
               textAlign: TextAlign.center,
+              cursorColor: context.colors.primary,
               decoration: InputDecoration(
+                filled: true,
+                fillColor: fill,
                 hintText: '0.0',
                 hintStyle: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: context.colors.textLight.withValues(alpha: 0.5),
+                  color: context.colors.textLight,
                 ),
                 suffixText: 'kg',
                 suffixStyle: TextStyle(
@@ -92,48 +103,52 @@ class _WeightEntryDialogState extends ConsumerState<WeightEntryDialog> {
                   fontWeight: FontWeight.w600,
                   color: context.colors.textMedium,
                 ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: context.colors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: context.colors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: context.colors.primary, width: 1.5),
+                ),
               ),
             ),
             SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 52,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: context.colors.primaryGradient,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.colors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    final weight = double.tryParse(_controller.text);
-                    if (weight != null && weight > 0) {
-                      ref.read(dailyLogProvider.notifier).updateWeight(weight);
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+              child: ElevatedButton(
+                onPressed: () {
+                  final weight = double.tryParse(_controller.text);
+                  if (weight != null && weight > 0) {
+                    ref.read(dailyLogProvider.notifier).updateWeight(weight);
+                    Navigator.of(context).pop();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    'Save Weight',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.onPrimary,
-                    ),
+                ),
+                child: Text(
+                  'Save Weight',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.onPrimary,
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
           ],
         ),
       ),

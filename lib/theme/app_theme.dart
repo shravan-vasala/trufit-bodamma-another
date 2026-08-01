@@ -74,7 +74,7 @@ class AppTheme {
           labelLarge: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColorsLight().white,
+            color: AppColorsLight().textDark,
           ),
           labelMedium: TextStyle(
             fontSize: 12,
@@ -88,9 +88,12 @@ class AppTheme {
             letterSpacing: 0.5,
           ),
         ),
+      ).apply(
+        bodyColor: AppColorsLight().textDark,
+        displayColor: AppColorsLight().textDark,
       ),
       cardTheme: CardThemeData(
-        color: AppColorsLight().white,
+        color: AppColorsLight().card,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -173,7 +176,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: AppColorsLight().primary, width: 1.5),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        labelStyle: TextStyle(
+          color: AppColorsLight().textMedium,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        floatingLabelStyle: TextStyle(
+          color: AppColorsLight().primary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
         hintStyle: TextStyle(
           color: AppColorsLight().textLight,
           fontSize: 14,
@@ -194,6 +208,46 @@ class AppTheme {
         shape: CircleBorder(),
         side: BorderSide(color: AppColorsLight().border, width: 2),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColorsLight().card,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppColorsLight().textDark,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColorsLight().textMedium,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: TextStyle(color: AppColorsLight().textDark, fontSize: 14),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(AppColorsLight().card),
+          surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColorsLight().textDark,
+        ),
+        subtitleTextStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: AppColorsLight().textMedium,
+        ),
+        iconColor: AppColorsLight().textMedium,
+      ),
+      canvasColor: AppColorsLight().card,
+      popupMenuTheme: PopupMenuThemeData(
+        color: AppColorsLight().card,
+        textStyle: TextStyle(color: AppColorsLight().textDark),
+      ),
     );
   }
 
@@ -204,85 +258,88 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColorsDark().scaffoldBg,
       primaryColor: AppColorsDark().primary,
-      colorScheme: ColorScheme.light(
+      colorScheme: ColorScheme.dark(
         primary: AppColorsDark().primary,
         secondary: AppColorsDark().indigo,
-        surface: AppColorsDark().white,
+        surface: AppColorsDark().surface,
         error: AppColorsDark().red,
-        onPrimary: AppColorsDark().white,
-        onSecondary: AppColorsDark().white,
-        onSurface: AppColorsDark().textDark,
-        onError: AppColorsDark().white,
+        onPrimary: AppColorsDark().onPrimary,
+        onSecondary: AppColorsDark().onPrimary,
+        onSurface: AppColorsDark().onSurface,
+        onError: AppColorsDark().onPrimary,
       ),
       textTheme: GoogleFonts.interTextTheme(
-        TextTheme(
-          headlineLarge: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            color: AppColorsDark().textDark,
-            letterSpacing: -0.5,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppColorsDark().textDark,
-            letterSpacing: -0.3,
-          ),
-          headlineSmall: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColorsDark().textDark,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColorsDark().textDark,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColorsDark().textDark,
-          ),
-          titleSmall: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColorsDark().textMedium,
-          ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: AppColorsDark().textDark,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: AppColorsDark().textMedium,
-          ),
-          bodySmall: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: AppColorsDark().textLight,
-          ),
-          labelLarge: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColorsDark().white,
-          ),
-          labelMedium: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColorsDark().textMedium,
-          ),
-          labelSmall: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: AppColorsDark().textLight,
-            letterSpacing: 0.5,
-          ),
+        ThemeData(brightness: Brightness.dark).textTheme,
+      ).apply(
+        bodyColor: AppColorsDark().textDark,
+        displayColor: AppColorsDark().textDark,
+      ).copyWith(
+        headlineLarge: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: AppColorsDark().textDark,
+          letterSpacing: -0.5,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: AppColorsDark().textDark,
+          letterSpacing: -0.3,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColorsDark().textDark,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColorsDark().textDark,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColorsDark().textDark,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColorsDark().textMedium,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: AppColorsDark().textDark,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColorsDark().textMedium,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: AppColorsDark().textLight,
+        ),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColorsDark().textDark,
+        ),
+        labelMedium: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: AppColorsDark().textMedium,
+        ),
+        labelSmall: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          color: AppColorsDark().textLight,
+          letterSpacing: 0.5,
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColorsDark().white,
+        color: AppColorsDark().card,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -307,7 +364,7 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColorsDark().textDark),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColorsDark().white,
+        backgroundColor: AppColorsDark().card,
         selectedItemColor: AppColorsDark().primary,
         unselectedItemColor: AppColorsDark().textLight,
         type: BottomNavigationBarType.fixed,
@@ -352,20 +409,31 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColorsDark().lavender,
+        fillColor: AppColorsDark().scaffoldBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: AppColorsDark().border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: AppColorsDark().primary, width: 1.5),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        labelStyle: TextStyle(
+          color: AppColorsDark().textMedium,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        floatingLabelStyle: TextStyle(
+          color: AppColorsDark().primaryLight,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
         hintStyle: TextStyle(
           color: AppColorsDark().textLight,
           fontSize: 14,
@@ -385,6 +453,46 @@ class AppTheme {
         }),
         shape: CircleBorder(),
         side: BorderSide(color: AppColorsDark().border, width: 2),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColorsDark().card,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppColorsDark().textDark,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColorsDark().textMedium,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: TextStyle(color: AppColorsDark().textDark, fontSize: 14),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(AppColorsDark().card),
+          surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColorsDark().textDark,
+        ),
+        subtitleTextStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: AppColorsDark().textMedium,
+        ),
+        iconColor: AppColorsDark().textMedium,
+      ),
+      canvasColor: AppColorsDark().card,
+      popupMenuTheme: PopupMenuThemeData(
+        color: AppColorsDark().card,
+        textStyle: TextStyle(color: AppColorsDark().textDark),
       ),
     );
   }

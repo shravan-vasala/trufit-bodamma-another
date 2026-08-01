@@ -19,6 +19,7 @@ class MealRepository {
     _planBox = await Hive.openBox<String>(_planBoxName);
     await _migrateLegacyCompletions();
     await _seedIfEmpty();
+    await _migrateLegacyPlanName();
   }
 
   Future<void> _seedIfEmpty() async {
@@ -26,6 +27,19 @@ class MealRepository {
       final jsonStr = await rootBundle.loadString('assets/data/seed_meal_plan.json');
       _planBox.put('standard_plan', jsonStr);
     }
+  }
+
+  /// Rename the original seed plan to a clearer display name.
+  Future<void> _migrateLegacyPlanName() async {
+    final jsonStr = _planBox.get('standard_plan');
+    if (jsonStr == null) return;
+    try {
+      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      if (map['planName'] == 'NonVeg Plan') {
+        map['planName'] = 'Balanced Non-Veg Plan';
+        await _planBox.put('standard_plan', jsonEncode(map));
+      }
+    } catch (_) {}
   }
 
   Future<void> _migrateLegacyCompletions() async {

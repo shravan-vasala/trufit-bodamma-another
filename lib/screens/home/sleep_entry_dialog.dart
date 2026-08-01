@@ -132,7 +132,10 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
             SizedBox(height: 8),
             Text(
               'Enter your sleep for $dateFormatted',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: TextStyle(
+                fontSize: 14,
+                color: context.colors.textMedium,
+              ),
             ),
             SizedBox(height: 24),
             
@@ -143,22 +146,29 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: context.colors.primary,
+                color: context.colors.textDark,
               ),
               textAlign: TextAlign.center,
               enabled: !isFuture,
               decoration: InputDecoration(
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? context.colors.scaffoldBg
+                    : context.colors.lavender,
                 hintText: '0.0',
                 hintStyle: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: context.colors.textLight.withValues(alpha: 0.5),
+                  color: context.colors.textLight,
                 ),
                 suffixText: 'hrs',
                 suffixStyle: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: context.colors.textMedium,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),

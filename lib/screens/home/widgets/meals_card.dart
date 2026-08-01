@@ -12,8 +12,7 @@ class MealsCard extends ConsumerWidget {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
     final mealPlan = ref.watch(mealPlanProvider);
-    final planName = mealPlan?.planName ?? 'Meals Plan';
-    final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
+    final planName = mealPlan?.planName ?? 'Daily Meal Plan';
     
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
@@ -81,9 +80,27 @@ class MealsCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Today's Meals",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.colors.textDark,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        planName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: context.colors.textMedium,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Text(

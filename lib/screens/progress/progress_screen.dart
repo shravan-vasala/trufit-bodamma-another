@@ -127,7 +127,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   void _openManualEntry() {
     if (_selectedMetric == MetricType.weight || _selectedMetric == MetricType.bodyFat || _selectedMetric == MetricType.bmi) {
-      showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => WeightEntryDialog());
+      showModalBottomSheet(context: context, isScrollControlled: true, useRootNavigator: true, backgroundColor: Colors.transparent, builder: (_) => WeightEntryDialog());
     } else if (_selectedMetric == MetricType.steps) {
       showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => StepsEntryDialog());
     } else if (_selectedMetric == MetricType.sleep) {

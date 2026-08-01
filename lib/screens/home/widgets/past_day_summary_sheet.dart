@@ -6,6 +6,7 @@ import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
 import '../../../router/app_router.dart';
+import '../../../utils/workout_completion.dart';
 
 class PastDaySummarySheet extends ConsumerWidget {
   final DateTime date;
@@ -45,19 +46,28 @@ class PastDaySummarySheet extends ConsumerWidget {
     int completedExercises = 0;
     String workoutDayName = "Rest Day";
     String? currentWorkoutDayId;
+    bool workoutDayDone = false;
 
     if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
-      final dayIndex = (date.weekday - 1).clamp(0, workoutPlan.days.length - 1);
-      final workoutDay = workoutPlan.days[dayIndex];
-      
-      if (date.weekday != DateTime.sunday && workoutDay.sections.isNotEmpty) {
-        isRestDay = false;
+      final workoutDay = WorkoutCompletion.resolveWorkoutDay(workoutPlan, date);
+      final logRepo = ref.read(exerciseLogRepoProvider);
+      isRestDay = WorkoutCompletion.isRestDay(workoutDay, date);
+      workoutDayDone = WorkoutCompletion.isDayWorkoutDoneWithRepo(
+        date: dateStr,
+        day: workoutDay,
+        dateTime: date,
+        repo: logRepo,
+        dailyLog: dailyLog,
+      );
+
+      if (!isRestDay) {
         workoutDayName = workoutDay.label ?? 'Workout Day';
         currentWorkoutDayId = dailyLog.workoutDayId ?? workoutDay.dayId;
-        final logRepo = ref.read(exerciseLogRepoProvider);
-        
         totalExercises = workoutDay.sections.expand((s) => s.exercises).length;
-        completedExercises = workoutDay.sections.expand((s) => s.exercises).where((e) => logRepo.hasLog(dateStr, e.name)).length;
+        completedExercises = workoutDay.sections
+            .expand((s) => s.exercises)
+            .where((e) => logRepo.hasLog(dateStr, e.name))
+            .length;
       }
     }
 
@@ -86,7 +96,7 @@ class PastDaySummarySheet extends ConsumerWidget {
     final completedHabits = applicableHabits.where((h) => isHabitCompleted(h, habitCompletions, dailyLog)).length;
 
     final totalThings = totalMealsTarget + totalHabitsTarget + (isRestDay ? 0 : 1);
-    final totalDone = completedMeals + completedHabits + (isRestDay ? 0 : (dailyLog.workoutCompleted ? 1 : 0));
+    final totalDone = completedMeals + completedHabits + (isRestDay ? 0 : (workoutDayDone ? 1 : 0));
 
     // 3) Status pill logic
     String statusText = "Nothing logged";
@@ -110,8 +120,6 @@ class PastDaySummarySheet extends ConsumerWidget {
     try {
       waterHabit = allHabits.firstWhere((h) => h.id == 'water');
     } catch (_) {}
-    final waterValue = waterHabit != null ? getHabitProgress(waterHabit, habitCompletions, dailyLog) : 0.0;
-
 
     return Container(
       decoration: BoxDecoration(
@@ -195,7 +203,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                     subtitle: isRestDay 
                         ? 'Recovery day' 
                         : '$completedExercises/$totalExercises exercises done',
-                    isDone: dailyLog.workoutCompleted,
+                    isDone: workoutDayDone,
                     onTap: () {
                       if (isRestDay || currentWorkoutDayId == null) return;
                       ref.read(selectedDateProvider.notifier).state = date;
@@ -281,7 +289,11 @@ class PastDaySummarySheet extends ConsumerWidget {
                     child: _MetricBox(
                       icon: Icons.water_drop_rounded,
                       label: 'Water',
-                      value: '${waterValue == waterValue.toInt() ? waterValue.toInt() : waterValue.toStringAsFixed(1)} L',
+                      value: waterHabit == null
+                          ? '—'
+                          : (isHabitCompleted(waterHabit, habitCompletions, dailyLog)
+                              ? 'Done · ${waterHabit.target == waterHabit.target.roundToDouble() ? waterHabit.target.toInt() : waterHabit.target} ${waterHabit.unit.isNotEmpty ? waterHabit.unit : 'L'}'
+                              : 'Goal ${waterHabit.target == waterHabit.target.roundToDouble() ? waterHabit.target.toInt() : waterHabit.target} ${waterHabit.unit.isNotEmpty ? waterHabit.unit : 'L'}'),
                     ),
                   ),
                 ],

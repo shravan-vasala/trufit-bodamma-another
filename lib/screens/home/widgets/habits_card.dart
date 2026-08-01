@@ -134,10 +134,27 @@ class _HabitItem extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: isCompleted ? context.colors.textLight : context.colors.textDark,
-                              decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                              color: isCompleted
+                                  ? context.colors.textLight
+                                  : context.colors.textDark,
+                              decoration: isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
                             ),
                           ),
+                          if (habit.type == HabitType.checkbox &&
+                              habit.unit.isNotEmpty &&
+                              habit.target > 0)
+                            Padding(
+                              padding: EdgeInsets.only(top: 2),
+                              child: Text(
+                                'Goal: ${habit.target == habit.target.roundToDouble() ? habit.target.toInt() : habit.target} ${habit.unit}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.colors.textMedium,
+                                ),
+                              ),
+                            ),
                           Row(
                             children: [
                               if (habit.type != HabitType.checkbox)

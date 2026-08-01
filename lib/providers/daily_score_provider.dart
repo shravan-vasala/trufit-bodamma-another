@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_providers.dart';
 import '../models/habit.dart';
 import '../models/daily_log.dart';
+import '../utils/workout_completion.dart';
 
 class DailyScore {
   final int totalScore;
@@ -57,7 +58,12 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
   final steps = ref.watch(dailyLogProvider.select((d) => d.steps));
   final sleepHours = ref.watch(dailyLogProvider.select((d) => d.sleepHours));
   final workoutCompleted = ref.watch(dailyLogProvider.select((d) => d.workoutCompleted));
-  final dummyDailyLog = DailyLog(date: dateStr, steps: steps, sleepHours: sleepHours, workoutCompleted: workoutCompleted);
+  final dailyLog = DailyLog(
+    date: dateStr,
+    steps: steps,
+    sleepHours: sleepHours,
+    workoutCompleted: workoutCompleted,
+  );
   
   double habitsScore = 0;
   double habitsMax = 40;
@@ -71,7 +77,7 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
         hasStepsHabit = true;
         stepsTarget = h.target.toDouble();
       }
-      if (isHabitCompleted(h, habitCompletions, dummyDailyLog)) {
+      if (isHabitCompleted(h, habitCompletions, dailyLog)) {
         habitsDone++;
       }
     }
@@ -81,32 +87,29 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
   // 2. Workouts (Max 30)
   double workoutsScore = 0;
   double workoutsMax = 30;
-  final workoutPlanDays = ref.watch(workoutPlanProvider.select((p) => p?.days));
+  final workoutPlan = ref.watch(workoutPlanProvider);
+  final logRepo = ref.watch(exerciseLogRepoProvider);
+  ref.watch(exerciseLogsUpdateProvider);
   
-  if (workoutPlanDays != null && workoutPlanDays.isNotEmpty) {
-    final weekday = date.weekday;
-    final isSunday = weekday == DateTime.sunday;
-    final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlanDays.length - 1);
-    final dayIdTarget = isSunday ? 'Rest' : workoutPlanDays[dayIndex].dayId;
-    final day = workoutPlanDays.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlanDays[dayIndex]);
-    
-    final isRestDay = (isSunday || day.sections.isEmpty);
-    
-    if (isRestDay) {
-      if (workoutCompleted) workoutsScore = workoutsMax;
+  if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
+    final day = WorkoutCompletion.resolveWorkoutDay(workoutPlan, date);
+
+    if (WorkoutCompletion.isRestDay(day, date)) {
+      // Planned rest counts as full workout points
+      workoutsScore = workoutsMax;
     } else {
-      final logRepo = ref.watch(exerciseLogRepoProvider);
-      
-      int workoutsDone = 0;
-      int workoutsTotal = day.sections.length;
-      
+      final workoutsTotal = day.sections.length;
       if (workoutsTotal > 0) {
-        for (final sec in day.sections) {
-          if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name))) {
-            workoutsDone++;
-          }
-        }
+        final workoutsDone = WorkoutCompletion.completedSectionCount(
+          dateStr,
+          day,
+          logRepo.hasLog,
+        );
         workoutsScore = (workoutsDone / workoutsTotal) * workoutsMax;
+        // Finish-early: day flagged complete even if sections incomplete
+        if (workoutCompleted && workoutsDone < workoutsTotal) {
+          workoutsScore = workoutsMax;
+        }
       }
     }
   } else {

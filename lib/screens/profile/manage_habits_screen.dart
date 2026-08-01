@@ -20,9 +20,14 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
     return Scaffold(
       backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: Text('Manage Habits'),
+        title: Text(
+          'Manage Habits',
+          style: TextStyle(color: context.colors.textDark),
+        ),
+        backgroundColor: context.colors.scaffoldBg,
+        foregroundColor: context.colors.textDark,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: context.colors.textDark),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -34,9 +39,14 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
         ],
       ),
       body: habits.isEmpty
-          ? Center(child: Text('No habits found. Add one!'))
+          ? Center(
+              child: Text(
+                'No habits found. Add one!',
+                style: TextStyle(color: context.colors.textMedium),
+              ),
+            )
           : ReorderableListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.fromLTRB(0, 8, 0, 100),
               itemCount: habits.length,
               // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
@@ -56,11 +66,17 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showEditorDialog(context, ref, null),
-        backgroundColor: context.colors.primary,
-        icon: Icon(Icons.add, color: context.colors.card),
-        label: Text('Add Habit', style: TextStyle(color: context.colors.onPrimary)),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: 16),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showEditorDialog(context, ref, null),
+          backgroundColor: context.colors.primary,
+          icon: Icon(Icons.add, color: context.colors.onPrimary),
+          label: Text(
+            'Add Habit',
+            style: TextStyle(color: context.colors.onPrimary),
+          ),
+        ),
       ),
     );
   }
@@ -81,16 +97,27 @@ class _HabitListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       key: key,
+      color: context.colors.card,
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         leading: Text(habit.icon, style: TextStyle(fontSize: 24)),
-        title: Text(habit.name, style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(_getTypeDescription(habit)),
+        title: Text(
+          habit.name,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: context.colors.textDark,
+          ),
+        ),
+        subtitle: Text(
+          _getTypeDescription(habit),
+          style: TextStyle(color: context.colors.textMedium),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               icon: Icon(Icons.edit_rounded, color: context.colors.primary),
+              tooltip: 'Edit habit',
               onPressed: () {
                 showDialog(
                   context: context,
@@ -100,14 +127,20 @@ class _HabitListTile extends ConsumerWidget {
             ),
             IconButton(
               icon: Icon(Icons.delete_outline_rounded, color: context.colors.red),
+              tooltip: 'Delete habit',
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: Text('Delete Habit?'),
-                    content: Text('Are you sure you want to delete this habit? History will be kept for past days, but it won\'t appear anymore.'),
+                    content: Text(
+                      'Are you sure you want to delete this habit? History will be kept for past days, but it won\'t appear anymore.',
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Cancel'),
+                      ),
                       TextButton(
                         onPressed: () {
                           ref.read(habitRepoProvider).deleteHabit(habit.id).then((_) {
@@ -116,14 +149,17 @@ class _HabitListTile extends ConsumerWidget {
                             Navigator.pop(ctx);
                           });
                         },
-                        child: Text('Delete', style: TextStyle(color: context.colors.red)),
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: context.colors.red),
+                        ),
                       ),
                     ],
                   ),
                 );
               },
             ),
-            SizedBox(width: 16),
+            SizedBox(width: 8),
             Icon(Icons.drag_handle_rounded, color: context.colors.textMedium),
           ],
         ),
@@ -134,7 +170,13 @@ class _HabitListTile extends ConsumerWidget {
   String _getTypeDescription(Habit h) {
     switch (h.type) {
       case HabitType.checkbox:
-        return 'Checkbox';
+        if (h.unit.isNotEmpty && h.target > 0) {
+          final t = h.target == h.target.roundToDouble()
+              ? h.target.toInt().toString()
+              : h.target.toString();
+          return 'Tap once · Goal: $t ${h.unit}';
+        }
+        return 'Tap once to complete';
       case HabitType.counter:
         return 'Counter (Target: ${h.target} ${h.unit})';
       case HabitType.autoSteps:
@@ -158,9 +200,10 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
   final _targetCtrl = TextEditingController();
   final _stepCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
-  
+
   String _selectedEmoji = '✅';
   HabitType _type = HabitType.checkbox;
+  bool _isWaterHabit = false;
 
   final _emojis = ['✅', '🧘', '😴', '🚶', '💧', '📚', '💊', '🍎', '🏃', '🏋️', '🚭', '🥦'];
 
@@ -169,6 +212,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
     super.initState();
     if (widget.habit != null) {
       final h = widget.habit!;
+      _isWaterHabit = h.id == 'water';
       _nameCtrl.text = h.name;
       _selectedEmoji = h.icon;
       _type = h.type;
@@ -190,24 +234,49 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
     super.dispose();
   }
 
+  void _syncWaterNameFromGoal() {
+    if (!_isWaterHabit) return;
+    final target = double.tryParse(_targetCtrl.text) ?? 3.0;
+    final unit = _unitCtrl.text.trim().isEmpty ? 'L' : _unitCtrl.text.trim();
+    final targetLabel = target == target.roundToDouble()
+        ? target.toInt().toString()
+        : target.toString();
+    _nameCtrl.text = 'Drink $targetLabel $unit of water';
+  }
+
   void _submit() {
-    final name = _nameCtrl.text.trim();
+    var name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
 
-    final target = double.tryParse(_targetCtrl.text) ?? 1.0;
+    var target = double.tryParse(_targetCtrl.text) ?? 1.0;
     final step = double.tryParse(_stepCtrl.text) ?? 1.0;
+    var unit = _unitCtrl.text.trim();
+
+    // Water: always checkbox with customizable daily goal
+    var type = _type;
+    if (_isWaterHabit) {
+      type = HabitType.checkbox;
+      if (unit.isEmpty) unit = 'L';
+      if (target <= 0) target = 3.0;
+      final targetLabel = target == target.roundToDouble()
+          ? target.toInt().toString()
+          : target.toString();
+      name = 'Drink $targetLabel $unit of water';
+    }
 
     final isNew = widget.habit == null;
-    final id = isNew ? DateTime.now().millisecondsSinceEpoch.toString() : widget.habit!.id;
+    final id = isNew
+        ? DateTime.now().millisecondsSinceEpoch.toString()
+        : widget.habit!.id;
 
     final updated = Habit(
       id: id,
       name: name,
       icon: _selectedEmoji,
-      type: _type,
+      type: type,
       target: target,
       step: step,
-      unit: _unitCtrl.text.trim(),
+      unit: unit,
       createdAt: isNew ? DateTime.now() : widget.habit!.createdAt,
       order: isNew ? ref.read(habitsProvider).length : widget.habit!.order,
     );
@@ -219,27 +288,67 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
     });
   }
 
+  bool get _showGoalFields =>
+      _isWaterHabit || _type != HabitType.checkbox;
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: context.colors.scaffoldBg,
+      backgroundColor: context.colors.card,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: Text(widget.habit == null ? 'Add Habit' : 'Edit Habit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+      title: Text(
+        widget.habit == null ? 'Add Habit' : 'Edit Habit',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          color: context.colors.textDark,
+        ),
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _nameCtrl,
-              decoration: InputDecoration(
-                labelText: 'Habit Name',
-                hintText: 'e.g. Meditate 10 min',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            if (!_isWaterHabit)
+              TextField(
+                controller: _nameCtrl,
+                style: TextStyle(color: context.colors.textDark),
+                decoration: InputDecoration(
+                  labelText: 'Habit Name',
+                  hintText: 'e.g. Meditate 10 min',
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? context.colors.scaffoldBg
+                      : context.colors.lavender,
+                  labelStyle: TextStyle(color: context.colors.textMedium),
+                  hintStyle: TextStyle(color: context.colors.textLight),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              )
+            else ...[
+              Text(
+                'Daily water goal',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.textMedium,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Tap once on Home to mark it done. Change how much you aim for below.',
+                style: TextStyle(fontSize: 13, color: context.colors.textLight),
+              ),
+            ],
+            SizedBox(height: 16),
+            Text(
+              'Emoji',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: context.colors.textMedium,
               ),
             ),
-            SizedBox(height: 16),
-            Text('Emoji', style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textMedium)),
             SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -251,8 +360,14 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                   child: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.card,
-                      border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
+                      color: isSelected
+                          ? context.colors.primary.withValues(alpha: 0.2)
+                          : context.colors.scaffoldBg,
+                      border: Border.all(
+                        color: isSelected
+                            ? context.colors.primary
+                            : context.colors.border,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(emoji, style: TextStyle(fontSize: 20)),
@@ -260,57 +375,127 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                 );
               }).toList(),
             ),
-            SizedBox(height: 20),
-            DropdownButtonFormField<HabitType>(
-              initialValue: _type,
-              decoration: InputDecoration(
-                labelText: 'Type',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            if (!_isWaterHabit) ...[
+              SizedBox(height: 20),
+              DropdownButtonFormField<HabitType>(
+                initialValue: _type,
+                dropdownColor: context.colors.card,
+                style: TextStyle(
+                  color: context.colors.textDark,
+                  fontSize: 14,
+                ),
+                iconEnabledColor: context.colors.textMedium,
+                decoration: InputDecoration(
+                  labelText: 'Type',
+                  labelStyle: TextStyle(color: context.colors.textMedium),
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? context.colors.scaffoldBg
+                      : context.colors.lavender,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: HabitType.checkbox,
+                    child: Text(
+                      'Checkbox (Tap once)',
+                      style: TextStyle(color: context.colors.textDark),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: HabitType.counter,
+                    child: Text(
+                      'Counter (+ / −)',
+                      style: TextStyle(color: context.colors.textDark),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: HabitType.autoSteps,
+                    child: Text(
+                      'Auto from Steps',
+                      style: TextStyle(color: context.colors.textDark),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: HabitType.autoSleep,
+                    child: Text(
+                      'Auto from Sleep',
+                      style: TextStyle(color: context.colors.textDark),
+                    ),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _type = val);
+                },
               ),
-              items: [
-                DropdownMenuItem(value: HabitType.checkbox, child: Text('Checkbox (Tick daily)')),
-                DropdownMenuItem(value: HabitType.counter, child: Text('Counter (Step-by-step)')),
-                DropdownMenuItem(value: HabitType.autoSteps, child: Text('Auto from Steps')),
-                DropdownMenuItem(value: HabitType.autoSleep, child: Text('Auto from Sleep')),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _type = val);
-              },
-            ),
-            if (_type != HabitType.checkbox) ...[
+            ],
+            if (_showGoalFields) ...[
               SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _targetCtrl,
+                      style: TextStyle(color: context.colors.textDark),
                       decoration: InputDecoration(
-                        labelText: 'Target',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        labelText: _isWaterHabit ? 'Amount' : 'Target',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) {
+                        if (_isWaterHabit) {
+                          setState(_syncWaterNameFromGoal);
+                        }
+                      },
                     ),
                   ),
                   SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _unitCtrl,
+                      style: TextStyle(color: context.colors.textDark),
                       decoration: InputDecoration(
-                        labelText: 'Unit (e.g. L)',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        labelText: _isWaterHabit ? 'Unit' : 'Unit (e.g. L)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      onChanged: (_) {
+                        if (_isWaterHabit) {
+                          setState(_syncWaterNameFromGoal);
+                        }
+                      },
                     ),
                   ),
                 ],
               ),
+              if (_isWaterHabit) ...[
+                SizedBox(height: 12),
+                Text(
+                  _nameCtrl.text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.primary,
+                  ),
+                ),
+              ],
             ],
-            if (_type == HabitType.counter) ...[
+            if (_type == HabitType.counter && !_isWaterHabit) ...[
               SizedBox(height: 16),
               TextField(
                 controller: _stepCtrl,
+                style: TextStyle(color: context.colors.textDark),
                 decoration: InputDecoration(
                   labelText: 'Increment Step (e.g. 0.25)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
               ),
@@ -321,14 +506,22 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: context.colors.textLight)),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: context.colors.textMedium,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         ElevatedButton(
           onPressed: _submit,
           style: ElevatedButton.styleFrom(
             backgroundColor: context.colors.primary,
-            foregroundColor: context.colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            foregroundColor: context.colors.onPrimary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           child: Text('Save'),
         ),

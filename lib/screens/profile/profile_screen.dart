@@ -140,6 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
+                    useRootNavigator: true,
                     backgroundColor: Colors.transparent,
                     builder: (ctx) => _EditProfileSheet(),
                   );
@@ -275,6 +276,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -350,43 +352,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showExportDataSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: context.colors.card,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Export Data (CSV)',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: context.colors.textDark,
+      builder: (ctx) => SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.card,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Export Data (CSV)',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textDark,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 16),
-            _ExportOptionTile(
-              title: 'Last 30 Days',
-              onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 30))),
-            ),
-            _ExportOptionTile(
-              title: 'Last 90 Days',
-              onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 90))),
-            ),
-            _ExportOptionTile(
-              title: 'All Time',
-              onTap: () => _handleExport(context, ref, null),
-            ),
-            SizedBox(height: 16),
-          ],
+              SizedBox(height: 16),
+              _ExportOptionTile(
+                title: 'Last 30 Days',
+                onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 30))),
+              ),
+              _ExportOptionTile(
+                title: 'Last 90 Days',
+                onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 90))),
+              ),
+              _ExportOptionTile(
+                title: 'All Time',
+                onTap: () => _handleExport(context, ref, null),
+              ),
+              SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -682,54 +687,57 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   void _showPickerOptions() {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: context.colors.card,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Profile Photo',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark),
-            ),
-            SizedBox(height: 16),
-            ListTile(
-              leading: Icon(Icons.camera_alt, color: context.colors.primary),
-              title: Text('Take a picture'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library, color: context.colors.primary),
-              title: Text('Choose from gallery'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-            if (_localPhotoPath != null && !_clearPhoto)
+      builder: (ctx) => SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.card,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(8, 24, 8, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Profile Photo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark),
+              ),
+              SizedBox(height: 16),
               ListTile(
-                leading: Icon(Icons.delete, color: context.colors.red),
-                title: Text('Remove photo', style: TextStyle(color: context.colors.red)),
-                onTap: () async {
+                leading: Icon(Icons.camera_alt, color: context.colors.primary),
+                title: Text('Take a picture'),
+                onTap: () {
                   Navigator.pop(ctx);
-                  if (_localPhotoPath != null) {
-                    final f = File(_localPhotoPath!);
-                    if (await f.exists()) await f.delete();
-                  }
-                  setState(() {
-                    _localPhotoPath = null;
-                    _clearPhoto = true;
-                  });
+                  _pickImage(ImageSource.camera);
                 },
               ),
-          ],
+              ListTile(
+                leading: Icon(Icons.photo_library, color: context.colors.primary),
+                title: Text('Choose from gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (_localPhotoPath != null && !_clearPhoto)
+                ListTile(
+                  leading: Icon(Icons.delete, color: context.colors.red),
+                  title: Text('Remove photo', style: TextStyle(color: context.colors.red)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    if (_localPhotoPath != null) {
+                      final f = File(_localPhotoPath!);
+                      if (await f.exists()) await f.delete();
+                    }
+                    setState(() {
+                      _localPhotoPath = null;
+                      _clearPhoto = true;
+                    });
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -738,6 +746,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
+    final fieldFill = Theme.of(context).brightness == Brightness.dark
+        ? context.colors.scaffoldBg
+        : context.colors.lavender;
     
     return Padding(
       padding: EdgeInsets.only(
@@ -748,185 +759,264 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
           color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: context.colors.border,
-                  borderRadius: BorderRadius.circular(2),
+        padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: context.colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Edit Profile',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: context.colors.textDark,
+              SizedBox(height: 20),
+              Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.textDark,
+                ),
               ),
-            ),
-            SizedBox(height: 20),
-            Center(
-              child: GestureDetector(
-                onTap: _showPickerOptions,
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.colors.lavender,
-                      ),
-                      child: ClipOval(
-                        child: _localPhotoPath != null && !_clearPhoto
-                            ? Image.file(
-                                File(_localPhotoPath!),
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                              )
-                            : Center(
-                                child: nameController.text.isNotEmpty
-                                    ? Text(
-                                        nameController.text[0].toUpperCase(),
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.w800,
-                                          color: context.colors.primary,
-                                        ),
-                                      )
-                                    : Icon(Icons.person, size: 40, color: context.colors.primary),
-                              ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(6),
+              SizedBox(height: 20),
+              Center(
+                child: GestureDetector(
+                  onTap: _showPickerOptions,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          color: context.colors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: context.colors.card, width: 2),
+                          color: context.colors.lavenderCard,
                         ),
-                        child: Icon(Icons.camera_alt, color: context.colors.onPrimary, size: 14),
+                        child: ClipOval(
+                          child: _localPhotoPath != null && !_clearPhoto
+                              ? Image.file(
+                                  File(_localPhotoPath!),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                )
+                              : Center(
+                                  child: nameController.text.isNotEmpty
+                                      ? Text(
+                                          nameController.text[0].toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w800,
+                                            color: context.colors.primary,
+                                          ),
+                                        )
+                                      : Icon(Icons.person, size: 40, color: context.colors.primary),
+                                ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                prefixIcon: Icon(Icons.person_rounded),
-              ),
-              onChanged: (v) => setState(() {}),
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: heightController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Height (cm)',
-                prefixIcon: Icon(Icons.height_rounded),
-              ),
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: targetController,
-              keyboardType:
-                  TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Target Weight (kg)',
-                prefixIcon: Icon(Icons.flag_rounded),
-              ),
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: caloriesController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Target Daily Calories',
-                prefixIcon: Icon(Icons.restaurant_rounded),
-              ),
-            ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: proteinController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Protein (g)',
-                      prefixIcon: Icon(Icons.fitness_center_rounded, size: 18),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: context.colors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: context.colors.card, width: 2),
+                          ),
+                          child: Icon(Icons.camera_alt, color: context.colors.onPrimary, size: 14),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: carbsController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Carbs (g)',
-                      prefixIcon: Icon(Icons.breakfast_dining_rounded, size: 18),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: fatController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Fat (g)',
-                      prefixIcon: Icon(Icons.water_drop_rounded, size: 18),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () {
-                  final updated = profile.copyWith(
-                    name: nameController.text,
-                    height: double.tryParse(heightController.text) ??
-                        profile.height,
-                    targetWeight: double.tryParse(targetController.text),
-                    targetCalories: int.tryParse(caloriesController.text) ?? 
-                        profile.targetCalories,
-                    targetProteinG: int.tryParse(proteinController.text) ?? profile.targetProteinG,
-                    targetCarbsG: int.tryParse(carbsController.text) ?? profile.targetCarbsG,
-                    targetFatG: int.tryParse(fatController.text) ?? profile.targetFatG,
-                    photoPath: _localPhotoPath,
-                    clearPhoto: _clearPhoto,
-                  );
-                  ref.read(profileProvider.notifier).updateProfile(updated);
-                  Navigator.of(context).pop();
-                },
-                child: Text('Save'),
               ),
-            ),
-            SizedBox(height: 8),
-          ],
+              SizedBox(height: 24),
+              _ProfileTextField(
+                label: 'Name',
+                controller: nameController,
+                fillColor: fieldFill,
+                prefixIcon: Icons.person_rounded,
+                onChanged: (v) => setState(() {}),
+              ),
+              SizedBox(height: 16),
+              _ProfileTextField(
+                label: 'Height (cm)',
+                controller: heightController,
+                fillColor: fieldFill,
+                prefixIcon: Icons.height_rounded,
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 16),
+              _ProfileTextField(
+                label: 'Target Weight (kg)',
+                controller: targetController,
+                fillColor: fieldFill,
+                prefixIcon: Icons.flag_rounded,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+              ),
+              SizedBox(height: 16),
+              _ProfileTextField(
+                label: 'Target Daily Calories',
+                controller: caloriesController,
+                fillColor: fieldFill,
+                prefixIcon: Icons.restaurant_rounded,
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Daily macros (g)',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.textMedium,
+                ),
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ProfileTextField(
+                      label: 'Protein',
+                      controller: proteinController,
+                      fillColor: fieldFill,
+                      prefixIcon: Icons.fitness_center_rounded,
+                      keyboardType: TextInputType.number,
+                      compact: true,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _ProfileTextField(
+                      label: 'Carbs',
+                      controller: carbsController,
+                      fillColor: fieldFill,
+                      prefixIcon: Icons.breakfast_dining_rounded,
+                      keyboardType: TextInputType.number,
+                      compact: true,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _ProfileTextField(
+                      label: 'Fat',
+                      controller: fatController,
+                      fillColor: fieldFill,
+                      prefixIcon: Icons.water_drop_rounded,
+                      keyboardType: TextInputType.number,
+                      compact: true,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final updated = profile.copyWith(
+                      name: nameController.text,
+                      height: double.tryParse(heightController.text) ??
+                          profile.height,
+                      targetWeight: double.tryParse(targetController.text),
+                      targetCalories: int.tryParse(caloriesController.text) ?? 
+                          profile.targetCalories,
+                      targetProteinG: int.tryParse(proteinController.text) ?? profile.targetProteinG,
+                      targetCarbsG: int.tryParse(carbsController.text) ?? profile.targetCarbsG,
+                      targetFatG: int.tryParse(fatController.text) ?? profile.targetFatG,
+                      photoPath: _localPhotoPath,
+                      clearPhoto: _clearPhoto,
+                    );
+                    ref.read(profileProvider.notifier).updateProfile(updated);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Save'),
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileTextField extends StatelessWidget {
+  const _ProfileTextField({
+    required this.label,
+    required this.controller,
+    required this.fillColor,
+    required this.prefixIcon,
+    this.keyboardType,
+    this.onChanged,
+    this.compact = false,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final Color fillColor;
+  final IconData prefixIcon;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: context.colors.textMedium,
+          ),
+        ),
+        SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: context.colors.textDark,
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: fillColor,
+            prefixIcon: Icon(
+              prefixIcon,
+              size: compact ? 18 : 22,
+              color: context.colors.primary,
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: compact ? 14 : 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: context.colors.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: context.colors.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

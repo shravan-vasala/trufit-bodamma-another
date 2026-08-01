@@ -264,10 +264,22 @@ class HealthConnectService {
     }
 
     final steps = await getTodaySteps();
-    if (steps != null && steps > 0) {
+    // A successful HC read can be 0 (e.g. early morning) — still persist it.
+    if (steps != null) {
       await _syncStepValueAndHabit(dateStr, steps, dailyLogRepo, habitRepo, true);
       return steps;
     }
     return existing?.steps;
+  }
+
+  /// Try reading today's steps to verify permission.
+  /// [hasPermissions] is unreliable on Android Health Connect after process death.
+  Future<bool> canReadSteps() async {
+    try {
+      final steps = await getTodaySteps();
+      return steps != null;
+    } catch (_) {
+      return false;
+    }
   }
 }

@@ -20,7 +20,9 @@ The app is built using a modern Riverpod architecture:
 ## Data Source of Truth Rules
 
 To prevent state desyncs across the app, follow these data rules:
-- **Workout Completions:** `ExerciseLog` is the single source of truth for all exercise and workout completions. Do NOT use separate "completion" boxes or booleans in the `WorkoutPlan` models. If an exercise is logged in `ExerciseLog` for a given date, it is considered completed.
+- **Exercise / section completion:** `ExerciseLog` is the source of truth. A section is complete when every exercise in it has a log for that date. Do NOT store completion booleans on `WorkoutPlan` models.
+- **Day-level Finish flag:** `DailyLog.workoutCompleted` is set when the user taps Finish (full or early), and is auto-set when all sections are fully logged. Use it together with logs for "day done" (e.g. finish-early).
+- **Rest days:** Planned rest (Sunday or empty sections) counts as complete for scoring and day-done checks via `WorkoutCompletion` helpers in `lib/utils/workout_completion.dart`.
 
 ## Local CI/CD (Building and Deploying)
 

@@ -131,6 +131,20 @@ void main() {
     expect(fullScore.workoutsScore, 30.0); // Max score for workouts is 30
   });
 
+  test('Rest day receives full workout score without logs', () async {
+    // Override selected date to Sunday
+    final sundayContainer = ProviderContainer(
+      parent: container,
+      overrides: [
+        selectedDateProvider.overrideWith((ref) => DateTime(2023, 10, 1)), // Sunday
+      ],
+    );
+
+    final score = sundayContainer.read(dailyScoreProvider);
+    expect(score.workoutsScore, 30.0);
+    sundayContainer.dispose();
+  });
+
   test('Meal score uses slot.type not slot.name for completion', () async {
     final mealRepo = container.read(mealRepoProvider);
     

@@ -23,8 +23,8 @@ class MealDetailScreen extends ConsumerWidget {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
     final mealPlan = ref.watch(mealPlanProvider);
-    final planName = mealPlan?.planName ?? 'Meals Plan';
-    final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
+    final planName = mealPlan?.planName ?? 'Daily Meal Plan';
+    final title = planName;
     
     final targetCalories = profile.targetCalories;
     final isOverTarget = dailyLog.totalCalories > targetCalories;

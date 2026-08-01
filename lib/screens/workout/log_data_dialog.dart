@@ -6,6 +6,7 @@ import '../../providers/app_providers.dart';
 import '../../models/workout_plan.dart';
 import '../../models/exercise_log.dart';
 import '../../utils/pr_calculator.dart';
+import '../../utils/workout_completion.dart';
 import '../../models/exercise_pr.dart';
 
 class LogDataDialog extends ConsumerStatefulWidget {
@@ -256,7 +257,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     );
   }
 
-  void _save() {
+  Future<void> _save() async {
     final dateStr = ref.read(dateStringProvider);
     final sets = <SetLog>[];
     for (int i = 0; i < widget.exercise.setCount; i++) {
@@ -271,12 +272,26 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
       sets: sets,
     );
     final repo = ref.read(exerciseLogRepoProvider);
-    repo.saveLog(log);
+    await repo.saveLog(log);
     
     // Check for PRs
     final prResult = PrCalculator.calculateNewPr(log, _currentPr);
     if (prResult.hasAnyNewPr) {
-      repo.savePr(prResult.newPr);
+      await repo.savePr(prResult.newPr);
+    }
+
+    // Auto-sync day flag when every section is fully logged
+    final plan = ref.read(workoutPlanProvider);
+    if (plan != null && plan.days.isNotEmpty) {
+      final date = DateTime.parse(dateStr);
+      final day = WorkoutCompletion.resolveWorkoutDay(plan, date);
+      if (!WorkoutCompletion.isRestDay(day, date) &&
+          WorkoutCompletion.isTrainingDayCompleteWithRepo(dateStr, day, repo)) {
+        final dailyLog = ref.read(dailyLogProvider);
+        if (!dailyLog.workoutCompleted) {
+          await ref.read(dailyLogProvider.notifier).markWorkoutCompleted(day.dayId);
+        }
+      }
     }
     
     // Trigger UI updates
@@ -292,6 +307,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
           );
     }
     
+    if (!mounted) return;
     Navigator.of(context).pop();
 
     String msg = 'Logged ${widget.exercise.name}';
