@@ -65,6 +65,12 @@ class BackupService {
         'boxes': <String, dynamic>{},
       };
       
+      final prefs = await SharedPreferences.getInstance();
+      final reminderConfigJson = prefs.getString('reminder_config');
+      if (reminderConfigJson != null) {
+        manifestData['reminder_config'] = reminderConfigJson;
+      }
+      
       final manifestBoxes = <String, Map<String, dynamic>>{};
 
       // 1. Read all Hive boxes into the manifest
@@ -308,6 +314,11 @@ class BackupService {
       }
 
       boxes = SchemaMigrationService.runMigrationsForRestore(boxes, manifestVersion);
+
+      if (manifestData.containsKey('reminder_config')) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('reminder_config', manifestData['reminder_config'] as String);
+      }
 
       // 0. Create pre-restore safety net
       final backupPath = await createBackup();
