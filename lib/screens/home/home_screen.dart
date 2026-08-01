@@ -54,7 +54,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     ref.invalidate(dailyLogProvider);
     ref.invalidate(habitCompletionsProvider);
 
-    ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
+    // Coach note is date-scoped — only auto-refresh when viewing today
+    final selectedDate = ref.read(dateStringProvider);
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    if (selectedDate == todayStr) {
+      ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
+    }
 
     final available = await hcService.isAvailable();
     if (!available) return;

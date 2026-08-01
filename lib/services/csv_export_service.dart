@@ -75,7 +75,7 @@ class CsvExportService {
   }
 
   Future<String?> _exportDailyLogs(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('daily_log');
+    final box = await Hive.openBox<String>('daily_logs');
     final rows = <List<dynamic>>[];
     
     // Headers
@@ -137,7 +137,7 @@ class CsvExportService {
 
   Future<String?> _exportHabitCompletions(DateTime? startDate) async {
     final box = await Hive.openBox<String>('habit_completions');
-    final habitBox = await Hive.openBox<String>('habits');
+    final habitBox = await Hive.openBox<String>('habit_config');
     
     final habits = <String, Habit>{};
     for (final hKey in habitBox.keys) {

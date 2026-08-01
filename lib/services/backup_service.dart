@@ -82,10 +82,10 @@ class BackupService {
 
       // 1. Read all Hive boxes into the manifest
       for (final boxName in _boxesToBackup) {
-        final box = await Hive.openBox<String>(boxName);
+        final box = await _openHiveBox(boxName);
         final boxData = <String, dynamic>{};
         for (final key in box.keys) {
-          String valStr = box.get(key) ?? '';
+          String valStr = box.get(key)?.toString() ?? '';
           
           // Ensure geminiApiKey is never backed up
           if (boxName == 'user_profile' && key == 'profile') {
@@ -134,6 +134,14 @@ class BackupService {
             }
           } catch (_) {}
         }
+      }
+
+      // Meal slot photos (AI / camera logs) live in daily_meal_logs JSON
+      if (manifestBoxes.containsKey('daily_meal_logs')) {
+        _collectMealLogPhotoPaths(
+          manifestBoxes['daily_meal_logs']!,
+          photosToBackup,
+        );
       }
 
       // 3. Create the Archive
@@ -338,17 +346,28 @@ class BackupService {
         await File(backupPath).copy(safetyNetFile.path);
       }
 
-      // 1. Overwrite all Hive boxes
+      // 1. Wipe every known box first — older backups may omit boxes and would
+      // otherwise leave stale local data mixed with restored data.
+      final boxesToWipe = <String>{
+        ..._boxesToBackup,
+        ...boxes.keys.map((k) => k.toString()),
+      };
+      for (final boxName in boxesToWipe) {
+        final box = await _openHiveBox(boxName);
+        await box.clear();
+      }
+
+      // 2. Apply backup contents
       for (final boxName in boxes.keys) {
-        final box = await Hive.openBox<String>(boxName);
-        await box.clear(); // Wipe current data
-        final Map<String, dynamic> boxData = boxes[boxName];
+        final box = await _openHiveBox(boxName.toString());
+        final Map<String, dynamic> boxData =
+            Map<String, dynamic>.from(boxes[boxName] as Map);
         for (final entry in boxData.entries) {
           await box.put(entry.key, entry.value.toString());
         }
       }
 
-      // 2. Restore photos
+      // 3. Restore photos
       int failedPhotosCount = 0;
       final docDir = await getApplicationDocumentsDirectory();
       final oldPathMap = <String, String>{};
@@ -376,11 +395,11 @@ class BackupService {
 
       // Fix paths in media_metadata
       if (boxes.containsKey('media_metadata')) {
-        final mediaBox = await Hive.openBox<String>('media_metadata');
+        final mediaBox = await _openHiveBox('media_metadata');
         final currentKeys = mediaBox.keys.toList();
         for (final key in currentKeys) {
           if (key.toString().startsWith('photos_')) {
-            final jsonStr = mediaBox.get(key);
+            final jsonStr = mediaBox.get(key)?.toString();
             if (jsonStr != null) {
               final List<dynamic> oldPaths = jsonDecode(jsonStr);
               final List<String> newPaths = [];
@@ -409,7 +428,7 @@ class BackupService {
 
       // Also fix paths in scanned_photo_meals
       if (boxes.containsKey('scanned_photo_meals')) {
-        final mealBox = await Hive.openBox<String>('scanned_photo_meals');
+        final mealBox = await _openHiveBox('scanned_photo_meals');
         final keys = mealBox.keys.toList();
         for (final key in keys) {
           final oldPath = key.toString();
@@ -424,8 +443,8 @@ class BackupService {
 
       // Fix profile photo path
       if (boxes.containsKey('user_profile')) {
-        final profileBox = await Hive.openBox<String>('user_profile');
-        final profileJsonStr = profileBox.get('profile');
+        final profileBox = await _openHiveBox('user_profile');
+        final profileJsonStr = profileBox.get('profile')?.toString();
         if (profileJsonStr != null) {
           try {
             final Map<String, dynamic> profileMap = jsonDecode(profileJsonStr);
@@ -436,6 +455,22 @@ class BackupService {
                 profileMap['photoPath'] = oldPathMap[fileName];
                 await profileBox.put('profile', jsonEncode(profileMap));
               }
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Fix meal slot photo paths in daily_meal_logs
+      if (boxes.containsKey('daily_meal_logs')) {
+        final mealLogBox = await _openHiveBox('daily_meal_logs');
+        final keys = mealLogBox.keys.toList();
+        for (final key in keys) {
+          final jsonStr = mealLogBox.get(key)?.toString();
+          if (jsonStr == null) continue;
+          try {
+            final Map<String, dynamic> logMap = jsonDecode(jsonStr);
+            if (_rewriteMealLogPhotoPaths(logMap, oldPathMap)) {
+              await mealLogBox.put(key, jsonEncode(logMap));
             }
           } catch (_) {}
         }
@@ -466,7 +501,7 @@ class BackupService {
 
       final manifest = <String, Map<String, dynamic>>{};
       for (final boxName in _boxesToBackup) {
-        final box = await Hive.openBox<String>(boxName);
+        final box = await _openHiveBox(boxName);
         final boxData = <String, dynamic>{};
         for (final key in box.keys) {
           boxData[key.toString()] = box.get(key);
@@ -505,6 +540,74 @@ class BackupService {
       await prefs.setString('last_auto_backup_display', DateFormat('MMM dd, yyyy · HH:mm').format(now));
     } catch (e) {
       debugPrint('Auto-backup error: $e');
+    }
+  }
+
+  /// Collects `photoPath` values from daily meal log JSON (customSlots + legacy slots).
+  static void _collectMealLogPhotoPaths(
+    Map<String, dynamic> mealLogsBox,
+    Set<String> photosToBackup,
+  ) {
+    for (final entry in mealLogsBox.values) {
+      try {
+        final logMap = jsonDecode(entry.toString()) as Map<String, dynamic>;
+        _forEachMealSlot(logMap, (slot) {
+          final path = slot['photoPath'];
+          if (path is String && path.isNotEmpty) {
+            photosToBackup.add(path);
+          }
+        });
+      } catch (_) {}
+    }
+  }
+
+  /// Opens a Hive box for backup/restore. Must use [Box]<String> (not untyped
+  /// [Hive.box]) — untyped access is Box<dynamic> and throws if the box was
+  /// already opened as Box<String>.
+  static Future<Box<String>> _openHiveBox(String boxName) async {
+    if (Hive.isBoxOpen(boxName)) {
+      return Hive.box<String>(boxName);
+    }
+    try {
+      return await Hive.openBox<String>(boxName);
+    } catch (_) {
+      return Hive.box<String>(boxName);
+    }
+  }
+
+  /// Rewrites meal slot `photoPath`s using [oldPathMap] (basename → restored path).
+  /// Returns true if any path was updated.
+  static bool _rewriteMealLogPhotoPaths(
+    Map<String, dynamic> logMap,
+    Map<String, String> oldPathMap,
+  ) {
+    var changed = false;
+    _forEachMealSlot(logMap, (slot) {
+      final path = slot['photoPath'];
+      if (path is! String || path.isEmpty) return;
+      final fileName = File(path).uri.pathSegments.last;
+      final newPath = oldPathMap[fileName];
+      if (newPath != null && newPath != path) {
+        slot['photoPath'] = newPath;
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  static void _forEachMealSlot(
+    Map<String, dynamic> logMap,
+    void Function(Map<String, dynamic> slot) onSlot,
+  ) {
+    for (final legacy in const ['breakfast', 'lunch', 'snack', 'dinner']) {
+      final slot = logMap[legacy];
+      if (slot is Map<String, dynamic>) onSlot(slot);
+    }
+    final custom = logMap['customSlots'];
+    if (custom is Map) {
+      for (final value in custom.values) {
+        if (value is Map<String, dynamic>) onSlot(value);
+      }
     }
   }
 }

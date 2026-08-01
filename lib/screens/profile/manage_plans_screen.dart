@@ -54,15 +54,23 @@ class ManagePlansScreen extends ConsumerWidget {
                           items: workoutRepo.getPlanKeys().map((k) => DropdownMenuItem(value: k, child: Text(k, style: TextStyle(fontSize: 14)))).toList(),
                           onChanged: (val) {
                             if (val != null) {
-                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(activeWorkoutPlan: val));
+                              ref
+                                  .read(profileProvider.notifier)
+                                  .updateProfile(
+                                    profile.copyWith(activeWorkoutPlan: val),
+                                  );
                             }
                           },
                         ),
                         if (profile.planStartDate != null)
                           TextButton(
                             onPressed: () {
-                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(clearPlanStart: true, currentPhaseWeek: 1));
-                              ref.read(profileProvider.notifier).updateProfile(profile.copyWith(clearPlanStart: true, currentPhaseWeek: 1));
+                              ref.read(profileProvider.notifier).updateProfile(
+                                    profile.copyWith(
+                                      clearPlanStart: true,
+                                      currentPhaseWeek: 1,
+                                    ),
+                                  );
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
@@ -87,7 +95,11 @@ class ManagePlansScreen extends ConsumerWidget {
                           items: mealRepo.getPlanKeys().map((k) => DropdownMenuItem(value: k, child: Text(k, style: TextStyle(fontSize: 14)))).toList(),
                           onChanged: (val) {
                             if (val != null) {
-                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(activeMealPlan: val));
+                              ref
+                                  .read(profileProvider.notifier)
+                                  .updateProfile(
+                                    profile.copyWith(activeMealPlan: val),
+                                  );
                             }
                           },
                         ),
@@ -133,7 +145,9 @@ class _MealSlotsEditorState extends ConsumerState<_MealSlotsEditor> {
   void _deleteSlot(Map<String, dynamic> slot) {
     final profile = ref.read(profileProvider);
     final updatedSlots = profile.customMealSlots.where((s) => s['id'] != slot['id']).toList();
-    ref.read(profileRepoProvider).saveProfile(profile.copyWith(customMealSlots: updatedSlots));
+    ref.read(profileProvider.notifier).updateProfile(
+          profile.copyWith(customMealSlots: updatedSlots),
+        );
   }
 
   void _editSlot(Map<String, dynamic> slot, int index) {
@@ -189,7 +203,9 @@ class _MealSlotsEditorState extends ConsumerState<_MealSlotsEditor> {
                   'name': nameCtrl.text.trim(),
                   'emoji': selectedEmoji,
                 };
-                ref.read(profileRepoProvider).saveProfile(profile.copyWith(customMealSlots: updatedSlots));
+                ref.read(profileProvider.notifier).updateProfile(
+                      profile.copyWith(customMealSlots: updatedSlots),
+                    );
                 Navigator.pop(ctx);
               },
               child: Text('Save'),

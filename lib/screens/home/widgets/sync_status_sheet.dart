@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import '../../../services/health_connect_service.dart';
 import '../steps_entry_dialog.dart';
 import '../../../widgets/async_error_card.dart';
 
@@ -71,7 +72,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                         ),
                       ),
                       Text(
-                        'via Samsung Health',
+                        'via Health Connect',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -136,33 +137,59 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                   final hcService = ref.read(healthConnectServiceProvider);
                   final dailyLogRepo = ref.read(dailyLogRepoProvider);
                   final habitRepo = ref.read(habitRepoProvider);
-                  
+                  final prefs = ref.read(sharedPreferencesProvider);
+
                   try {
                     final isAvail = await hcService.isAvailable();
                     if (!isAvail) {
                       setState(() {
-                        _errorMessage = 'Health Connect is not available on this device.';
+                        _errorMessage =
+                            'Health Connect is not available on this device.';
                         _errorAction = 'Install Health Connect';
                       });
                       return;
                     }
-                    
-                    final isAuth = await hcService.isAuthorized();
-                    if (!isAuth) {
+
+                    // hasPermissions / isAuthorized is flaky after process death.
+                    // Trust prior successful sync, then probe a real steps read.
+                    final everConnected =
+                        prefs.getBool('hc_connected') ?? false;
+                    var canSync =
+                        everConnected || await hcService.isAuthorized();
+                    if (!canSync) {
+                      canSync = await hcService.canReadSteps();
+                      if (canSync) {
+                        await prefs.setBool('hc_connected', true);
+                      }
+                    }
+
+                    if (!canSync) {
                       setState(() {
-                        _errorMessage = 'Missing permissions to read steps.';
+                        _errorMessage =
+                            'Missing permissions to read steps.';
                         _errorAction = 'Grant Permission';
                       });
                       return;
                     }
 
-                    await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+                    final steps =
+                        await hcService.syncTodayAndAutoCompleteHabit(
+                      dailyLogRepo,
+                      habitRepo,
+                    );
+                    if (steps != null) {
+                      await prefs.setBool('hc_connected', true);
+                      ref.read(stepsSourceProvider.notifier).state =
+                          StepsSource.healthConnect;
+                    }
+
                     ref.invalidate(dailyLogProvider);
                     ref.invalidate(habitCompletionsProvider);
                     if (context.mounted) Navigator.of(context).pop();
                   } catch (e) {
                     setState(() {
-                      _errorMessage = 'An unexpected error occurred during sync.';
+                      _errorMessage =
+                          'An unexpected error occurred during sync.';
                       _errorAction = null;
                     });
                   }

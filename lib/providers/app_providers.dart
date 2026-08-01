@@ -123,7 +123,10 @@ final stepsSourceProvider = StateProvider<StepsSource>((ref) => StepsSource.none
 // ── Workout Providers ──
 
 final workoutPlanProvider = Provider<WorkoutPlan?>((ref) {
-  return ref.watch(workoutRepoProvider).getActivePlan();
+  final repo = ref.watch(workoutRepoProvider);
+  final activePlanId =
+      ref.watch(profileProvider.select((p) => p.activeWorkoutPlan));
+  return repo.getActivePlan(preferredKey: activePlanId ?? 'beginner_plan');
 });
 
 final workoutDayProvider = Provider.family<WorkoutDay?, String>((ref, dayId) {
@@ -411,23 +414,39 @@ final dailyMealLogsRangeProvider =
 // ── Coach Notes ──
 class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
   final Ref _ref;
+  final String dateStr;
 
-  CoachNoteNotifier(this._ref) : super(AsyncValue.loading()) {
-    // Auto-fetch on first build if no cache exists
-    final dateStr = _ref.read(dateStringProvider);
+  CoachNoteNotifier(this._ref, this.dateStr) : super(const AsyncValue.loading()) {
+    _loadForDate();
+  }
+
+  Future<void> _loadForDate() async {
     final repo = _ref.read(coachNoteRepoProvider);
     final cached = repo.getNote(dateStr);
     if (cached != null) {
-      state = AsyncValue.data(cached);
-    } else {
-      fetchNote();
+      if (mounted) state = AsyncValue.data(cached);
+      return;
+    }
+
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (dateStr == todayStr) {
+      await fetchNote();
+      return;
+    }
+
+    // Past/future days: don't auto-call Gemini while flipping the calendar.
+    if (mounted) {
+      state = AsyncValue.data(CoachNote(
+        date: dateStr,
+        note: 'No coach note saved for this day yet.',
+        isAi: false,
+      ));
     }
   }
 
   Future<void> fetchNote({bool force = false}) async {
-    final dateStr = _ref.read(dateStringProvider);
     final repo = _ref.read(coachNoteRepoProvider);
-    
+
     if (!force) {
       final cached = repo.getNote(dateStr);
       if (cached != null) {
@@ -435,16 +454,16 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
         return;
       }
     }
-    
-    state = AsyncValue.loading();
+
+    state = const AsyncValue.loading();
     try {
       final coachService = _ref.read(coachServiceProvider);
       final profile = _ref.read(profileProvider);
       final dailyLog = _ref.read(dailyLogProvider);
       final dailyLogRepo = _ref.read(dailyLogRepoProvider);
       final habitRepo = _ref.read(habitRepoProvider);
-      
-      // Calculate today's habits
+
+      // Habits for the selected date
       final habits = _ref.read(habitsProvider);
       final completions = _ref.read(habitCompletionsProvider);
       int habitsDone = 0;
@@ -452,8 +471,8 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
         if (isHabitCompleted(h, completions, dailyLog)) habitsDone++;
       }
 
-      // Calculate yesterday's habits
-      final yesterday = DateTime.parse(dateStr).subtract(Duration(days: 1));
+      // Habits for the day before the selected date
+      final yesterday = DateTime.parse(dateStr).subtract(const Duration(days: 1));
       final yesterdayStr = DateFormat('yyyy-MM-dd').format(yesterday);
       final yCompletions = habitRepo.getCompletions(yesterdayStr);
       final yLog = dailyLogRepo.getLog(yesterdayStr) ?? DailyLog(date: yesterdayStr);
@@ -463,10 +482,10 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       }
       final yesterdayHabitRate = habits.isEmpty ? 0.0 : yHabitsDone / habits.length;
 
-      // Calculate weight trend (7 days)
+      // Weight trend relative to selected date
       String weightTrend = 'stable';
       final todayWeight = dailyLog.weight ?? profile.targetWeight ?? 0.0;
-      final weekAgo = DateTime.parse(dateStr).subtract(Duration(days: 7));
+      final weekAgo = DateTime.parse(dateStr).subtract(const Duration(days: 7));
       final weekAgoStr = DateFormat('yyyy-MM-dd').format(weekAgo);
       final weekAgoLog = dailyLogRepo.getLog(weekAgoStr);
       final pastWeight = weekAgoLog?.weight ?? profile.targetWeight ?? 0.0;
@@ -476,7 +495,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
         weightTrend = 'down';
       }
 
-      // Calculate workouts
+      // Workouts for the selected date
       final workoutPlan = _ref.read(workoutPlanProvider);
       int workoutsTotal = 0;
       int workoutsDone = 0;
@@ -488,27 +507,30 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
         final isSunday = weekday == DateTime.sunday;
         final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlan.days.length - 1);
         final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
-        final day = workoutPlan.days.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlan.days[dayIndex]);
-        
+        final day = workoutPlan.days.firstWhere(
+          (d) => d.dayId == dayIdTarget,
+          orElse: () => workoutPlan.days[dayIndex],
+        );
+
         isRestDay = (isSunday || day.sections.isEmpty);
         workoutsTotal = isRestDay ? 1 : day.sections.length;
-        
+
         if (isRestDay) {
           if (dailyLog.workoutCompleted) workoutsDone = 1;
-          
-          // Calculate days since last workout
+
           DateTime checkDate = yesterday;
           while (daysSinceLastWorkout < 14) {
             final checkStr = DateFormat('yyyy-MM-dd').format(checkDate);
             final cLog = dailyLogRepo.getLog(checkStr);
             if (cLog != null && cLog.workoutCompleted) break;
             daysSinceLastWorkout++;
-            checkDate = checkDate.subtract(Duration(days: 1));
+            checkDate = checkDate.subtract(const Duration(days: 1));
           }
         } else {
           final logRepo = _ref.read(exerciseLogRepoProvider);
           for (final sec in day.sections) {
-            if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name))) {
+            if (sec.exercises.isNotEmpty &&
+                sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name))) {
               workoutsDone++;
             }
           }
@@ -516,25 +538,26 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       } else {
         isRestDay = true;
       }
-      
-      // Calculate calories
+
       final mealLog = _ref.read(dailyMealLogProvider);
 
-      final noteStr = await coachService.generateNote(
-        userName: profile.name,
-        steps: dailyLog.steps ?? 0,
-        sleep: dailyLog.sleepHours ?? 0.0,
-        habitsDone: habitsDone,
-        habitsTotal: habits.length,
-        calories: mealLog.totalCalories,
-        workoutsDone: workoutsDone,
-        workoutsTotal: workoutsTotal,
-        yesterdayHabitRate: yesterdayHabitRate,
-        weightTrend: weightTrend,
-        isRestDay: isRestDay,
-        daysSinceLastWorkout: daysSinceLastWorkout,
-      ).timeout(Duration(seconds: 15));
-      
+      final noteStr = await coachService
+          .generateNote(
+            userName: profile.name,
+            steps: dailyLog.steps ?? 0,
+            sleep: dailyLog.sleepHours ?? 0.0,
+            habitsDone: habitsDone,
+            habitsTotal: habits.length,
+            calories: mealLog.totalCalories,
+            workoutsDone: workoutsDone,
+            workoutsTotal: workoutsTotal,
+            yesterdayHabitRate: yesterdayHabitRate,
+            weightTrend: weightTrend,
+            isRestDay: isRestDay,
+            daysSinceLastWorkout: daysSinceLastWorkout,
+          )
+          .timeout(const Duration(seconds: 15));
+
       final isAi = coachService.apiKey != null && coachService.apiKey!.isNotEmpty;
       final newNote = CoachNote(date: dateStr, note: noteStr, isAi: isAi);
       await repo.saveNote(newNote);
@@ -550,7 +573,9 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
   }
 }
 
-final coachNoteProvider = StateNotifierProvider<CoachNoteNotifier, AsyncValue<CoachNote>>((ref) {
-  return CoachNoteNotifier(ref);
+final coachNoteProvider =
+    StateNotifierProvider<CoachNoteNotifier, AsyncValue<CoachNote>>((ref) {
+  final dateStr = ref.watch(dateStringProvider);
+  return CoachNoteNotifier(ref, dateStr);
 });
 

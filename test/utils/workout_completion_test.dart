@@ -76,7 +76,7 @@ void main() {
     );
   });
 
-  test('Finish-early counts as day done even with incomplete logs', () {
+  test('Finish-early / skip via DailyLog.workoutCompleted counts as day done', () {
     bool hasLog(String date, String name) => false;
 
     expect(

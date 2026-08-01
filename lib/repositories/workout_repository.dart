@@ -30,10 +30,22 @@ class WorkoutRepository {
     }).toList();
   }
 
-  WorkoutPlan? getActivePlan() {
-    if (_planBox.isEmpty) return null;
-    final jsonStr = _planBox.values.first;
+  WorkoutPlan? getPlan(String key) {
+    final jsonStr = _planBox.get(key);
+    if (jsonStr == null) return null;
     return WorkoutPlan.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+  }
+
+  /// Resolves the plan for [preferredKey], falling back to `beginner_plan`
+  /// then the first stored plan (same pattern as meal plans).
+  WorkoutPlan? getActivePlan({String? preferredKey}) {
+    if (_planBox.isEmpty) return null;
+    if (preferredKey != null) {
+      final preferred = getPlan(preferredKey);
+      if (preferred != null) return preferred;
+    }
+    return getPlan('beginner_plan') ??
+        getPlan(_planBox.keys.first as String);
   }
 
   WorkoutDay? getWorkoutDay(String dayId) {

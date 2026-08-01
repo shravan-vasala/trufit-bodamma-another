@@ -45,7 +45,7 @@ class HealthConnectService {
     }
   }
 
-  /// Check if we already have STEPS read permission.
+  /// Check if we already have STEPS + SLEEP_SESSION read permission.
   Future<bool> isAuthorized() async {
     try {
       await _ensureConfigured();
@@ -57,7 +57,7 @@ class HealthConnectService {
     }
   }
 
-  /// Request STEPS read permission from Health Connect.
+  /// Request STEPS + SLEEP_SESSION read permission from Health Connect.
   Future<bool> requestPermission() async {
     try {
       await _ensureConfigured();

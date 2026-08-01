@@ -265,7 +265,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
               ),
               SizedBox(height: 4),
               Text(
-                'from Samsung Health',
+                'from Health Connect',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
@@ -285,7 +285,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
     if (steps != null) {
       stepsSubtitle = '$steps steps';
       if (stepsSource == 'healthConnect') {
-        sourceHint = 'Synced via Samsung Health';
+        sourceHint = 'Synced via Health Connect';
       } else if (stepsSource == 'manual') {
         sourceHint = 'manual';
       }
@@ -379,7 +379,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                 sourceHint,
                 style: TextStyle(
                   fontSize: 10,
-                  color: sourceHint == 'Synced via Samsung Health' || sourceHint == 'Synced'
+                  color: sourceHint == 'Synced via Health Connect' || sourceHint == 'Synced'
                       ? context.colors.green
                       : context.colors.textLight,
                 ),

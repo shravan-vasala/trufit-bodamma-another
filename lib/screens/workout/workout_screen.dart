@@ -372,8 +372,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              final dateStr = ref.read(dateStringProvider);
-              ref.read(workoutRepoProvider).finishWorkout(dateStr, dayId);
+              _persistWorkoutFinished(ref, dayId);
               context.go('/home');
             },
             child: Text('Skip Workout'),
@@ -383,10 +382,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     );
   }
 
-  void _executeFinish(BuildContext context, WidgetRef ref, String dayId) {
+  void _persistWorkoutFinished(WidgetRef ref, String dayId) {
     final dateStr = ref.read(dateStringProvider);
     ref.read(workoutRepoProvider).finishWorkout(dateStr, dayId);
     ref.read(dailyLogProvider.notifier).markWorkoutCompleted(dayId);
+  }
+
+  void _executeFinish(BuildContext context, WidgetRef ref, String dayId) {
+    _persistWorkoutFinished(ref, dayId);
 
     showDialog(
       context: context,

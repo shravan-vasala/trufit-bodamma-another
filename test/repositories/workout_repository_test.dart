@@ -32,4 +32,27 @@ void main() {
 
     expect(repository.isWorkoutFinished(date, dayId), isTrue);
   });
+
+  test('getActivePlan respects preferredKey over insertion order', () async {
+    await repository.init().catchError((_) {});
+
+    await repository.savePlanJson(
+      'plan_a',
+      '{"planName":"Plan A","days":[]}',
+    );
+    await repository.savePlanJson(
+      'plan_b',
+      '{"planName":"Plan B","days":[]}',
+    );
+
+    expect(repository.getPlan('plan_b')?.planName, 'Plan B');
+    expect(
+      repository.getActivePlan(preferredKey: 'plan_b')?.planName,
+      'Plan B',
+    );
+    expect(
+      repository.getActivePlan(preferredKey: 'missing')?.planName,
+      isNot(equals('Plan B')),
+    );
+  });
 }

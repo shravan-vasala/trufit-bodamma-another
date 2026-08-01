@@ -8,6 +8,49 @@ import '../../../utils/workout_completion.dart';
 import 'past_day_summary_sheet.dart';
 import 'daily_score_sheet.dart';
 
+/// Activity flags for each day in a week (keyed by yyyy-MM-dd).
+/// Rebuilds when selected-day logs/habits/meals or exercise logs change, then
+/// re-reads Hive for all 7 days so dots stay correct for non-selected dates.
+final calendarWeekActivityProvider =
+    Provider.family<Map<String, bool>, String>((ref, weekStartStr) {
+  ref.watch(dailyLogProvider);
+  ref.watch(habitCompletionsProvider);
+  ref.watch(dailyMealLogProvider);
+  ref.watch(exerciseLogsUpdateProvider);
+
+  final weekStart = DateTime.parse(weekStartStr);
+  final dailyLogRepo = ref.watch(dailyLogRepoProvider);
+  final mealRepo = ref.watch(mealRepoProvider);
+  final habitRepo = ref.watch(habitRepoProvider);
+  final habits = habitRepo.getHabits();
+
+  final result = <String, bool>{};
+  for (var i = 0; i < 7; i++) {
+    final date = weekStart.add(Duration(days: i));
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+
+    final hasActivity = dailyLogRepo.hasActivityOnDate(dateStr);
+    final mealLog = mealRepo.getDailyLog(dateStr);
+    final habitCompletions = habitRepo.getCompletions(dateStr);
+    final dailyLog = dailyLogRepo.getOrCreate(dateStr);
+
+    final applicableHabits = habits.where((h) {
+      final habitDate =
+          DateTime(h.createdAt.year, h.createdAt.month, h.createdAt.day);
+      final sDate = DateTime(date.year, date.month, date.day);
+      return !habitDate.isAfter(sDate);
+    }).toList();
+
+    final completedHabits = applicableHabits
+        .where((h) => isHabitCompleted(h, habitCompletions, dailyLog))
+        .length;
+
+    result[dateStr] =
+        hasActivity || mealLog.loggedSlotsCount > 0 || completedHabits > 0;
+  }
+  return result;
+});
+
 class WeekCalendarStrip extends ConsumerStatefulWidget {
   const WeekCalendarStrip({super.key});
 
@@ -38,7 +81,7 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
     final selectedDate = ref.watch(selectedDateProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     ref.listen<int>(weekOffsetProvider, (prev, next) {
       if (_pageController.hasClients) {
         final targetPage = _basePage + next;
@@ -151,9 +194,12 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
                   if (picked != null) {
                     ref.read(selectedDateProvider.notifier).state = picked;
                     // Calculate week offset between today and picked date
-                    final pickedWeekStart = picked.subtract(Duration(days: picked.weekday - 1));
-                    final todayWeekStart = today.subtract(Duration(days: today.weekday - 1));
-                    final diffDays = pickedWeekStart.difference(todayWeekStart).inDays;
+                    final pickedWeekStart =
+                        picked.subtract(Duration(days: picked.weekday - 1));
+                    final todayWeekStart =
+                        today.subtract(Duration(days: today.weekday - 1));
+                    final diffDays =
+                        pickedWeekStart.difference(todayWeekStart).inDays;
                     final weekOffset = (diffDays / 7).round();
                     ref.read(weekOffsetProvider.notifier).state = weekOffset;
                   }
@@ -181,19 +227,11 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
                 final weekStart = today
                     .subtract(Duration(days: today.weekday - 1))
                     .add(Duration(days: weekOffset * 7));
-                final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: weekDays.map((day) {
-                    return _DayCircle(
-                      date: day,
-                      isSelected: _isSameDay(day, selectedDate),
-                      isToday: _isSameDay(day, today),
-                      isFuture: day.isAfter(today),
-                      ref: ref,
-                    );
-                  }).toList(),
+                return _WeekDaysRow(
+                  weekStart: weekStart,
+                  today: today,
+                  selectedDate: selectedDate,
                 );
               },
             ),
@@ -208,50 +246,66 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
   }
 }
 
-class _DayCircle extends StatelessWidget {
+class _WeekDaysRow extends ConsumerWidget {
+  const _WeekDaysRow({
+    required this.weekStart,
+    required this.today,
+    required this.selectedDate,
+  });
+
+  final DateTime weekStart;
+  final DateTime today;
+  final DateTime selectedDate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weekStartStr = DateFormat('yyyy-MM-dd').format(weekStart);
+    final activityByDate = ref.watch(calendarWeekActivityProvider(weekStartStr));
+    final weekDays =
+        List.generate(7, (i) => weekStart.add(Duration(days: i)));
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: weekDays.map((day) {
+        final dateStr = DateFormat('yyyy-MM-dd').format(day);
+        return _DayCircle(
+          date: day,
+          isSelected: _isSameDay(day, selectedDate),
+          isToday: _isSameDay(day, today),
+          isFuture: day.isAfter(today),
+          isComplete: activityByDate[dateStr] ?? false,
+        );
+      }).toList(),
+    );
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+}
+
+class _DayCircle extends ConsumerWidget {
   const _DayCircle({
     required this.date,
     required this.isSelected,
     required this.isToday,
     required this.isFuture,
-    required this.ref,
+    required this.isComplete,
   });
 
   final DateTime date;
   final bool isSelected;
   final bool isToday;
   final bool isFuture;
-  final WidgetRef ref;
+  final bool isComplete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dayName = DateFormat('E').format(date).substring(0, 3);
     final dayNum = date.day.toString();
 
-    // Check if there's activity on this day
-    final dateStr = DateFormat('yyyy-MM-dd').format(date);
-    
-    // Watch to rebuild when activity is logged on the selected date
-    ref.watch(dailyLogProvider);
-    ref.watch(habitCompletionsProvider);
-    final hasActivity = ref.read(dailyLogRepoProvider).hasActivityOnDate(dateStr);
-    final mealLog = ref.read(mealRepoProvider).getDailyLog(dateStr);
-    final habitCompletions = ref.read(habitRepoProvider).getCompletions(dateStr);
-    
-    final habits = ref.read(habitRepoProvider).getHabits();
-    final applicableHabits = habits.where((h) {
-      final habitDate = DateTime(h.createdAt.year, h.createdAt.month, h.createdAt.day);
-      final sDate = DateTime(date.year, date.month, date.day);
-      return !habitDate.isAfter(sDate);
-    }).toList();
-    
-    final dailyLog = ref.read(dailyLogRepoProvider).getOrCreate(dateStr);
-    final completedHabits = applicableHabits.where((h) => isHabitCompleted(h, habitCompletions, dailyLog)).length;
-    
-    final isComplete = hasActivity || mealLog.loggedSlotsCount > 0 || completedHabits > 0;
-
     // Planned rest: no activity dot — green/red would misread rest as success/failure.
-    final plan = ref.read(workoutPlanProvider);
+    final plan = ref.watch(workoutPlanProvider);
     final isRestDay = plan != null
         ? WorkoutCompletion.isRestDay(
             WorkoutCompletion.resolveWorkoutDay(plan, date),
@@ -294,7 +348,8 @@ class _DayCircle extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isSelected ? context.colors.primary : context.colors.textLight,
+              color:
+                  isSelected ? context.colors.primary : context.colors.textLight,
             ),
           ),
           SizedBox(height: 6),
@@ -314,7 +369,9 @@ class _DayCircle extends StatelessWidget {
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
                       ? context.colors.white
-                      : (isToday ? context.colors.primary : context.colors.textDark),
+                      : (isToday
+                          ? context.colors.primary
+                          : context.colors.textDark),
                 ),
               ),
             ),
@@ -352,20 +409,24 @@ class _DailyScoreRing extends ConsumerWidget {
     } else if (scoreData.totalScore < 80) {
       scoreColor = context.colors.orange;
     }
-    
-    final displayScore = scoreData.isFutureDate ? '--' : scoreData.totalScore.toString();
-    final progress = scoreData.isFutureDate ? 0.0 : scoreData.totalScore / 100.0;
+
+    final displayScore =
+        scoreData.isFutureDate ? '--' : scoreData.totalScore.toString();
+    final progress =
+        scoreData.isFutureDate ? 0.0 : scoreData.totalScore / 100.0;
 
     return GestureDetector(
-      onTap: scoreData.isFutureDate ? null : () {
-        showModalBottomSheet(
-          context: context,
-          useRootNavigator: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => const DailyScoreSheet(),
-        );
-      },
+      onTap: scoreData.isFutureDate
+          ? null
+          : () {
+              showModalBottomSheet(
+                context: context,
+                useRootNavigator: true,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (ctx) => const DailyScoreSheet(),
+              );
+            },
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -409,7 +470,9 @@ class _DailyScoreRing extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: scoreData.isFutureDate ? context.colors.textLight : context.colors.textDark,
+                    color: scoreData.isFutureDate
+                        ? context.colors.textLight
+                        : context.colors.textDark,
                   ),
                 ),
               ],
@@ -466,7 +529,7 @@ class _ScoreRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ScoreRingPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-           oldDelegate.color != color ||
-           oldDelegate.trackColor != trackColor;
+        oldDelegate.color != color ||
+        oldDelegate.trackColor != trackColor;
   }
 }

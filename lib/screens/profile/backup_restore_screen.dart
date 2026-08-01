@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_colors.dart';
@@ -148,75 +149,112 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
     );
   }
 
+  /// Android SAF often returns [PlatformFile.path] == null. Prefer path when
+  /// present; otherwise write [PlatformFile.bytes] to a temp file.
+  Future<String?> _resolvePickedZipPath(PlatformFile file) async {
+    final path = file.path;
+    if (path != null && path.isNotEmpty) {
+      return path;
+    }
+
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not read the selected file. Try again or pick from Downloads.',
+            ),
+            backgroundColor: context.colors.red,
+          ),
+        );
+      }
+      return null;
+    }
+
+    final tempDir = await getTemporaryDirectory();
+    final name = (file.name.isNotEmpty) ? file.name : 'trufit_restore.zip';
+    final safeName = name.toLowerCase().endsWith('.zip') ? name : '$name.zip';
+    final tempFile = File(
+      '${tempDir.path}/picked_${DateTime.now().millisecondsSinceEpoch}_$safeName',
+    );
+    await tempFile.writeAsBytes(bytes, flush: true);
+    return tempFile.path;
+  }
+
   Future<void> _handleVerifyBackup() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
+      withData: true,
     );
 
-    if (result != null && result.files.single.path != null) {
-      setState(() => _isLoading = true);
-      try {
-        final backupService = ref.read(backupServiceProvider);
-        var verify = await backupService.verifyBackup(result.files.single.path!);
+    if (result == null || result.files.isEmpty) return;
 
+    final path = await _resolvePickedZipPath(result.files.single);
+    if (path == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final backupService = ref.read(backupServiceProvider);
+      var verify = await backupService.verifyBackup(path);
+
+      if (!mounted) return;
+
+      if (verify.isEncrypted && !verify.isValid) {
+        setState(() => _isLoading = false);
+        final pwd = await _promptForPassword();
+        if (pwd == null || pwd.isEmpty) return;
+
+        setState(() => _isLoading = true);
+        verify = await backupService.verifyBackup(path, password: pwd);
         if (!mounted) return;
-        
-        if (verify.isEncrypted && !verify.isValid) {
-          setState(() => _isLoading = false);
-          final pwd = await _promptForPassword();
-          if (pwd == null || pwd.isEmpty) return;
-          
-          setState(() => _isLoading = true);
-          verify = await backupService.verifyBackup(result.files.single.path!, password: pwd);
-          if (!mounted) return;
-        }
-
-        if (verify.isValid) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Backup Verified ✨', style: TextStyle(color: context.colors.green)),
-              content: Text(
-                'App Version: ${verify.appVersion}\n'
-                'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
-                'Entries: ${verify.totalEntries}\n'
-                'Photos: ${verify.photoCount}\n\n'
-                'Your current data was not touched.'
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Awesome')),
-              ],
-            ),
-          );
-        } else {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Verification Failed', style: TextStyle(color: context.colors.red)),
-              content: Text(verify.errorMessage ?? 'Invalid backup file.'),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
-              ],
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Verification Error', style: TextStyle(color: context.colors.red)),
-              content: Text('An error occurred while verifying the backup: $e'),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
-              ],
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
       }
+
+      if (verify.isValid) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Backup Verified ✨', style: TextStyle(color: context.colors.green)),
+            content: Text(
+              'App Version: ${verify.appVersion}\n'
+              'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
+              'Entries: ${verify.totalEntries}\n'
+              'Photos: ${verify.photoCount}\n\n'
+              'Your current data was not touched.'
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Awesome')),
+            ],
+          ),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Verification Failed', style: TextStyle(color: context.colors.red)),
+            content: Text(verify.errorMessage ?? 'Invalid backup file.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Verification Error', style: TextStyle(color: context.colors.red)),
+            content: Text('An error occurred while verifying the backup: $e'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -224,102 +262,105 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
+      withData: true,
     );
 
-    if (result != null && result.files.single.path != null) {
-      final path = result.files.single.path!;
-      setState(() => _isLoading = true);
-      try {
-        final backupService = ref.read(backupServiceProvider);
-        var verify = await backupService.verifyBackup(path);
-        
+    if (result == null || result.files.isEmpty) return;
+
+    final path = await _resolvePickedZipPath(result.files.single);
+    if (path == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final backupService = ref.read(backupServiceProvider);
+      var verify = await backupService.verifyBackup(path);
+
+      if (!mounted) return;
+
+      String? passwordUsed;
+      if (verify.isEncrypted && !verify.isValid) {
+        setState(() => _isLoading = false);
+        passwordUsed = await _promptForPassword();
+        if (passwordUsed == null || passwordUsed.isEmpty) return;
+
+        setState(() => _isLoading = true);
+        verify = await backupService.verifyBackup(path, password: passwordUsed);
         if (!mounted) return;
-        
-        String? passwordUsed;
-        if (verify.isEncrypted && !verify.isValid) {
-          setState(() => _isLoading = false);
-          passwordUsed = await _promptForPassword();
-          if (passwordUsed == null || passwordUsed.isEmpty) return;
-          
-          setState(() => _isLoading = true);
-          verify = await backupService.verifyBackup(path, password: passwordUsed);
-          if (!mounted) return;
-        }
+      }
 
-        if (!verify.isValid) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid backup file.'), backgroundColor: context.colors.red),
-          );
-          return;
-        }
+      if (!verify.isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid backup file.'), backgroundColor: context.colors.red),
+        );
+        return;
+      }
 
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('Restore Backup?'),
-            content: Text(
-              'App Version: ${verify.appVersion}\n'
-              'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
-              'Entries: ${verify.totalEntries}\n'
-              'Photos: ${verify.photoCount}\n\n'
-              'WARNING: Restoring will completely overwrite all your current data. A pre-restore safety backup will be created in your app documents directory.'
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  setState(() => _isLoading = true);
-                    try {
-                    final result = await backupService.restoreBackup(path, password: passwordUsed);
-                    
-                    if (!mounted) return;
-
-                    if (result.success) {
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(result.failedPhotosCount > 0 ? 'Restore Complete (with errors)' : 'Restore Complete 🎉', 
-                            style: TextStyle(color: result.failedPhotosCount > 0 ? context.colors.orange : context.colors.green)),
-                          content: Text(result.failedPhotosCount > 0 
-                            ? 'Restore complete, but ${result.failedPhotosCount} photos failed to decrypt and were skipped. Please restart the app.'
-                            : 'Restore complete — please restart the app.'),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to restore backup.'), backgroundColor: context.colors.red),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      final errorMsg = e.toString().replaceFirst('FormatException: ', '');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Restore error: $errorMsg'), backgroundColor: context.colors.red),
-                      );
-                    }
-                  } finally {
-                    if (mounted) setState(() => _isLoading = false);
-                  }
-                },
-                child: Text('Restore', style: TextStyle(color: context.colors.red)),
-              ),
-            ],
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Restore Backup?'),
+          content: Text(
+            'App Version: ${verify.appVersion}\n'
+            'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
+            'Entries: ${verify.totalEntries}\n'
+            'Photos: ${verify.photoCount}\n\n'
+            'WARNING: Restoring will completely overwrite all your current data. A pre-restore safety backup will be created in your app documents directory.'
           ),
-        ).then((_) {
-          // If dialog was dismissed without restoring, loading should be cleared,
-          // but we only set _isLoading = false if we didn't start the restore.
-          // Let's just handle it securely here.
-          if (mounted) setState(() => _isLoading = false);
-        });
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification error: $e'), backgroundColor: context.colors.red),
-          );
-          setState(() => _isLoading = false);
-        }
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                setState(() => _isLoading = true);
+                  try {
+                  final result = await backupService.restoreBackup(path, password: passwordUsed);
+
+                  if (!mounted) return;
+
+                  if (result.success) {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(result.failedPhotosCount > 0 ? 'Restore Complete (with errors)' : 'Restore Complete 🎉',
+                          style: TextStyle(color: result.failedPhotosCount > 0 ? context.colors.orange : context.colors.green)),
+                        content: Text(result.failedPhotosCount > 0
+                          ? 'Restore complete, but ${result.failedPhotosCount} photos failed to decrypt and were skipped. Please restart the app.'
+                          : 'Restore complete — please restart the app.'),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to restore backup.'), backgroundColor: context.colors.red),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    final errorMsg = e.toString().replaceFirst('FormatException: ', '');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Restore error: $errorMsg'), backgroundColor: context.colors.red),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => _isLoading = false);
+                }
+              },
+              child: Text('Restore', style: TextStyle(color: context.colors.red)),
+            ),
+          ],
+        ),
+      ).then((_) {
+        // If dialog was dismissed without restoring, loading should be cleared,
+        // but we only set _isLoading = false if we didn't start the restore.
+        // Let's just handle it securely here.
+        if (mounted) setState(() => _isLoading = false);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verification error: $e'), backgroundColor: context.colors.red),
+        );
+        setState(() => _isLoading = false);
       }
     }
   }
