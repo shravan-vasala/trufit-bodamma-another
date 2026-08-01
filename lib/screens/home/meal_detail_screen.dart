@@ -22,8 +22,8 @@ class MealDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
-    final mealPlanAsync = ref.watch(mealPlanProvider);
-    final planName = mealPlanAsync.valueOrNull?.planName ?? 'Meals Plan';
+    final mealPlan = ref.watch(mealPlanProvider);
+    final planName = mealPlan?.planName ?? 'Meals Plan';
     final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
     
     final targetCalories = profile.targetCalories;
@@ -108,11 +108,11 @@ class MealDetailScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _MacroInfo(label: 'Protein', value: '${dailyLog.totalProtein.toStringAsFixed(0)}g'),
-                    Container(width: 1, height: 24, color: Colors.white.withValues(alpha: 0.3)),
-                    _MacroInfo(label: 'Carbs', value: '${dailyLog.totalCarbs.toStringAsFixed(0)}g'),
-                    Container(width: 1, height: 24, color: Colors.white.withValues(alpha: 0.3)),
-                    _MacroInfo(label: 'Fat', value: '${dailyLog.totalFat.toStringAsFixed(0)}g'),
+                    Expanded(child: _MacroInfo(label: 'Protein', current: dailyLog.totalProtein, target: profile.targetProteinG.toDouble(), color: AppColors.green)),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.3)),
+                    Expanded(child: _MacroInfo(label: 'Carbs', current: dailyLog.totalCarbs, target: profile.targetCarbsG.toDouble(), color: AppColors.orange)),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.3)),
+                    Expanded(child: _MacroInfo(label: 'Fat', current: dailyLog.totalFat, target: profile.targetFatG.toDouble(), color: AppColors.lavender)),
                   ],
                 ),
               ],
@@ -147,16 +147,34 @@ class MealDetailScreen extends ConsumerWidget {
 }
 
 class _MacroInfo extends StatelessWidget {
-  const _MacroInfo({required this.label, required this.value});
+  const _MacroInfo({required this.label, required this.current, required this.target, required this.color});
   final String label;
-  final String value;
+  final double current;
+  final double target;
+  final Color color;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      ],
+    final progress = (current / (target > 0 ? target : 1)).clamp(0.0, 1.0);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        children: [
+          Text('${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)}g', style: const TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

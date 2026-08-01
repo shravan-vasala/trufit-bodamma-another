@@ -1,43 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
+import '../../../providers/app_providers.dart';
 
-class RestTimerLabel extends StatelessWidget {
-  const RestTimerLabel({super.key, required this.seconds});
+class RestTimerLabel extends ConsumerWidget {
+  const RestTimerLabel({super.key, required this.seconds, required this.exerciseName});
 
   final int seconds;
+  final String exerciseName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (seconds <= 0) return const SizedBox.shrink();
 
-    final display = seconds >= 60
-        ? '${seconds ~/ 60} MIN${seconds % 60 > 0 ? ' ${seconds % 60} SEC' : ''}'
-        : '$seconds SEC';
+    final timerState = ref.watch(restTimerProvider);
+    final isActive = timerState.isActive && timerState.exerciseName == exerciseName;
+    final displaySeconds = isActive ? timerState.remainingSeconds : seconds;
+
+
+    final display = displaySeconds >= 60
+        ? '${displaySeconds ~/ 60} MIN${displaySeconds % 60 > 0 ? ' ${displaySeconds % 60} SEC' : ''}'
+        : '$displaySeconds SEC';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
           Expanded(
-            child: Container(height: 1, color: AppColors.border),
+            child: Container(height: 1, color: isActive ? AppColors.orange : AppColors.border),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.timer_outlined,
                   size: 14,
-                  color: AppColors.textLight,
+                  color: isActive ? AppColors.orange : AppColors.textLight,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'REST FOR $display AFTER SET',
-                  style: const TextStyle(
+                  isActive ? 'RESTING FOR $display' : 'REST FOR $display AFTER SET',
+                  style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textLight,
+                    fontWeight: FontWeight.w800,
+                    color: isActive ? AppColors.orange : AppColors.textLight,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -45,7 +53,7 @@ class RestTimerLabel extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Container(height: 1, color: AppColors.border),
+            child: Container(height: 1, color: isActive ? AppColors.orange : AppColors.border),
           ),
         ],
       ),

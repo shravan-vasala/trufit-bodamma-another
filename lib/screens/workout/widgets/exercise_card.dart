@@ -21,6 +21,8 @@ class ExerciseCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pr = ref.watch(exerciseLogRepoProvider).getPr(exercise.name);
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -70,14 +72,14 @@ class ExerciseCard extends ConsumerWidget {
                               fit: BoxFit.cover,
                               placeholder: (ctx, url) => const Center(
                                 child: Icon(
-                                  Icons.play_circle_fill_rounded,
+                                  Icons.fitness_center_rounded,
                                   color: AppColors.primary,
                                   size: 30,
                                 ),
                               ),
                               errorWidget: (ctx, url, error) => const Center(
                                 child: Icon(
-                                  Icons.play_circle_fill_rounded,
+                                  Icons.fitness_center_rounded,
                                   color: AppColors.primary,
                                   size: 30,
                                 ),
@@ -86,27 +88,28 @@ class ExerciseCard extends ConsumerWidget {
                           else
                             const Center(
                               child: Icon(
-                                Icons.play_circle_fill_rounded,
+                                Icons.fitness_center_rounded,
                                 color: AppColors.primary,
                                 size: 30,
                               ),
                             ),
                           // Play overlay
-                          Center(
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.play_arrow_rounded,
-                                color: AppColors.white,
-                                size: 20,
+                          if (exercise.youtubeUrl != null && exercise.youtubeUrl!.isNotEmpty)
+                            Center(
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow_rounded,
+                                  color: AppColors.white,
+                                  size: 20,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -146,6 +149,25 @@ class ExerciseCard extends ConsumerWidget {
                               ),
                             ),
                           ),
+                          if (exercise.weightKg != null) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.lavender,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${exercise.weightKg} kg',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
                           if (exercise.sideInfo != 'None') ...[
                             const SizedBox(width: 6),
                             Container(
@@ -165,6 +187,31 @@ class ExerciseCard extends ConsumerWidget {
                               ),
                             ),
                           ],
+                          if (pr != null) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFD700).withValues(alpha: 0.2), // Gold tint
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.emoji_events, size: 12, color: Color(0xFFB8860B)),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    pr.maxWeight > 0 ? '${pr.maxWeight}kg' : '${pr.maxReps} reps',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFB8860B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -177,6 +224,20 @@ class ExerciseCard extends ConsumerWidget {
                     ref
                         .read(exerciseCompletionsProvider(dayId).notifier)
                         .toggle(exercise.name);
+                        
+                    // If newly completed and has rest, start timer
+                    if (!isCompleted && exercise.restSecondsAfterSet > 0) {
+                      ref.read(restTimerProvider.notifier).startTimer(
+                            exercise.restSecondsAfterSet,
+                            exerciseName: exercise.name,
+                          );
+                    } else if (isCompleted) {
+                      // If un-completing, we could optionally stop the timer if it was for this exercise
+                      final timerState = ref.read(restTimerProvider);
+                      if (timerState.isActive && timerState.exerciseName == exercise.name) {
+                        ref.read(restTimerProvider.notifier).stopTimer();
+                      }
+                    }
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),

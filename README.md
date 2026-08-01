@@ -1,99 +1,39 @@
-# TruFit Bodamma 🌻🏋️♀️
+# TruFit Bodamma
 
-> Made with ❤️ for Bodamma
+TruFit Bodamma is a private, local-first personal fitness tracking application built with Flutter. It prioritizes data ownership and privacy by keeping all your workouts, meals, body stats, and health metrics directly on your device.
 
-A personal fitness tracking app built for one very important user — my sister. Local-first, private, and sideloaded: no accounts, no cloud, no ads. Her data lives on her phone and nowhere else.
+## Core Principles
 
-<p align="center">
-  <img src="assets/icon/app_icon.png" alt="TruFit Bodamma icon" width="120" />
-</p>
+1. **Local-First Storage:** All data is stored in a local Hive NoSQL database. There is no cloud backend, no remote database, and no accounts.
+2. **Total Privacy:** The only outbound connections made are to the Gemini AI API (for meal tracking) and YouTube (for workout videos). Health Connect syncs data locally on the Android device.
+3. **Data Ownership:** You can export all your data (including photos) as a single ZIP file and restore it at any time.
 
-## Features
+## Project Architecture
 
-**🏠 Home dashboard**
-- Week calendar strip with per-day completion dots (grey = planned, green = done)
-- Tap any past day for a summary sheet — workout, meals, habits, steps, sleep, weight, and water at a glance — with full backfill support for missed logs
-- Daily progress cards for body stats, physique pictures, body weight, and steps
+The app is built using a modern Riverpod architecture:
+- **Models:** Simple Dart classes representing data entities (e.g., `WorkoutPlan`, `DailyLog`).
+- **Repositories:** Classes responsible for reading/writing models to the local Hive database.
+- **Providers:** Riverpod providers connect the repositories to the UI, ensuring the app is always reactive.
+- **Services:** External integrations, such as `HealthConnectService` and `GeminiFoodService`.
+- **UI:** The app is divided into three main tabs: Home, Progress, and Profile.
 
-**💪 Workouts**
-- Weekly plan driven by an editable JSON file: Mon/Tue/Thu/Fri strength days (warm up → main workout → cooldown), Wed/Sat cardio, Sunday rest
-- Every exercise has an embedded YouTube demo video with in-app fullscreen playback
-- Per-set rep logging, per-exercise progress history, rest reminders between sets
-- Partial-completion aware: finish guard, skip option, and honest "6/9 done" records
+## Local CI/CD (Building and Deploying)
 
-**🍛 AI meal tracking**
-- Photograph your food — Gemini identifies the dishes (tuned for South Indian home cooking), estimates portions, calories, and macros
-- Editable confirmation sheet before anything is saved; manual entry always available
-- Four default meal slots plus custom one-off or recurring slots, daily calorie target with macro totals
+Because this app will never be pushed to a public or private repository, all CI/CD is handled locally via PowerShell scripts located in the `scripts/` directory.
 
-**✅ Habits**
-- Fully user-defined habits with emoji, four types: checkbox, counter (e.g. water glasses), auto-from-steps, and sleep-log based
-- Manual override always wins over sensors — tap the circle to check anything off
+### Building and Installing
+To build the app and install it on your Android device:
+1. Connect your Android device via USB and ensure **USB Debugging** is enabled.
+2. Open PowerShell in the project root.
+3. Run: `.\scripts\build_and_install.ps1`
 
-**📈 Progress charts**
-- Weight, Steps, Sleep, BMI (auto-computed), Body Fat, and Calories
-- Weekly / Monthly / 6-month views with gap-aware curves, auto-scaled axes, and tap tooltips
-- Dated body measurements with change indicators, and side-by-side physique photo comparison with weights
+### App Signing (Optional)
+If you want to generate a signed release APK:
+1. Run `.\scripts\generate_keystore.ps1` and follow the prompts.
+2. Create an `android/key.properties` file with the generated details.
+3. Modify `build_and_install.ps1` to use `flutter build apk --release` instead of `--profile`.
 
-**⌚ Samsung Health sync**
-- Steps sync automatically via Health Connect, with 90-day backfill and 7-day revision re-reads
-- Manual entries always take precedence over synced values
+## App Icons
 
-**💾 Backup & Restore**
-- One-tap full backup (all data + photos) to a single zip via the Android share sheet
-- Weekly automatic data-only backups (last 4 kept on device)
-- Verify-without-restoring, and full restore onto a fresh install — new-phone migration is: install APK → restore → done
-- API keys are stored in Android secure storage and are never included in backups
-
-## Tech stack
-
-| Layer | Choice |
-|---|---|
-| Framework | Flutter (Android-first, iOS-compatible) |
-| State | Riverpod |
-| Storage | Hive (local, date-keyed) + flutter_secure_storage for secrets |
-| Charts | fl_chart |
-| Video | youtube_player_iframe |
-| Health data | health (Health Connect) |
-| AI food scan | google_generative_ai (Gemini 2.5 Flash) |
-| Navigation | go_router |
-
-Architecture: `models → repositories → providers → screens`, all logs keyed by calendar date.
-
-## Getting started
-
-```bash
-flutter pub get
-flutter run
-```
-
-1. Build and sideload the APK (`flutter build apk --release`)
-2. On first launch, set your name, height, and daily calorie target in **Profile → Edit Profile**
-3. For AI food scanning: create a free API key at [Google AI Studio](https://aistudio.google.com) and paste it into **Profile → AI Settings**
-4. For step/sleep sync: enable data sharing in **Samsung Health → Settings → Health Connect**, then grant permission when the app asks
-5. Edit the workout in `assets/data/seed_workout_plan.json` (or in-app via **Profile → Manage Plans**) — each exercise takes a `youtubeUrl`, `displayName`, `reps`, optional coach `note`, and rest time
-
-## Privacy
-
-- 100% local data — no backend, no analytics, no account
-- The only network calls: YouTube video playback and the Gemini food-scan API (opt-in, your own key)
-- Backups are plain zips you control; share them only with people you trust
-
-## Project structure
-
-```
-lib/
-├── models/          # Habit, DailyLog, WorkoutPlan, UserProfile, ...
-├── repositories/    # Hive-backed, date-keyed persistence
-├── providers/       # Riverpod state
-├── services/        # Health Connect, Gemini, Backup
-├── screens/         # Home, Workout, Progress, Profile
-└── router/          # go_router shell with 3 tabs
-assets/data/         # Editable workout & meal plan JSON
-```
-
-## Credits
-
-Built by a brother, one prompt at a time — vibe-coded with AI agents (Antigravity + Claude), reviewed by Claude, and shaped by real feedback from its one and only user.
-
-🌻 The sunflower-and-dumbbell icon: because she likes both, and because growth takes strength.
+App icons are generated using `flutter_launcher_icons`. If you change the icon in `assets/icon/app_icon.png`, you can regenerate the Android launcher icons by running:
+`dart run flutter_launcher_icons`

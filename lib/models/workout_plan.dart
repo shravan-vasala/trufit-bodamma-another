@@ -67,24 +67,29 @@ class WorkoutSection {
 class Exercise {
   final String name;
   final String? displayName;
-  final String youtubeUrl;
-  final List<int> reps;
+  final String? youtubeUrl;
+  final List<String> reps;
   final String note;
   final String sideInfo;
   final int restSecondsAfterSet;
+  final double? weightKg;
+  final int? durationSeconds;
 
   Exercise({
     required this.name,
     this.displayName,
-    required this.youtubeUrl,
+    this.youtubeUrl,
     required this.reps,
     this.note = '',
     this.sideInfo = 'None',
     this.restSecondsAfterSet = 0,
+    this.weightKg,
+    this.durationSeconds,
   });
 
   String? get youtubeVideoId {
-    final uri = Uri.tryParse(youtubeUrl);
+    if (youtubeUrl == null || youtubeUrl!.isEmpty) return null;
+    final uri = Uri.tryParse(youtubeUrl!);
     if (uri == null) return null;
     
     // Handle youtu.be/ID format
@@ -113,7 +118,15 @@ class Exercise {
   }
 
   String get repsDisplay {
-    if (reps.length == 1) return '${reps.first}';
+    if (durationSeconds != null && durationSeconds! > 0) {
+      return '${durationSeconds}s';
+    }
+    if (reps.isEmpty) return '';
+    bool allSame = reps.every((r) => r == reps.first);
+    if (allSame && reps.length > 1) {
+      return '${reps.length} × ${reps.first}';
+    }
+    if (reps.length == 1) return reps.first;
     return reps.join(', ');
   }
 
@@ -123,21 +136,25 @@ class Exercise {
     return Exercise(
       name: json['name'] as String,
       displayName: json['displayName'] as String?,
-      youtubeUrl: json['youtubeUrl'] as String? ?? '',
-      reps: (json['reps'] as List).map((r) => r as int).toList(),
+      youtubeUrl: json['youtubeUrl'] as String?,
+      reps: (json['reps'] as List).map((r) => r.toString()).toList(),
       note: json['note'] as String? ?? '',
       sideInfo: json['sideInfo'] as String? ?? 'None',
       restSecondsAfterSet: json['restSecondsAfterSet'] as int? ?? 0,
+      weightKg: json['weightKg'] != null ? (json['weightKg'] as num).toDouble() : null,
+      durationSeconds: json['durationSeconds'] as int?,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'name': name,
         if (displayName != null) 'displayName': displayName,
-        'youtubeUrl': youtubeUrl,
+        if (youtubeUrl != null && youtubeUrl!.isNotEmpty) 'youtubeUrl': youtubeUrl,
         'reps': reps,
         'note': note,
         'sideInfo': sideInfo,
         'restSecondsAfterSet': restSecondsAfterSet,
+        if (weightKg != null) 'weightKg': weightKg,
+        if (durationSeconds != null) 'durationSeconds': durationSeconds,
       };
 }

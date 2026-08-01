@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/habit.dart';
@@ -24,6 +25,13 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_rounded, color: AppColors.primary),
+            tooltip: 'Remind me daily',
+            onPressed: () => context.go('/profile/reminders'),
+          ),
+        ],
       ),
       body: habits.isEmpty
           ? const Center(child: Text('No habits found. Add one!'))

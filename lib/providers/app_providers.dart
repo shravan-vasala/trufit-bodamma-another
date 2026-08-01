@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../repositories/coach_note_repository.dart';
 import '../repositories/workout_repository.dart';
 import '../repositories/meal_repository.dart';
 import '../repositories/daily_log_repository.dart';
@@ -12,6 +13,7 @@ import '../repositories/profile_repository.dart';
 import '../repositories/exercise_log_repository.dart';
 import '../services/health_connect_service.dart';
 import '../services/backup_service.dart';
+import '../services/coach_service.dart';
 import '../models/workout_plan.dart';
 import '../models/meal_plan.dart';
 import '../models/daily_meal_log.dart';
@@ -20,6 +22,8 @@ import '../models/daily_log.dart';
 import '../models/body_stats.dart';
 import '../models/exercise_log.dart';
 import '../models/user_profile.dart';
+export 'rest_timer_provider.dart';
+export 'phase_progress_provider.dart';
 
 // ── Date ──
 
@@ -69,12 +73,21 @@ final exerciseLogRepoProvider = Provider<ExerciseLogRepository>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
+final coachNoteRepoProvider = Provider<CoachNoteRepository>((ref) {
+  throw UnimplementedError('Must be overridden in main');
+});
+
 final healthConnectServiceProvider = Provider<HealthConnectService>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
 final backupServiceProvider = Provider<BackupService>((ref) {
   return BackupService();
+});
+
+final coachServiceProvider = Provider<CoachService>((ref) {
+  final profile = ref.watch(profileProvider);
+  return CoachService(apiKey: profile.geminiApiKey);
 });
 
 // Tracks whether the current step value is from HC sync, manual, or nothing
@@ -116,9 +129,14 @@ final exerciseCompletionsProvider = StateNotifierProvider.family<
 
 // ── Meal Providers ──
 
-final mealPlanProvider = FutureProvider<MealPlan>((ref) async {
-  final jsonStr = await rootBundle.loadString('assets/data/seed_meal_plan.json');
-  return MealPlan.fromJson(jsonDecode(jsonStr));
+final mealPlanProvider = Provider<MealPlan?>((ref) {
+  final repo = ref.watch(mealRepoProvider);
+  final profile = ref.watch(profileProvider);
+  // Re-evaluate if refreshTrigger changes
+  ref.watch(refreshTriggerProvider);
+  
+  final activePlanId = profile.activeMealPlan ?? 'standard_plan';
+  return repo.getMealPlan(activePlanId);
 });
 
 class DailyMealLogNotifier extends StateNotifier<DailyMealLog> {
@@ -212,6 +230,22 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
   Future<void> markWorkoutCompleted(String dayId) async {
     await _repo.markWorkoutCompleted(state.date, dayId);
     state = _repo.getOrCreate(state.date);
+
+    // Auto-start phase if not started
+    final profileRepo = _ref.read(profileRepoProvider);
+    final profile = profileRepo.getProfile();
+    if (profile.planStartDate == null) {
+      final now = DateTime.now();
+      profileRepo.saveProfile(profile.copyWith(
+        planStartDate: DateTime(now.year, now.month, now.day),
+        currentPhaseWeek: 1,
+      ));
+      _ref.read(profileProvider.notifier).updateProfile(profile.copyWith(
+        planStartDate: DateTime(now.year, now.month, now.day),
+        currentPhaseWeek: 1,
+      ));
+    }
+
     _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
@@ -263,6 +297,47 @@ final habitCompletionsProvider =
   final date = ref.watch(dateStringProvider);
   ref.watch(refreshTriggerProvider);
   return HabitCompletionsNotifier(repo, date, ref);
+});
+
+final habitStreakProvider = Provider.family<int, String>((ref, habitId) {
+  final habits = ref.watch(habitsProvider);
+  final habit = habits.firstWhere((h) => h.id == habitId, orElse: () => Habit(id: '', name: '', icon: '', target: 1));
+  if (habit.id.isEmpty) return 0;
+  
+  final dateStr = ref.watch(dateStringProvider);
+  
+  // Reactive to today's changes
+  ref.watch(habitCompletionsProvider);
+  ref.watch(dailyLogProvider);
+  
+  final habitRepo = ref.watch(habitRepoProvider);
+  final dailyLogRepo = ref.watch(dailyLogRepoProvider);
+  
+  int streak = 0;
+  DateTime current = DateTime.parse(dateStr);
+  
+  // Check today
+  final todayCompletions = habitRepo.getCompletions(dateStr);
+  final todayLog = dailyLogRepo.getLog(dateStr) ?? DailyLog(date: dateStr);
+  if (isHabitCompleted(habit, todayCompletions, todayLog)) {
+    streak++;
+  }
+  
+  // Go backward
+  DateTime checkDate = current.subtract(const Duration(days: 1));
+  while (true) {
+    final dStr = '${checkDate.year.toString().padLeft(4, '0')}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
+    final comp = habitRepo.getCompletions(dStr);
+    final log = dailyLogRepo.getLog(dStr) ?? DailyLog(date: dStr);
+    
+    if (isHabitCompleted(habit, comp, log)) {
+      streak++;
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    } else {
+      break;
+    }
+  }
+  return streak;
 });
 
 // ── Body Stats Providers ──
@@ -346,3 +421,140 @@ final dailyMealLogsRangeProvider =
 // ── Refresh trigger ──
 // Increment this to force providers to rebuild after data changes
 final refreshTriggerProvider = StateProvider<int>((ref) => 0);
+
+// ── Coach Notes ──
+class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
+  final Ref _ref;
+
+  CoachNoteNotifier(this._ref) : super(const AsyncValue.loading());
+
+  Future<void> fetchNote({bool forceRefresh = false}) async {
+    final dateStr = _ref.read(dateStringProvider);
+    final repo = _ref.read(coachNoteRepoProvider);
+    
+    if (!forceRefresh) {
+      final cached = repo.getNote(dateStr);
+      if (cached != null) {
+        if (mounted) state = AsyncValue.data(cached);
+        return;
+      }
+    }
+    
+    state = const AsyncValue.loading();
+    try {
+      final coachService = _ref.read(coachServiceProvider);
+      final profile = _ref.read(profileProvider);
+      final dailyLog = _ref.read(dailyLogProvider);
+      final dailyLogRepo = _ref.read(dailyLogRepoProvider);
+      final habitRepo = _ref.read(habitRepoProvider);
+      
+      // Calculate today's habits
+      final habits = _ref.read(habitsProvider);
+      final completions = _ref.read(habitCompletionsProvider);
+      int habitsDone = 0;
+      for (final h in habits) {
+        if (isHabitCompleted(h, completions, dailyLog)) habitsDone++;
+      }
+
+      // Calculate yesterday's habits
+      final yesterday = DateTime.parse(dateStr).subtract(const Duration(days: 1));
+      final yesterdayStr = DateFormat('yyyy-MM-dd').format(yesterday);
+      final yCompletions = habitRepo.getCompletions(yesterdayStr);
+      final yLog = dailyLogRepo.getLog(yesterdayStr) ?? DailyLog(date: yesterdayStr);
+      int yHabitsDone = 0;
+      for (final h in habits) {
+        if (isHabitCompleted(h, yCompletions, yLog)) yHabitsDone++;
+      }
+      final yesterdayHabitRate = habits.isEmpty ? 0.0 : yHabitsDone / habits.length;
+
+      // Calculate weight trend (7 days)
+      String weightTrend = 'stable';
+      final todayWeight = dailyLog.weight ?? profile.targetWeight ?? 0.0;
+      final weekAgo = DateTime.parse(dateStr).subtract(const Duration(days: 7));
+      final weekAgoStr = DateFormat('yyyy-MM-dd').format(weekAgo);
+      final weekAgoLog = dailyLogRepo.getLog(weekAgoStr);
+      final pastWeight = weekAgoLog?.weight ?? profile.targetWeight ?? 0.0;
+      if (todayWeight > pastWeight + 0.5) {
+        weightTrend = 'up';
+      } else if (todayWeight < pastWeight - 0.5) {
+        weightTrend = 'down';
+      }
+
+      // Calculate workouts
+      final workoutPlan = _ref.read(workoutPlanProvider);
+      int workoutsTotal = 0;
+      int workoutsDone = 0;
+      bool isRestDay = false;
+      int daysSinceLastWorkout = 0;
+
+      if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
+        final weekday = DateTime.parse(dateStr).weekday;
+        final isSunday = weekday == DateTime.sunday;
+        final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlan.days.length - 1);
+        final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
+        final day = workoutPlan.days.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlan.days[dayIndex]);
+        
+        isRestDay = (isSunday || day.sections.isEmpty);
+        workoutsTotal = isRestDay ? 1 : day.sections.length;
+        
+        if (isRestDay) {
+          if (dailyLog.workoutCompleted) workoutsDone = 1;
+          
+          // Calculate days since last workout
+          DateTime checkDate = yesterday;
+          while (daysSinceLastWorkout < 14) {
+            final checkStr = DateFormat('yyyy-MM-dd').format(checkDate);
+            final cLog = dailyLogRepo.getLog(checkStr);
+            if (cLog != null && cLog.workoutCompleted) break;
+            daysSinceLastWorkout++;
+            checkDate = checkDate.subtract(const Duration(days: 1));
+          }
+        } else {
+          final logRepo = _ref.read(exerciseLogRepoProvider);
+          for (final sec in day.sections) {
+            if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name))) {
+              workoutsDone++;
+            }
+          }
+        }
+      } else {
+        isRestDay = true;
+      }
+      
+      // Calculate calories
+      final mealLog = _ref.read(dailyMealLogProvider);
+
+      final noteStr = await coachService.generateNote(
+        userName: profile.name,
+        steps: dailyLog.steps ?? 0,
+        sleep: dailyLog.sleepHours ?? 0.0,
+        habitsDone: habitsDone,
+        habitsTotal: habits.length,
+        calories: mealLog.totalCalories,
+        workoutsDone: workoutsDone,
+        workoutsTotal: workoutsTotal,
+        yesterdayHabitRate: yesterdayHabitRate,
+        weightTrend: weightTrend,
+        isRestDay: isRestDay,
+        daysSinceLastWorkout: daysSinceLastWorkout,
+      );
+      
+      final isAi = coachService.apiKey != null && coachService.apiKey!.isNotEmpty;
+      final newNote = CoachNote(date: dateStr, note: noteStr, isAi: isAi);
+      await repo.saveNote(newNote);
+
+      if (mounted) {
+        state = AsyncValue.data(newNote);
+      }
+    } catch (e, st) {
+      if (mounted) {
+        state = AsyncValue.error(e, st);
+      }
+    }
+  }
+}
+
+final coachNoteProvider = StateNotifierProvider<CoachNoteNotifier, AsyncValue<CoachNote>>((ref) {
+  return CoachNoteNotifier(ref);
+});
+

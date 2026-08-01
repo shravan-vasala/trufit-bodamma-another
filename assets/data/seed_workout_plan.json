@@ -1,8 +1,8 @@
 {
-  "planName": "Weekly Master Plan",
+  "planName": "Phase 1 (8 Weeks)",
   "days": [
     {
-      "dayId": "1",
+      "dayId": "beg_day1",
       "label": "Monday",
       "sections": [
         {
@@ -10,91 +10,80 @@
           "exercises": [
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                10
+                "20"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Jumping Jacks"
+              "restSecondsAfterSet": 0
             },
             {
               "name": "Wall Shoulder Circles",
+              "displayName": "Wall Shoulder Circles",
               "youtubeUrl": "https://youtu.be/KmherMbhPco",
               "reps": [
-                10
+                "6"
               ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Shoulder Circles"
+              "note": "avoid rotating from chest",
+              "sideInfo": "Per Arm",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Side Lying Thoracic Rotation (S/L Tsp Rot)",
+              "name": "Side Lying Thoracic Rotation",
+              "displayName": "Side Lying Thoracic Rotation",
               "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
               "reps": [
-                10
+                "6"
               ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Thoracic Rotation"
+              "note": "Push top knee to the ground",
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "CAT-COW POSE (Marjaryasana-Bitilasana)🐮 😺",
+              "name": "Cat Camel",
+              "displayName": "Cat Camel",
               "youtubeUrl": "https://youtu.be/2of247Kt0tU",
               "reps": [
-                10
+                "8"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Cat-Cow Pose"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "90 90 Hip Rotations",
+              "name": "90-90 Hip Rotation",
+              "displayName": "90-90 Hip Rotation",
               "youtubeUrl": "https://youtu.be/npdpCtfPI5I",
               "reps": [
-                10
+                "8"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Hip Rotations"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Fix Your Back with This Flow: Down Dog to Cobra",
+              "name": "Downward Dog to Cobra",
+              "displayName": "Downward Dog to Cobra",
               "youtubeUrl": "https://youtu.be/2Qo3eUchf7A",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Down Dog to Cobra"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "The World’s Greatest Stretch with LOTS OF BENEFITS! 🤩🤩🤩 #worldsgreateststretch #stretch #yoga",
+              "name": "World's Greatest Stretch",
+              "displayName": "World's Greatest Stretch",
               "youtubeUrl": "https://youtu.be/KJBHqUBtoCw",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "World's Greatest Stretch"
-            },
-            {
-              "name": "Neck Rotation",
-              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Neck Rotation"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -102,70 +91,76 @@
           "title": "Main Workout",
           "exercises": [
             {
-              "name": "Wall Push-Ups for Absolute Beginners",
+              "name": "Wall Pushups",
+              "displayName": "Wall Pushups",
               "youtubeUrl": "https://youtu.be/YWw-3rGaoT0",
               "reps": [
-                10
+                "8-10",
+                "8-10"
               ],
-              "note": "",
+              "note": "Dont drop the heels and elbows move at 45degree angle",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Wall Push-Ups"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "How To: Dumbbell Goblet Box Squat",
+              "name": "Goblet Box Squat",
+              "displayName": "Goblet Box Squat",
               "youtubeUrl": "https://youtu.be/mIJub2k6YNg",
               "reps": [
-                10
+                "10",
+                "10"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Goblet Box Squat"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Glute Bridge w. Adductor Squeeze",
+              "name": "Glute Bridge Adduction",
+              "displayName": "Glute Bridge Adduction",
               "youtubeUrl": "https://youtu.be/IMx4lDf9XgA",
               "reps": [
-                10
+                "12",
+                "12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Glute Bridge"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Seated DB good mornings",
+              "name": "DB Seated Good Mornings",
+              "displayName": "DB Seated Good Mornings",
               "youtubeUrl": "https://youtu.be/yXi8Po4TvR0",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Seated Good Mornings"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "How To: Floor Dumbbell Incline Press Without Bench",
+              "name": "Incline Press (at home)",
+              "displayName": "Incline Press (at home)",
               "youtubeUrl": "https://youtu.be/nEC7ebL3VLw",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Floor Incline Press"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Supine Core 90/90 Heel Taps",
+              "name": "Supine Heel Taps",
+              "displayName": "Supine Heel Taps",
               "youtubeUrl": "https://youtu.be/KaOGIHNTXZU",
               "reps": [
-                10
+                "8-10",
+                "8-10"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Core Heel Taps"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 60
             }
           ]
         },
@@ -173,22 +168,23 @@
           "title": "Cooldown",
           "exercises": [
             {
-              "name": "POST-WORKOUT STRETCH for Injury Prevention & Flexibility",
+              "name": "Full Body Cool Down",
+              "displayName": "Full Body Cool Down",
               "youtubeUrl": "https://youtu.be/IjH_8pdybfs",
               "reps": [
-                10
+                "1"
               ],
-              "note": "",
+              "note": "Keep it easy",
               "sideInfo": "None",
               "restSecondsAfterSet": 0,
-              "displayName": "Post-Workout Stretch"
+              "durationSeconds": 20
             }
           ]
         }
       ]
     },
     {
-      "dayId": "2",
+      "dayId": "beg_day2",
       "label": "Tuesday",
       "sections": [
         {
@@ -196,91 +192,80 @@
           "exercises": [
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                10
+                "20"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Jumping Jacks"
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Neck Rotations",
+              "displayName": "Neck Rotations",
+              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
+              "reps": [
+                "5"
+              ],
+              "note": "",
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
               "name": "Wall Shoulder Circles",
+              "displayName": "Wall Shoulder Circles",
               "youtubeUrl": "https://youtu.be/KmherMbhPco",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Shoulder Circles"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Side Lying Thoracic Rotation (S/L Tsp Rot)",
-              "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Thoracic Rotation"
-            },
-            {
-              "name": "CAT-COW POSE (Marjaryasana-Bitilasana)🐮 😺",
+              "name": "Cat Camel Stretch",
+              "displayName": "Cat Camel Stretch",
               "youtubeUrl": "https://youtu.be/2of247Kt0tU",
               "reps": [
-                10
+                "8"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Cat-Cow Pose"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "90 90 Hip Rotations",
+              "name": "90-90 Hip Rotation",
+              "displayName": "90-90 Hip Rotation",
               "youtubeUrl": "https://youtu.be/npdpCtfPI5I",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Hip Rotations"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Fix Your Back with This Flow: Down Dog to Cobra",
-              "youtubeUrl": "https://youtu.be/2Qo3eUchf7A",
+              "name": "Side Lying Thoracic Rotation",
+              "displayName": "Side Lying Thoracic Rotation",
+              "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Down Dog to Cobra"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "The World’s Greatest Stretch with LOTS OF BENEFITS! 🤩🤩🤩 #worldsgreateststretch #stretch #yoga",
+              "name": "World's Greatest Stretch",
+              "displayName": "World's Greatest Stretch",
               "youtubeUrl": "https://youtu.be/KJBHqUBtoCw",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "World's Greatest Stretch"
-            },
-            {
-              "name": "Neck Rotation",
-              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Neck Rotation"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -288,70 +273,77 @@
           "title": "Main Workout",
           "exercises": [
             {
-              "name": "How to Perform a Hamstring Bridge",
+              "name": "Hamstring Bridge",
+              "displayName": "Hamstring Bridge",
               "youtubeUrl": "https://youtu.be/-JS94QNq0vw",
               "reps": [
-                10
+                "15",
+                "15"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Hamstring Bridge"
+              "restSecondsAfterSet": 30
             },
             {
-              "name": "Banded Pulldown",
+              "name": "Banded Pull Downs",
+              "displayName": "Banded Pull Downs",
               "youtubeUrl": "https://youtu.be/0H7d2qjyKbU",
               "reps": [
-                10
+                "10-15",
+                "10-15"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Banded Pulldown"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Dumbbell Hip Thrust",
+              "name": "Dumbbell Hip Thrusts",
+              "displayName": "Dumbbell Hip Thrusts",
               "youtubeUrl": "https://youtu.be/Zp3mZV6Plyg",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Dumbbell Hip Thrust"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Seated Plate Press",
+              "name": "Seated OH Plate Press",
+              "displayName": "Seated OH Plate Press",
               "youtubeUrl": "https://youtu.be/KY2gOYm9DCw",
               "reps": [
-                10
+                "15",
+                "15"
               ],
-              "note": "",
+              "note": "Start with one 2.5kg dumbbell, hold with two hands, or use 1kg dumbbells",
               "sideInfo": "None",
               "restSecondsAfterSet": 60,
-              "displayName": "Seated Plate Press"
+              "weightKg": 2.5
             },
             {
-              "name": "Seated Band Row",
+              "name": "Seated Banded Row",
+              "displayName": "Seated Banded Row",
               "youtubeUrl": "https://youtu.be/djzKw8fGtFg",
               "reps": [
-                10
+                "10-15",
+                "10-15"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Seated Band Row"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Alternating Superman With Hold",
+              "name": "Alternate Superman",
+              "displayName": "Alternate Superman",
               "youtubeUrl": "https://youtu.be/x_Dbhd10MZU",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Alternating Superman"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -359,44 +351,45 @@
           "title": "Cooldown",
           "exercises": [
             {
-              "name": "POST-WORKOUT STRETCH for Injury Prevention & Flexibility",
+              "name": "Full Body Cool Down",
+              "displayName": "Full Body Cool Down",
               "youtubeUrl": "https://youtu.be/IjH_8pdybfs",
               "reps": [
-                10
+                "1"
               ],
-              "note": "",
+              "note": "Keep it easy",
               "sideInfo": "None",
               "restSecondsAfterSet": 0,
-              "displayName": "Post-Workout Stretch"
+              "durationSeconds": 20
             }
           ]
         }
       ]
     },
     {
-      "dayId": "3",
+      "dayId": "Home Cardio",
       "label": "Wednesday",
       "sections": [
         {
           "title": "Cardio",
           "exercises": [
             {
-              "name": "Home Workout for Weight Loss | Jumping Jacks, Froggers, Crunches & Plank",
+              "name": "Home Cardio",
+              "displayName": "Home Cardio",
               "youtubeUrl": "https://youtu.be/fxtkdAdfykY",
               "reps": [
-                10
+                "1"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Cardio Flow"
+              "restSecondsAfterSet": 0
             }
           ]
         }
       ]
     },
     {
-      "dayId": "4",
+      "dayId": "beg_day3",
       "label": "Thursday",
       "sections": [
         {
@@ -404,91 +397,69 @@
           "exercises": [
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                10
+                "20"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Jumping Jacks"
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "Neck Rotations",
+              "displayName": "Neck Rotations",
+              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
+              "reps": [
+                "6"
+              ],
+              "note": "",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 0
             },
             {
               "name": "Wall Shoulder Circles",
+              "displayName": "Wall Shoulder Circles",
               "youtubeUrl": "https://youtu.be/KmherMbhPco",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Shoulder Circles"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Side Lying Thoracic Rotation (S/L Tsp Rot)",
-              "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Thoracic Rotation"
-            },
-            {
-              "name": "CAT-COW POSE (Marjaryasana-Bitilasana)🐮 😺",
+              "name": "Cat Camel Stretch",
+              "displayName": "Cat Camel Stretch",
               "youtubeUrl": "https://youtu.be/2of247Kt0tU",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Cat-Cow Pose"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "90 90 Hip Rotations",
+              "name": "Side Lying Thoracic Rotation",
+              "displayName": "Side Lying Thoracic Rotation",
+              "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
+              "reps": [
+                "6"
+              ],
+              "note": "",
+              "sideInfo": "None",
+              "restSecondsAfterSet": 0
+            },
+            {
+              "name": "90-90 Hip Rotation",
+              "displayName": "90-90 Hip Rotation",
               "youtubeUrl": "https://youtu.be/npdpCtfPI5I",
               "reps": [
-                10
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Hip Rotations"
-            },
-            {
-              "name": "Fix Your Back with This Flow: Down Dog to Cobra",
-              "youtubeUrl": "https://youtu.be/2Qo3eUchf7A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Down Dog to Cobra"
-            },
-            {
-              "name": "The World’s Greatest Stretch with LOTS OF BENEFITS! 🤩🤩🤩 #worldsgreateststretch #stretch #yoga",
-              "youtubeUrl": "https://youtu.be/KJBHqUBtoCw",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "World's Greatest Stretch"
-            },
-            {
-              "name": "Neck Rotation",
-              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Neck Rotation"
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -497,80 +468,87 @@
           "exercises": [
             {
               "name": "Incline Push Ups",
+              "displayName": "Incline Push Ups",
               "youtubeUrl": "https://youtu.be/49jfZ_z7-us",
               "reps": [
-                10
+                "8",
+                "8"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Incline Push Ups"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Dumbbell Hip Thrust",
+              "name": "Dumbbell Hip Thrusts",
+              "displayName": "Dumbbell Hip Thrusts",
               "youtubeUrl": "https://youtu.be/Zp3mZV6Plyg",
               "reps": [
-                10
+                "10-15",
+                "10-15"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Dumbbell Hip Thrust"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Banded Clamshell",
+              "name": "Banded Clamshells",
+              "displayName": "Banded Clamshells",
               "youtubeUrl": "https://youtu.be/InAOx0qA9EE",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Banded Clamshell"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Arnold Dumbbell Press",
+              "name": "Arnold Press",
+              "displayName": "Arnold Press",
               "youtubeUrl": "https://youtu.be/ASsEO6pabKk",
               "reps": [
-                10
+                "8-10",
+                "8-10"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Arnold Dumbbell Press"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "How to do Standing Calf Raises",
+              "name": "DB Deficit Calf Raises",
+              "displayName": "DB Deficit Calf Raises",
               "youtubeUrl": "https://youtu.be/n-5T_oYc1oU",
               "reps": [
-                10
+                "10",
+                "10"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Standing Calf Raises"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "How To Do A DUMBBELL GOBLET SQUAT",
+              "name": "Dumbbell Goblet Squats",
+              "displayName": "Dumbbell Goblet Squats",
               "youtubeUrl": "https://youtu.be/Xjo_fY9Hl9w",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Goblet Squat"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Reverse Snow Angels",
+              "name": "Rev Snow Angels",
+              "displayName": "Rev Snow Angels",
               "youtubeUrl": "https://youtu.be/R7jH-CNUb_c",
               "reps": [
-                10
+                "8",
+                "8"
               ],
-              "note": "",
+              "note": "Keep arms higher",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Reverse Snow Angels"
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -578,22 +556,23 @@
           "title": "Cooldown",
           "exercises": [
             {
-              "name": "POST-WORKOUT STRETCH for Injury Prevention & Flexibility",
+              "name": "Full Body Cool Down",
+              "displayName": "Full Body Cool Down",
               "youtubeUrl": "https://youtu.be/IjH_8pdybfs",
               "reps": [
-                10
+                "1"
               ],
-              "note": "",
+              "note": "Keep it easy",
               "sideInfo": "None",
               "restSecondsAfterSet": 0,
-              "displayName": "Post-Workout Stretch"
+              "durationSeconds": 20
             }
           ]
         }
       ]
     },
     {
-      "dayId": "5",
+      "dayId": "beg_day4",
       "label": "Friday",
       "sections": [
         {
@@ -601,91 +580,58 @@
           "exercises": [
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                10
+                "20"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Jumping Jacks"
+              "restSecondsAfterSet": 0
             },
             {
               "name": "Wall Shoulder Circles",
+              "displayName": "Wall Shoulder Circles",
               "youtubeUrl": "https://youtu.be/KmherMbhPco",
               "reps": [
-                10
+                "6"
               ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Shoulder Circles"
+              "note": "avoid rotating from chest",
+              "sideInfo": "Per Arm",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Side Lying Thoracic Rotation (S/L Tsp Rot)",
+              "name": "Side Lying Thoracic Rotation",
+              "displayName": "Side Lying Thoracic Rotation",
               "youtubeUrl": "https://youtu.be/aBI_-T3jFH0",
               "reps": [
-                10
+                "6"
               ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Thoracic Rotation"
+              "note": "Push top knee to the ground",
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "CAT-COW POSE (Marjaryasana-Bitilasana)🐮 😺",
+              "name": "Cat Camel",
+              "displayName": "Cat Camel",
               "youtubeUrl": "https://youtu.be/2of247Kt0tU",
               "reps": [
-                10
+                "8"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Cat-Cow Pose"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "90 90 Hip Rotations",
+              "name": "90-90 Hip Rotation",
+              "displayName": "90-90 Hip Rotation",
               "youtubeUrl": "https://youtu.be/npdpCtfPI5I",
               "reps": [
-                10
+                "8"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Hip Rotations"
-            },
-            {
-              "name": "Fix Your Back with This Flow: Down Dog to Cobra",
-              "youtubeUrl": "https://youtu.be/2Qo3eUchf7A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Down Dog to Cobra"
-            },
-            {
-              "name": "The World’s Greatest Stretch with LOTS OF BENEFITS! 🤩🤩🤩 #worldsgreateststretch #stretch #yoga",
-              "youtubeUrl": "https://youtu.be/KJBHqUBtoCw",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "World's Greatest Stretch"
-            },
-            {
-              "name": "Neck Rotation",
-              "youtubeUrl": "https://youtu.be/zDe1in6Uq3A",
-              "reps": [
-                10
-              ],
-              "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 0,
-              "displayName": "Neck Rotation"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -693,81 +639,88 @@
           "title": "Main Workout",
           "exercises": [
             {
-              "name": "Glute Bridge w. Adductor Squeeze",
+              "name": "Glute Bridge Adduction",
+              "displayName": "Glute Bridge Adduction",
               "youtubeUrl": "https://youtu.be/IMx4lDf9XgA",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Glute Bridge"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Dumbbell RDL for Beginners",
+              "name": "Bench Assisted RDL",
+              "displayName": "Bench Assisted RDL",
               "youtubeUrl": "https://youtu.be/pN_dB48gTYM",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Dumbbell RDL"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Banded Pulldown",
+              "name": "Banded Pull Downs",
+              "displayName": "Banded Pull Downs",
               "youtubeUrl": "https://youtu.be/0H7d2qjyKbU",
               "reps": [
-                10
+                "10-15",
+                "10-15"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Banded Pulldown"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Seated Dumbbell Rear Delt Raise",
+              "name": "Rear Delt Flies",
+              "displayName": "Rear Delt Flies",
               "youtubeUrl": "https://youtu.be/p1yQnTNE808",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Rear Delt Raise"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "How to Do Bicep Curls",
+              "name": "Bicep Curl",
+              "displayName": "Bicep Curl",
               "youtubeUrl": "https://youtu.be/uO_CNYidOw0",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Bicep Curls"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Home Tricep pushdown with band - using door hinge attachment",
+              "name": "Banded Tricep Push Downs",
+              "displayName": "Banded Tricep Push Downs",
               "youtubeUrl": "https://youtu.be/qyZmxVS5_Z0",
               "reps": [
-                10
+                "10-12",
+                "10-12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Tricep Pushdown"
+              "restSecondsAfterSet": 0
             },
             {
-              "name": "Dead-bug (Band-resisted)",
+              "name": "Banded Dead Bugs",
+              "displayName": "Banded Dead Bugs",
               "youtubeUrl": "https://youtu.be/iW_CtYtzbeU",
               "reps": [
-                10
+                "8-10",
+                "8-10"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Dead-bug"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 0
             }
           ]
         },
@@ -775,152 +728,168 @@
           "title": "Cooldown",
           "exercises": [
             {
-              "name": "POST-WORKOUT STRETCH for Injury Prevention & Flexibility",
+              "name": "Full Body Cool Down",
+              "displayName": "Full Body Cool Down",
               "youtubeUrl": "https://youtu.be/IjH_8pdybfs",
               "reps": [
-                10
+                "1"
               ],
-              "note": "",
+              "note": "Keep it easy",
               "sideInfo": "None",
               "restSecondsAfterSet": 0,
-              "displayName": "Post-Workout Stretch"
+              "durationSeconds": 20
             }
           ]
         }
       ]
     },
     {
-      "dayId": "6",
+      "dayId": "HIIT",
       "label": "Saturday",
       "sections": [
         {
-          "title": "Cardio",
+          "title": "Section 1",
           "exercises": [
             {
-              "name": "Modified Burpee or Low Impact Burpee Exercise Demonstration",
+              "name": "Modified Burpees",
+              "displayName": "Modified Burpees",
               "youtubeUrl": "https://youtu.be/iUL2tndomms",
               "reps": [
-                6,
-                6,
-                6
+                "6",
+                "6",
+                "6"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Modified Burpee"
+              "restSecondsAfterSet": 30
             },
             {
               "name": "Mountain Climbers",
+              "displayName": "Mountain Climbers",
               "youtubeUrl": "https://youtu.be/hyo2QqhrOHU",
               "reps": [
-                10,
-                10,
-                10
+                "10",
+                "10",
+                "10"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Mountain Climbers"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 30
             },
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                12,
-                12,
-                12
+                "12",
+                "12",
+                "12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Jumping Jacks"
-            },
+              "restSecondsAfterSet": 30
+            }
+          ]
+        },
+        {
+          "title": "Section 2",
+          "exercises": [
             {
-              "name": "The Air Squat",
-              "youtubeUrl": "https://youtu.be/rMvwVtlqjTE",
+              "name": "Air Squats",
+              "displayName": "Air Squats",
+              "youtubeUrl": "",
               "reps": [
-                10,
-                10,
-                10
+                "10",
+                "10",
+                "10"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Air Squat"
+              "restSecondsAfterSet": 30
             },
             {
-              "name": "Wall Push-Ups for Absolute Beginners",
+              "name": "Wall Pushups",
+              "displayName": "Wall Pushups",
               "youtubeUrl": "https://youtu.be/YWw-3rGaoT0",
               "reps": [
-                10,
-                10,
-                10
+                "10",
+                "10",
+                "10"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Wall Push-Ups"
+              "restSecondsAfterSet": 60
             },
             {
-              "name": "Side Shuffle Drill",
-              "youtubeUrl": "https://youtu.be/OOoU9Ym7O1c",
+              "name": "Lateral Shuffle",
+              "displayName": "Lateral Shuffle",
+              "youtubeUrl": "",
               "reps": [
-                3,
-                3,
-                3
+                "3",
+                "3",
+                "3"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Side Shuffle"
-            },
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 30
+            }
+          ]
+        },
+        {
+          "title": "Section 3",
+          "exercises": [
             {
               "name": "Bicycle Crunch",
+              "displayName": "Bicycle Crunch",
               "youtubeUrl": "https://youtu.be/CakPX7X-mSw",
               "reps": [
-                10,
-                10,
-                10
+                "10",
+                "10",
+                "10"
               ],
               "note": "",
-              "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Bicycle Crunch"
+              "sideInfo": "Per Side",
+              "restSecondsAfterSet": 30
             },
             {
               "name": "Jumping Jacks",
+              "displayName": "Jumping Jacks",
               "youtubeUrl": "https://youtu.be/X2eHWNM3Bf8",
               "reps": [
-                12,
-                12,
-                12
+                "12",
+                "12",
+                "12"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Jumping Jacks"
+              "restSecondsAfterSet": 30
             },
             {
-              "name": "Modified Burpee or Low Impact Burpee Exercise Demonstration",
+              "name": "Modified Burpees",
+              "displayName": "Modified Burpees",
               "youtubeUrl": "https://youtu.be/iUL2tndomms",
               "reps": [
-                4,
-                4,
-                4
+                "4",
+                "4",
+                "4"
               ],
               "note": "",
               "sideInfo": "None",
-              "restSecondsAfterSet": 60,
-              "displayName": "Modified Burpee"
+              "restSecondsAfterSet": 60
             }
           ]
         }
       ]
     },
     {
-      "dayId": "7",
+      "dayId": "Rest",
       "label": "Sunday",
-      "sections": []
+      "sections": [
+        {
+          "title": "Rest Day",
+          "exercises": []
+        }
+      ]
     }
   ]
 }

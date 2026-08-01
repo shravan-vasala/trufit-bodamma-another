@@ -1,18 +1,31 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
 import '../models/daily_meal_log.dart';
+import '../models/meal_plan.dart';
+import 'package:flutter/services.dart';
 
 class MealRepository {
   static const String _dailyLogsBoxName = 'daily_meal_logs';
   static const String _completionBoxName = 'meal_completions'; // Legacy box
+  static const String _planBoxName = 'meal_plans';
 
   late Box<String> _dailyLogsBox;
   late Box<String> _completionBox;
+  late Box<String> _planBox;
 
   Future<void> init() async {
     _dailyLogsBox = await Hive.openBox<String>(_dailyLogsBoxName);
     _completionBox = await Hive.openBox<String>(_completionBoxName);
+    _planBox = await Hive.openBox<String>(_planBoxName);
     await _migrateLegacyCompletions();
+    await _seedIfEmpty();
+  }
+
+  Future<void> _seedIfEmpty() async {
+    if (_planBox.isEmpty) {
+      final jsonStr = await rootBundle.loadString('assets/data/seed_meal_plan.json');
+      _planBox.put('standard_plan', jsonStr);
+    }
   }
 
   Future<void> _migrateLegacyCompletions() async {
@@ -89,5 +102,35 @@ class MealRepository {
     
     final updated = currentLog.copyWith(customSlots: updatedSlots);
     await saveDailyLog(updated);
+  }
+
+  MealPlan? getMealPlan(String key) {
+    final jsonStr = _planBox.get(key);
+    if (jsonStr == null) return null;
+    return MealPlan.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+  }
+
+  Future<void> savePlanJson(String key, String jsonStr) async {
+    final dynamic decoded = jsonDecode(jsonStr);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Root JSON must be an object');
+    }
+    final map = decoded;
+    if (map['planName'] == null || map['planName'].toString().trim().isEmpty) {
+      throw const FormatException('Missing or empty "planName"');
+    }
+    final meals = map['meals'];
+    if (meals is! List) {
+      throw const FormatException('"meals" must be an array');
+    }
+    await _planBox.put(key, jsonStr);
+  }
+
+  String? getRawPlanJson(String key) {
+    return _planBox.get(key);
+  }
+
+  List<String> getPlanKeys() {
+    return _planBox.keys.cast<String>().toList();
   }
 }

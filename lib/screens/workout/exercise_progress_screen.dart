@@ -5,6 +5,7 @@ import '../progress/widgets/shared_chart_card.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/exercise_log.dart';
+import '../../models/exercise_pr.dart';
 
 class ExerciseProgressScreen extends ConsumerWidget {
   const ExerciseProgressScreen({super.key, required this.exerciseName});
@@ -115,6 +116,10 @@ class ExerciseProgressScreen extends ConsumerWidget {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(20),
               children: [
+                if (ref.watch(exerciseLogRepoProvider).getPr(exerciseName) != null) ...[
+                  _PrSummary(pr: ref.watch(exerciseLogRepoProvider).getPr(exerciseName)!),
+                  const SizedBox(height: 20),
+                ],
                 SharedChartCard(
                   title: 'Max Weight',
                   data: maxWeightData,
@@ -150,6 +155,65 @@ class ExerciseProgressScreen extends ConsumerWidget {
                 ...sortedLogs.reversed.map((log) => _HistoryCard(log: log)),
               ],
             ),
+    );
+  }
+}
+
+class _PrSummary extends StatelessWidget {
+  final ExercisePr pr;
+  const _PrSummary({required this.pr});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD700).withValues(alpha: 0.1),
+        border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.emoji_events_rounded, color: Color(0xFFB8860B), size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'PERSONAL RECORDS',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: Color(0xFFB8860B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (pr.maxWeight > 0)
+            _buildPrRow('Max Weight', '${pr.maxWeight}kg × ${pr.maxWeightReps}'),
+          if (pr.maxReps > 0 && (pr.maxWeight == 0 || pr.maxReps > pr.maxWeightReps))
+            _buildPrRow('Max Reps', '${pr.maxReps} reps @ ${pr.maxRepsWeight}kg'),
+          if (pr.estimated1RM > 0)
+            _buildPrRow('Est. 1RM', '${pr.estimated1RM.toStringAsFixed(1)}kg'),
+          if (pr.maxVolume > 0)
+            _buildPrRow('Max Volume', '${pr.maxVolume}kg'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF8B6508))),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF8B6508))),
+        ],
+      ),
     );
   }
 }

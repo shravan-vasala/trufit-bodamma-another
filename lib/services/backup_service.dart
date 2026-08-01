@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class BackupVerificationResult {
   final bool isValid;
@@ -13,11 +14,18 @@ class BackupVerificationResult {
   final int photoCount;
   final String? errorMessage;
 
+  final int schemaVersion;
+  final String appVersion;
+  final String createdAt;
+
   BackupVerificationResult({
     required this.isValid,
     required this.totalEntries,
     required this.photoCount,
     this.errorMessage,
+    this.schemaVersion = 0,
+    this.appVersion = 'Unknown',
+    this.createdAt = 'Unknown',
   });
 }
 
@@ -37,12 +45,21 @@ class BackupService {
     'exercise_logs',
     'daily_logs',
     'body_stats',
+    'coach_notes',
   ];
 
   /// Creates a ZIP archive containing a manifest of all Hive data and the physical photos.
   Future<String?> createBackup() async {
     try {
-      final manifest = <String, Map<String, dynamic>>{};
+      final packageInfo = await PackageInfo.fromPlatform();
+      final manifestData = <String, dynamic>{
+        'schemaVersion': 1,
+        'appVersion': packageInfo.version,
+        'createdAt': DateTime.now().toIso8601String(),
+        'boxes': <String, dynamic>{},
+      };
+      
+      final manifestBoxes = <String, Map<String, dynamic>>{};
 
       // 1. Read all Hive boxes into the manifest
       for (final boxName in _boxesToBackup) {
@@ -51,13 +68,15 @@ class BackupService {
         for (final key in box.keys) {
           boxData[key.toString()] = box.get(key);
         }
-        manifest[boxName] = boxData;
+        manifestBoxes[boxName] = boxData;
       }
+      
+      manifestData['boxes'] = manifestBoxes;
 
       // 2. Identify all photos to backup
       final photosToBackup = <String>{};
-      if (manifest.containsKey('media_metadata')) {
-        final mediaBox = manifest['media_metadata']!;
+      if (manifestBoxes.containsKey('media_metadata')) {
+        final mediaBox = manifestBoxes['media_metadata']!;
         for (final key in mediaBox.keys) {
           if (key.startsWith('photos_')) {
             final String jsonStr = mediaBox[key];
@@ -72,8 +91,8 @@ class BackupService {
       }
 
       // Add profile photo if present
-      if (manifest.containsKey('user_profile')) {
-        final profileBox = manifest['user_profile']!;
+      if (manifestBoxes.containsKey('user_profile')) {
+        final profileBox = manifestBoxes['user_profile']!;
         final profileJsonStr = profileBox['profile'];
         if (profileJsonStr != null) {
           try {
@@ -89,7 +108,7 @@ class BackupService {
       final archive = Archive();
       
       // Add manifest.json
-      final manifestBytes = utf8.encode(jsonEncode(manifest));
+      final manifestBytes = utf8.encode(jsonEncode(manifestData));
       archive.addFile(ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
 
       // Add photos
@@ -138,8 +157,20 @@ class BackupService {
       final manifestContent = utf8.decode(manifestFile.content as List<int>);
       final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
 
+      int schemaVersion = 0;
+      String appVersion = 'Unknown';
+      String createdAt = 'Unknown';
+      Map<String, dynamic> boxes = manifest;
+
+      if (manifest.containsKey('schemaVersion')) {
+        schemaVersion = manifest['schemaVersion'] as int? ?? 1;
+        appVersion = manifest['appVersion'] as String? ?? 'Unknown';
+        createdAt = manifest['createdAt'] as String? ?? 'Unknown';
+        boxes = manifest['boxes'] as Map<String, dynamic>? ?? {};
+      }
+
       int entriesCount = 0;
-      for (final box in manifest.values) {
+      for (final box in boxes.values) {
         entriesCount += (box as Map).length;
       }
 
@@ -150,6 +181,9 @@ class BackupService {
         isValid: true,
         totalEntries: entriesCount,
         photoCount: photosCount,
+        schemaVersion: schemaVersion,
+        appVersion: appVersion,
+        createdAt: createdAt,
       );
     } catch (e) {
       return BackupVerificationResult(isValid: false, totalEntries: 0, photoCount: 0, errorMessage: e.toString());
@@ -167,13 +201,29 @@ class BackupService {
       if (manifestFile == null) return false;
 
       final manifestContent = utf8.decode(manifestFile.content as List<int>);
-      final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
+      final manifestData = jsonDecode(manifestContent) as Map<String, dynamic>;
+
+      Map<String, dynamic> boxes = manifestData;
+      if (manifestData.containsKey('schemaVersion')) {
+        boxes = manifestData['boxes'] as Map<String, dynamic>? ?? {};
+      }
+
+      // 0. Create pre-restore safety net
+      final backupPath = await createBackup();
+      if (backupPath != null) {
+        final docDir = await getApplicationDocumentsDirectory();
+        final safetyNetFile = File('${docDir.path}/pre_restore_safety_net.zip');
+        if (await safetyNetFile.exists()) {
+          await safetyNetFile.delete();
+        }
+        await File(backupPath).copy(safetyNetFile.path);
+      }
 
       // 1. Overwrite all Hive boxes
-      for (final boxName in manifest.keys) {
+      for (final boxName in boxes.keys) {
         final box = await Hive.openBox<String>(boxName);
         await box.clear(); // Wipe current data
-        final Map<String, dynamic> boxData = manifest[boxName];
+        final Map<String, dynamic> boxData = boxes[boxName];
         for (final entry in boxData.entries) {
           await box.put(entry.key, entry.value.toString());
         }
@@ -195,7 +245,7 @@ class BackupService {
       }
 
       // Fix paths in media_metadata
-      if (manifest.containsKey('media_metadata')) {
+      if (boxes.containsKey('media_metadata')) {
         final mediaBox = await Hive.openBox<String>('media_metadata');
         final currentKeys = mediaBox.keys.toList();
         for (final key in currentKeys) {
@@ -228,7 +278,7 @@ class BackupService {
       }
 
       // Also fix paths in scanned_photo_meals
-      if (manifest.containsKey('scanned_photo_meals')) {
+      if (boxes.containsKey('scanned_photo_meals')) {
         final mealBox = await Hive.openBox<String>('scanned_photo_meals');
         final keys = mealBox.keys.toList();
         for (final key in keys) {
@@ -243,7 +293,7 @@ class BackupService {
       }
 
       // Fix profile photo path
-      if (manifest.containsKey('user_profile')) {
+      if (boxes.containsKey('user_profile')) {
         final profileBox = await Hive.openBox<String>('user_profile');
         final profileJsonStr = profileBox.get('profile');
         if (profileJsonStr != null) {

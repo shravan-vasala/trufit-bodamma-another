@@ -42,14 +42,14 @@ void main() {
       final exercise = Exercise(
         name: 'Test',
         youtubeUrl: 'https://youtu.be/test123',
-        reps: [10],
+        reps: ['10'],
       );
       expect(exercise.youtubeVideoId, 'test123');
 
       final exercise2 = Exercise(
         name: 'Test',
         youtubeUrl: 'https://www.youtube.com/watch?v=abc456',
-        reps: [10],
+        reps: ['10'],
       );
       expect(exercise2.youtubeVideoId, 'abc456');
     });

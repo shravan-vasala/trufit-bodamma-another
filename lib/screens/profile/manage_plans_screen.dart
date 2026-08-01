@@ -8,8 +8,12 @@ class ManagePlansScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider);
+    final workoutRepo = ref.watch(workoutRepoProvider);
+    final mealRepo = ref.watch(mealRepoProvider);
+
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -22,22 +26,96 @@ class ManagePlansScreen extends ConsumerWidget {
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textMedium,
             indicatorColor: AppColors.primary,
+            isScrollable: true,
             tabs: [
               Tab(text: 'Workout Plans'),
+              Tab(text: 'Meal Plans'),
               Tab(text: 'Meal Slots'),
             ],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _PlanEditor(
-              type: 'workout',
-              getKeys: () => ref.read(workoutRepoProvider).getPlanKeys(),
-              getRawJson: (key) => ref.read(workoutRepoProvider).getRawPlanJson(key),
-              saveJson: (key, json) =>
-                  ref.read(workoutRepoProvider).savePlanJson(key, json),
+            // Active Plans Selection
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              color: AppColors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Active Workout', style: TextStyle(fontSize: 12, color: AppColors.textMedium, fontWeight: FontWeight.bold)),
+                        DropdownButton<String>(
+                          value: profile.activeWorkoutPlan,
+                          isExpanded: true,
+                          hint: const Text('Select Plan', style: TextStyle(fontSize: 14)),
+                          items: workoutRepo.getPlanKeys().map((k) => DropdownMenuItem(value: k, child: Text(k, style: const TextStyle(fontSize: 14)))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(activeWorkoutPlan: val));
+                            }
+                          },
+                        ),
+                        if (profile.planStartDate != null)
+                          TextButton(
+                            onPressed: () {
+                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(clearPlanStart: true, currentPhaseWeek: 1));
+                              ref.read(profileProvider.notifier).updateProfile(profile.copyWith(clearPlanStart: true, currentPhaseWeek: 1));
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              alignment: Alignment.centerLeft,
+                            ),
+                            child: const Text('Reset phase progress', style: TextStyle(fontSize: 11, color: AppColors.red)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Active Meals', style: TextStyle(fontSize: 12, color: AppColors.textMedium, fontWeight: FontWeight.bold)),
+                        DropdownButton<String>(
+                          value: profile.activeMealPlan,
+                          isExpanded: true,
+                          hint: const Text('Select Plan', style: TextStyle(fontSize: 14)),
+                          items: mealRepo.getPlanKeys().map((k) => DropdownMenuItem(value: k, child: Text(k, style: const TextStyle(fontSize: 14)))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              ref.read(profileRepoProvider).saveProfile(profile.copyWith(activeMealPlan: val));
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const _MealSlotsEditor(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _PlanEditor(
+                    type: 'workout',
+                    getKeys: () => workoutRepo.getPlanKeys(),
+                    getRawJson: (key) => workoutRepo.getRawPlanJson(key),
+                    saveJson: (key, json) => workoutRepo.savePlanJson(key, json),
+                  ),
+                  _PlanEditor(
+                    type: 'meal',
+                    getKeys: () => mealRepo.getPlanKeys(),
+                    getRawJson: (key) => mealRepo.getRawPlanJson(key),
+                    saveJson: (key, json) => mealRepo.savePlanJson(key, json),
+                  ),
+                  const _MealSlotsEditor(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -326,9 +404,10 @@ class _PlanEditorState extends State<_PlanEditor> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceAll('FormatException: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Invalid JSON: $e'),
+            content: Text('Validation Error: $errorMsg'),
             backgroundColor: AppColors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

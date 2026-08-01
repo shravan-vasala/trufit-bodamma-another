@@ -41,8 +41,8 @@ class HealthConnectService {
   Future<bool> isAuthorized() async {
     try {
       await _ensureConfigured();
-      final types = [HealthDataType.STEPS];
-      final perms = [HealthDataAccess.READ];
+      final types = [HealthDataType.STEPS, HealthDataType.SLEEP_SESSION];
+      final perms = [HealthDataAccess.READ, HealthDataAccess.READ];
       return await _health.hasPermissions(types, permissions: perms) ?? false;
     } catch (_) {
       return false;
@@ -56,8 +56,8 @@ class HealthConnectService {
       // Request activity recognition first (required for step data)
       await Permission.activityRecognition.request();
       
-      final types = [HealthDataType.STEPS];
-      final perms = [HealthDataAccess.READ];
+      final types = [HealthDataType.STEPS, HealthDataType.SLEEP_SESSION];
+      final perms = [HealthDataAccess.READ, HealthDataAccess.READ];
       return await _health.requestAuthorization(types, permissions: perms);
     } catch (_) {
       return false;
@@ -100,6 +100,35 @@ class HealthConnectService {
     }
   }
 
+  /// Get sleep hours for a specific calendar day.
+  /// Health Connect often stores sleep sessions from previous night to current morning.
+  Future<double?> getSleepForDate(DateTime date) async {
+    try {
+      await _ensureConfigured();
+      // Sleep for a date usually means sleep ending on that date
+      final start = DateTime(date.year, date.month, date.day - 1, 18, 0); // 6 PM previous day
+      final end = DateTime(date.year, date.month, date.day, 18, 0); // 6 PM current day
+      
+      final healthData = await _health.getHealthDataFromTypes(
+        types: [HealthDataType.SLEEP_SESSION],
+        startTime: start,
+        endTime: end,
+      );
+      
+      if (healthData.isEmpty) return null;
+      
+      // Calculate total minutes of sleep
+      double totalMinutes = 0;
+      for (final data in healthData) {
+        totalMinutes += data.dateTo.difference(data.dateFrom).inMinutes;
+      }
+      
+      return double.parse((totalMinutes / 60).toStringAsFixed(1));
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Whether the 90-day backfill has already been done.
   bool get isBackfillDone => _metaBox.get(_backfillDoneKey) == 'true';
 
@@ -112,6 +141,14 @@ class HealthConnectService {
     bool isToday,
   ) async {
     await dailyLogRepo.updateSteps(dateStr, steps, source: 'healthConnect');
+  }
+
+  Future<void> _syncSleepValue(
+    String dateStr,
+    double sleepHours,
+    DailyLogRepository dailyLogRepo,
+  ) async {
+    await dailyLogRepo.updateSleep(dateStr, sleepHours, source: 'healthConnect');
   }
 
   /// Backfill the last 90 days of step data into Hive.
@@ -138,15 +175,22 @@ class HealthConnectService {
       final dateStr = dateFormat.format(date);
       final existing = dailyLogRepo.getLog(dateStr);
 
-      // Skip if user manually entered steps for this day
-      if (existing != null && existing.steps != null && existing.stepsSource == 'manual') {
-        continue;
+      // Sync steps
+      if (existing == null || existing.steps == null || existing.stepsSource != 'manual') {
+        final steps = await getStepsForDate(date);
+        if (steps != null && steps > 0) {
+          await _syncStepValueAndHabit(dateStr, steps, dailyLogRepo, habitRepo, dateStr == todayStr);
+          count++;
+        }
       }
 
-      final steps = await getStepsForDate(date);
-      if (steps != null && steps > 0) {
-        await _syncStepValueAndHabit(dateStr, steps, dailyLogRepo, habitRepo, dateStr == todayStr);
-        count++;
+      // Sync sleep
+      if (existing == null || existing.sleepHours == null || existing.sleepSource != 'manual') {
+        final sleep = await getSleepForDate(date);
+        if (sleep != null && sleep > 0) {
+          await _syncSleepValue(dateStr, sleep, dailyLogRepo);
+          count++;
+        }
       }
     }
 
@@ -167,15 +211,22 @@ class HealthConnectService {
       final dateStr = dateFormat.format(date);
       final existing = dailyLogRepo.getLog(dateStr);
 
-      // Skip if user manually entered steps for this day
-      if (existing != null && existing.steps != null && existing.stepsSource == 'manual') {
-        continue;
+      // Sync steps
+      if (existing == null || existing.steps == null || existing.stepsSource != 'manual') {
+        final steps = await getStepsForDate(date);
+        if (steps != null && steps > 0) {
+          await _syncStepValueAndHabit(dateStr, steps, dailyLogRepo, habitRepo, dateStr == todayStr);
+          count++;
+        }
       }
 
-      final steps = await getStepsForDate(date);
-      if (steps != null && steps > 0) {
-        await _syncStepValueAndHabit(dateStr, steps, dailyLogRepo, habitRepo, dateStr == todayStr);
-        count++;
+      // Sync sleep
+      if (existing == null || existing.sleepHours == null || existing.sleepSource != 'manual') {
+        final sleep = await getSleepForDate(date);
+        if (sleep != null && sleep > 0) {
+          await _syncSleepValue(dateStr, sleep, dailyLogRepo);
+          count++;
+        }
       }
     }
 
@@ -191,7 +242,15 @@ class HealthConnectService {
     final dateStr = DateFormat('yyyy-MM-dd').format(now);
     final existing = dailyLogRepo.getLog(dateStr);
 
-    // Don't overwrite manual entries
+    // Sync sleep
+    if (existing == null || existing.sleepHours == null || existing.sleepSource != 'manual') {
+      final sleep = await getSleepForDate(now);
+      if (sleep != null && sleep > 0) {
+        await _syncSleepValue(dateStr, sleep, dailyLogRepo);
+      }
+    }
+
+    // Don't overwrite manual entries for steps
     if (existing != null && existing.steps != null && existing.stepsSource == 'manual') {
       return existing.steps;
     }

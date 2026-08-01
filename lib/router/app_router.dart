@@ -8,10 +8,14 @@ import '../screens/workout/workout_screen.dart';
 import '../screens/workout/youtube_player_screen.dart';
 import '../screens/workout/exercise_progress_screen.dart';
 import '../screens/progress/progress_screen.dart';
+import '../screens/progress/weekly_summary_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/manage_plans_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
+import '../screens/profile/reminders_screen.dart';
 import '../theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/app_providers.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
@@ -37,6 +41,9 @@ final appRouter = GoRouter(
     ),
   ),
   redirect: (context, state) {
+    if (state.uri.queryParameters['metric'] == 'calories') {
+      return '/home/meals';
+    }
     if (state.uri.path == '/' || state.uri.path.isEmpty) {
       return '/home';
     }
@@ -71,7 +78,11 @@ final appRouter = GoRouter(
                   path: 'workout/:dayId',
                   builder: (context, state) {
                     final dayId = state.pathParameters['dayId']!;
-                    return WorkoutScreen(dayId: dayId);
+                    final sectionParam = state.uri.queryParameters['section'];
+                    final sectionIndex = sectionParam != null
+                        ? int.tryParse(sectionParam)
+                        : null;
+                    return WorkoutScreen(dayId: dayId, sectionIndex: sectionIndex);
                   },
                 ),
               ],
@@ -107,6 +118,12 @@ final appRouter = GoRouter(
                 }
                 return ProgressScreen(initialMetric: metric);
               },
+              routes: [
+                GoRoute(
+                  path: 'weekly-summary',
+                  builder: (context, state) => const WeeklySummaryScreen(),
+                ),
+              ],
             ),
           ],
         ),
@@ -125,6 +142,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'backup-restore',
                   builder: (context, state) => const BackupRestoreScreen(),
+                ),
+                GoRoute(
+                  path: 'reminders',
+                  builder: (context, state) => const RemindersScreen(),
                 ),
               ],
             ),
@@ -155,13 +176,14 @@ final appRouter = GoRouter(
   ],
 );
 
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timerState = ref.watch(restTimerProvider);
     return PopScope(
       canPop: navigationShell.currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -170,38 +192,144 @@ class ScaffoldWithNavBar extends StatelessWidget {
         }
       },
       child: Scaffold(
-        body: navigationShell,
-        bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
+        extendBody: true,
+        body: Stack(
+          children: [
+            navigationShell,
+            if (timerState.isActive)
+              Positioned(
+                bottom: 100, // Above nav bar
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.orange.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        timerState.isPaused ? Icons.pause_circle_filled : Icons.timer,
+                        color: AppColors.white,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              timerState.exerciseName != null
+                                  ? 'Resting for ${timerState.exerciseName}'
+                                  : 'Resting',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${timerState.remainingSeconds ~/ 60}:${(timerState.remainingSeconds % 60).toString().padLeft(2, '0')}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Controls
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _TimerControlButton(
+                            label: '+15s',
+                            onTap: () => ref.read(restTimerProvider.notifier).addSeconds(15),
+                          ),
+                          const SizedBox(width: 8),
+                          _TimerControlButton(
+                            label: '+30s',
+                            onTap: () => ref.read(restTimerProvider.notifier).addSeconds(30),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: Icon(
+                              timerState.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                              color: AppColors.white,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              if (timerState.isPaused) {
+                                ref.read(restTimerProvider.notifier).resumeTimer();
+                              } else {
+                                ref.read(restTimerProvider.notifier).pauseTimer();
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: AppColors.white),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              ref.read(restTimerProvider.notifier).stopTimer();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textDark.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
-                  icon: Icons.home_rounded,
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
                   label: 'Home',
                   isSelected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
                 _NavItem(
-                  icon: Icons.show_chart_rounded,
+                  icon: Icons.show_chart_outlined,
+                  activeIcon: Icons.show_chart_rounded,
                   label: 'Progress',
                   isSelected: navigationShell.currentIndex == 1,
                   onTap: () => navigationShell.goBranch(1),
                 ),
                 _NavItem(
-                  icon: Icons.person_rounded,
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
                   label: 'Profile',
                   isSelected: navigationShell.currentIndex == 2,
                   onTap: () => navigationShell.goBranch(2),
@@ -211,20 +339,21 @@ class ScaffoldWithNavBar extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -236,31 +365,60 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon,
-              color: isSelected ? AppColors.primary : AppColors.textLight,
+              isSelected ? activeIcon : icon,
+              color: isSelected ? AppColors.white : AppColors.textLight,
               size: 24,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textLight,
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
               ),
-            ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TimerControlButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _TimerControlButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
         ),
       ),
     );

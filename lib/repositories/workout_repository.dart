@@ -52,7 +52,56 @@ class WorkoutRepository {
 
   Future<void> savePlanJson(String key, String jsonStr) async {
     // Validate JSON first
-    jsonDecode(jsonStr);
+    final dynamic decoded = jsonDecode(jsonStr);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Root JSON must be an object');
+    }
+    final map = decoded;
+    
+    if (map['planName'] == null || map['planName'].toString().trim().isEmpty) {
+      throw const FormatException('Missing or empty "planName"');
+    }
+    
+    final days = map['days'];
+    if (days is! List) {
+      throw const FormatException('"days" must be an array');
+    }
+    
+    for (int i = 0; i < days.length; i++) {
+      final day = days[i];
+      if (day is! Map<String, dynamic>) {
+        throw FormatException('Day at index $i is not an object');
+      }
+      
+      final exercises = day['exercises'];
+      if (exercises != null && exercises is! List) {
+        throw FormatException('"exercises" in day "${day['dayName'] ?? 'unknown'}" must be an array');
+      }
+      
+      if (exercises != null) {
+        for (final ex in exercises) {
+          if (ex is! Map<String, dynamic>) {
+            throw const FormatException('Each exercise must be an object');
+          }
+          final name = ex['name']?.toString() ?? '';
+          if (name.trim().isEmpty) {
+            throw const FormatException('An exercise is missing a "name"');
+          }
+          final reps = ex['reps']?.toString() ?? '';
+          if (reps.trim().isEmpty) {
+            throw FormatException('Exercise "$name" is missing "reps"');
+          }
+          
+          final yt = ex['youtubeUrl']?.toString() ?? '';
+          if (yt.isNotEmpty) {
+            if (!yt.contains('youtube.com/watch') && !yt.contains('youtu.be')) {
+              throw FormatException('Invalid YouTube URL format for exercise "$name". Use youtube.com/watch or youtu.be');
+            }
+          }
+        }
+      }
+    }
+    
     await _planBox.put(key, jsonStr);
   }
 

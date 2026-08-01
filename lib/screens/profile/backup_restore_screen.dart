@@ -109,7 +109,13 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Backup Verified ✨', style: TextStyle(color: AppColors.green)),
-              content: Text('Backup OK — ${verify.totalEntries} entries, ${verify.photoCount} photos.\n\nYour current data was not touched.'),
+              content: Text(
+                'App Version: ${verify.appVersion}\n'
+                'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
+                'Entries: ${verify.totalEntries}\n'
+                'Photos: ${verify.photoCount}\n\n'
+                'Your current data was not touched.'
+              ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Awesome')),
               ],
@@ -173,8 +179,11 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
           builder: (ctx) => AlertDialog(
             title: const Text('Restore Backup?'),
             content: Text(
-              'This backup contains ${verify.totalEntries} entries and ${verify.photoCount} photos.\n\n'
-              'WARNING: Restoring will completely overwrite all your current data. This cannot be undone.'
+              'App Version: ${verify.appVersion}\n'
+              'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
+              'Entries: ${verify.totalEntries}\n'
+              'Photos: ${verify.photoCount}\n\n'
+              'WARNING: Restoring will completely overwrite all your current data. A pre-restore safety backup will be created in your app documents directory.'
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),

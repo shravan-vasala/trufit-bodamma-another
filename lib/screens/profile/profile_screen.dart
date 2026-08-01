@@ -157,11 +157,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.go('/profile/manage-plans'),
               ),
               _MenuCard(
+                icon: Icons.notifications_rounded,
+                title: 'Reminders',
+                subtitle: 'Daily habits, workouts, and backups',
+                onTap: () => context.go('/profile/reminders'),
+              ),
+              _MenuCard(
                 icon: Icons.swap_horiz_rounded,
                 title: 'Unit Preference',
                 subtitle: 'Currently: ${profile.useKg ? 'Kilograms (kg)' : 'Pounds (lb)'}',
                 onTap: () {
                   ref.read(profileProvider.notifier).toggleUnit();
+                },
+              ),
+              _SettingsSwitch(
+                icon: Icons.volume_up_rounded,
+                title: 'Rest Timer Sound',
+                subtitle: 'Play alert sound when rest finishes',
+                value: profile.restTimerSound,
+                onChanged: (val) {
+                  ref.read(profileProvider.notifier).updateProfile(
+                        profile.copyWith(restTimerSound: val),
+                      );
+                },
+              ),
+              _SettingsSwitch(
+                icon: Icons.vibration_rounded,
+                title: 'Rest Timer Vibration',
+                subtitle: 'Vibrate when rest finishes',
+                value: profile.restTimerVibration,
+                onChanged: (val) {
+                  ref.read(profileProvider.notifier).updateProfile(
+                        profile.copyWith(restTimerVibration: val),
+                      );
                 },
               ),
               _MenuCard(
@@ -357,6 +385,70 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
+class _SettingsSwitch extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsSwitch({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: SwitchListTile(
+        value: value,
+        onChanged: onChanged,
+        activeColor: AppColors.primary,
+        secondary: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.lavender,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textMedium,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+    );
+  }
+}
+
 class _EditProfileSheet extends ConsumerStatefulWidget {
   const _EditProfileSheet();
 
@@ -369,6 +461,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   late TextEditingController heightController;
   late TextEditingController targetController;
   late TextEditingController caloriesController;
+  late TextEditingController proteinController;
+  late TextEditingController carbsController;
+  late TextEditingController fatController;
   
   String? _localPhotoPath;
   bool _clearPhoto = false;
@@ -381,6 +476,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     heightController = TextEditingController(text: profile.height.toStringAsFixed(0));
     targetController = TextEditingController(text: profile.targetWeight?.toStringAsFixed(1) ?? '');
     caloriesController = TextEditingController(text: profile.targetCalories.toString());
+    proteinController = TextEditingController(text: profile.targetProteinG.toString());
+    carbsController = TextEditingController(text: profile.targetCarbsG.toString());
+    fatController = TextEditingController(text: profile.targetFatG.toString());
     _localPhotoPath = profile.photoPath;
   }
 
@@ -390,6 +488,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     heightController.dispose();
     targetController.dispose();
     caloriesController.dispose();
+    proteinController.dispose();
+    carbsController.dispose();
+    fatController.dispose();
     super.dispose();
   }
 
@@ -622,6 +723,43 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 prefixIcon: Icon(Icons.restaurant_rounded),
               ),
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: proteinController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Protein (g)',
+                      prefixIcon: Icon(Icons.fitness_center_rounded, size: 18),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: carbsController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Carbs (g)',
+                      prefixIcon: Icon(Icons.breakfast_dining_rounded, size: 18),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: fatController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Fat (g)',
+                      prefixIcon: Icon(Icons.water_drop_rounded, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -635,6 +773,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                     targetWeight: double.tryParse(targetController.text),
                     targetCalories: int.tryParse(caloriesController.text) ?? 
                         profile.targetCalories,
+                    targetProteinG: int.tryParse(proteinController.text) ?? profile.targetProteinG,
+                    targetCarbsG: int.tryParse(carbsController.text) ?? profile.targetCarbsG,
+                    targetFatG: int.tryParse(fatController.text) ?? profile.targetFatG,
                     photoPath: _localPhotoPath,
                     clearPhoto: _clearPhoto,
                   );

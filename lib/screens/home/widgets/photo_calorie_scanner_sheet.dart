@@ -7,6 +7,7 @@ import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../services/gemini_food_service.dart';
 import '../../../models/daily_meal_log.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PhotoCalorieScannerSheet extends ConsumerStatefulWidget {
   final String slotId;
@@ -198,8 +199,21 @@ class _PhotoCalorieScannerSheetState
   }
 
   Future<void> _saveMeal() async {
+    String? finalPhotoPath;
+    if (_selectedImage != null) {
+      if (!kIsWeb) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = 'meal_photo_$timestamp.jpg';
+        final savedImage = await _selectedImage!.copy('${appDir.path}/$fileName');
+        finalPhotoPath = savedImage.path;
+      } else {
+        finalPhotoPath = _selectedImage!.path;
+      }
+    }
+
     final slotLog = MealSlotLog(
-      photoPath: _selectedImage?.path,
+      photoPath: finalPhotoPath,
       items: _items,
       totalCalories: _totalCalories,
       totalProtein: _totalProtein,

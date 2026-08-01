@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# User specifically requested these ignored due to OneDrive syncing locks
+build_locked_1/
+.dart_tool_locked_1/
+ios_backup/

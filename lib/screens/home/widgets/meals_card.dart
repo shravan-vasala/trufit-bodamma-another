@@ -11,8 +11,8 @@ class MealsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dailyLog = ref.watch(dailyMealLogProvider);
     final profile = ref.watch(profileProvider);
-    final mealPlanAsync = ref.watch(mealPlanProvider);
-    final planName = mealPlanAsync.valueOrNull?.planName ?? 'Meals Plan';
+    final mealPlan = ref.watch(mealPlanProvider);
+    final planName = mealPlan?.planName ?? 'Meals Plan';
     final title = profile.name.isEmpty ? planName : "${profile.name}'s $planName";
     
     final selectedDateStr = ref.watch(dateStringProvider);
@@ -45,7 +45,7 @@ class MealsCard extends ConsumerWidget {
         }
       }
     }
-    final emojiPrefix = loggedEmojis.isNotEmpty ? '${loggedEmojis.join(' ')} · ' : '';
+    final emojiDisplay = loggedEmojis.isNotEmpty ? loggedEmojis.join(' ') : '🍜';
 
     final completedMeals = dailyLog.loggedSlotsCount;
     final completedCal = dailyLog.totalCalories;
@@ -55,113 +55,139 @@ class MealsCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => context.go('/home/meals'),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.restaurant_rounded,
-                      color: AppColors.green,
-                      size: 22,
-                    ),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textLight.withValues(alpha: 0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                Text(
+                  emojiDisplay,
+                  style: const TextStyle(fontSize: 22),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: AppColors.lavender,
+                valueColor: AlwaysStoppedAnimation<Color>(isOverTarget ? AppColors.orange : AppColors.green),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
                       children: [
-                        Text(
-                          'MEALS',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textLight,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
+                        _MacroPill(label: 'P', value: '${dailyLog.totalProtein.toStringAsFixed(0)}g', color: AppColors.green),
+                        const SizedBox(width: 6),
+                        _MacroPill(label: 'C', value: '${dailyLog.totalCarbs.toStringAsFixed(0)}g', color: AppColors.orange),
+                        const SizedBox(width: 6),
+                        _MacroPill(label: 'F', value: '${dailyLog.totalFat.toStringAsFixed(0)}g', color: AppColors.primary),
                       ],
                     ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textLight,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: AppColors.lavender,
-                  valueColor: AlwaysStoppedAnimation<Color>(isOverTarget ? AppColors.orange : AppColors.green),
-                  minHeight: 8,
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$emojiPrefix$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  if (!isFuture)
-                    GestureDetector(
-                      onTap: () {
-                         context.go('/home/meals'); // Just go to meals screen where they can tap "Scan" on any slot
-                      },
-                      child: Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.center_focus_strong_rounded,
-                              size: 14,
+                if (!isFuture)
+                  GestureDetector(
+                    onTap: () {
+                       context.go('/home/meals');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline_rounded,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Log Food',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.primary,
                             ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Log Food',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            ],
-          ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MacroPill extends StatelessWidget {
+  const _MacroPill({required this.label, required this.value, required this.color});
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        '$label: $value',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
         ),
       ),
     );

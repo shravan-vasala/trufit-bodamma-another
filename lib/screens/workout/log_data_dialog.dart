@@ -4,6 +4,8 @@ import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/workout_plan.dart';
 import '../../models/exercise_log.dart';
+import '../../utils/pr_calculator.dart';
+import '../../models/exercise_pr.dart';
 
 class LogDataDialog extends ConsumerStatefulWidget {
   const LogDataDialog({super.key, required this.exercise});
@@ -17,16 +19,28 @@ class LogDataDialog extends ConsumerStatefulWidget {
 class _LogDataDialogState extends ConsumerState<LogDataDialog> {
   late List<TextEditingController> _repsControllers;
   late List<TextEditingController> _weightControllers;
+  ExerciseLog? _lastLog;
+  ExercisePr? _currentPr;
+
+  String _parseRepTarget(String rep) {
+    if (rep.contains('-')) {
+      final parts = rep.split('-');
+      if (parts.length == 2) {
+        return parts[1].trim();
+      }
+    }
+    return rep;
+  }
 
   @override
   void initState() {
     super.initState();
     final setCount = widget.exercise.setCount;
     _repsControllers = List.generate(setCount, (i) {
-      return TextEditingController(text: widget.exercise.reps[i].toString());
+      return TextEditingController(text: _parseRepTarget(widget.exercise.reps[i]));
     });
     _weightControllers = List.generate(setCount, (i) {
-      return TextEditingController();
+      return TextEditingController(text: widget.exercise.weightKg?.toString() ?? '');
     });
 
     // Load existing data if any
@@ -35,14 +49,21 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
 
   void _loadExistingData() {
     final dateStr = ref.read(dateStringProvider);
-    final existing = ref
-        .read(exerciseLogRepoProvider)
-        .getLog(dateStr, widget.exercise.name);
+    final repo = ref.read(exerciseLogRepoProvider);
+    final existing = repo.getLog(dateStr, widget.exercise.name);
+    _currentPr = repo.getPr(widget.exercise.name);
+    
     if (existing != null) {
       for (int i = 0; i < existing.sets.length && i < _repsControllers.length; i++) {
         _repsControllers[i].text = existing.sets[i].reps.toString();
         _weightControllers[i].text =
             existing.sets[i].weight > 0 ? existing.sets[i].weight.toString() : '';
+      }
+    } else {
+      // Find the most recent log to use as ghost text
+      final allLogs = repo.getLogsForExercise(widget.exercise.name);
+      if (allLogs.isNotEmpty) {
+        _lastLog = allLogs.last; // Since it's sorted by date
       }
     }
   }
@@ -169,10 +190,12 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                         textAlign: TextAlign.center,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           isDense: true,
-                          hintText: '0',
-                          contentPadding: EdgeInsets.symmetric(
+                          hintText: _lastLog != null && i < _lastLog!.sets.length 
+                            ? _lastLog!.sets[i].weight.toString() 
+                            : '0',
+                          contentPadding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 10),
                         ),
                       ),
@@ -211,13 +234,34 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
       exerciseName: widget.exercise.name,
       sets: sets,
     );
-    ref.read(exerciseLogRepoProvider).saveLog(log);
+    final repo = ref.read(exerciseLogRepoProvider);
+    repo.saveLog(log);
+    
+    // Check for PRs
+    final prResult = PrCalculator.calculateNewPr(log, _currentPr);
+    if (prResult.hasAnyNewPr) {
+      repo.savePr(prResult.newPr);
+    }
+    
     Navigator.of(context).pop();
+
+    String msg = 'Logged ${widget.exercise.name}';
+    if (prResult.hasAnyNewPr) {
+      if (prResult.isNewMaxWeight) {
+        msg = 'New PR! ${prResult.newPr.maxWeight}kg';
+      } else if (prResult.isNewMaxReps) {
+        msg = 'New PR! ${prResult.newPr.maxReps} reps';
+      } else if (prResult.isNewMaxVolume) {
+        msg = 'New Volume PR!';
+      } else if (prResult.isNew1RM) {
+        msg = 'New 1RM PR!';
+      }
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Logged ${widget.exercise.name}'),
-        backgroundColor: AppColors.green,
+        content: Text(msg),
+        backgroundColor: prResult.hasAnyNewPr ? AppColors.green : AppColors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

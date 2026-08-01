@@ -10,10 +10,14 @@ import 'repositories/body_stats_repository.dart';
 import 'repositories/media_repository.dart';
 import 'repositories/profile_repository.dart';
 import 'repositories/exercise_log_repository.dart';
+import 'repositories/coach_note_repository.dart';
 import 'services/health_connect_service.dart';
 import 'services/backup_service.dart';
+import 'services/notification_service.dart';
 import 'providers/app_providers.dart';
+import 'providers/reminders_provider.dart';
 import 'router/app_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -45,6 +49,7 @@ Future<void> main() async {
   final mediaRepo = MediaRepository();
   final profileRepo = ProfileRepository();
   final exerciseLogRepo = ExerciseLogRepository();
+  final coachNoteRepo = CoachNoteRepository();
   final healthConnectService = HealthConnectService();
 
   await Future.wait([
@@ -56,8 +61,12 @@ Future<void> main() async {
     mediaRepo.init(),
     profileRepo.init(),
     exerciseLogRepo.init(),
+    coachNoteRepo.init(),
     healthConnectService.init(),
+    NotificationService().init(),
   ]);
+
+  final prefs = await SharedPreferences.getInstance();
 
   // Run weekly auto-backup (non-blocking)
   BackupService().autoBackup();
@@ -73,15 +82,31 @@ Future<void> main() async {
         mediaRepoProvider.overrideWithValue(mediaRepo),
         profileRepoProvider.overrideWithValue(profileRepo),
         exerciseLogRepoProvider.overrideWithValue(exerciseLogRepo),
+        coachNoteRepoProvider.overrideWithValue(coachNoteRepo),
         healthConnectServiceProvider.overrideWithValue(healthConnectService),
+        sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: const TruFitApp(),
     ),
   );
 }
 
-class TruFitApp extends StatelessWidget {
+class TruFitApp extends ConsumerStatefulWidget {
   const TruFitApp({super.key});
+
+  @override
+  ConsumerState<TruFitApp> createState() => _TruFitAppState();
+}
+
+class _TruFitAppState extends ConsumerState<TruFitApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize notifications and sync them
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(remindersProvider.notifier).initializeNotifications();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

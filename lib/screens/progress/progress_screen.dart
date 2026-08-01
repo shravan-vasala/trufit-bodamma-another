@@ -4,12 +4,14 @@ import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/daily_log.dart';
+import 'package:go_router/go_router.dart';
+import '../../models/user_profile.dart';
 import 'widgets/shared_chart_card.dart';
 import '../home/weight_entry_dialog.dart';
 import '../home/steps_entry_dialog.dart';
 import '../home/sleep_entry_dialog.dart';
 
-enum MetricType { weight, steps, sleep, bmi, bodyFat, calories }
+enum MetricType { weight, steps, sleep, bmi, bodyFat, calories, macros }
 enum TimeRange { weekly, monthly, sixMonths }
 
 class ProgressScreen extends ConsumerStatefulWidget {
@@ -241,6 +243,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               ],
             ),
           ),
+          
+          Center(
+            child: ActionChip(
+              backgroundColor: AppColors.lavender,
+              side: BorderSide.none,
+              label: const Text(
+                'This Week Summary ✨',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              onPressed: () {
+                context.go('/progress/weekly-summary');
+              },
+            ),
+          ),
           const SizedBox(height: 8),
 
           // Chart card
@@ -252,7 +272,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 children: [
                   _selectedMetric == MetricType.calories
                     ? _buildCaloriesChart(startStr, endStr, profile)
-                    : _buildChart(logs, profile.useKg, profile),
+                    : _selectedMetric == MetricType.macros
+                      ? _buildMacrosChart(startStr, endStr, profile)
+                      : _buildChart(logs, profile.useKg, profile),
                   const SizedBox(height: 80), // Fab spacing
                 ],
               ),
@@ -360,6 +382,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             val = log.bodyFat;
             break;
           case MetricType.calories:
+          case MetricType.macros:
             val = null;
             break;
         }
@@ -510,6 +533,59 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
+  Widget _buildMacrosChart(String startStr, String endStr, UserProfile profile) {
+    final mealLogs = ref.watch(dailyMealLogsRangeProvider((startStr, endStr)));
+    final daysDiff = _endDate.difference(_startDate).inDays;
+    final logsByDate = {for (var l in mealLogs) l.date: l};
+    
+    final data = <ChartDataPoint>[];
+    for (int i = 0; i <= daysDiff; i++) {
+      final d = _startDate.add(Duration(days: i));
+      final dateStr = DateFormat('yyyy-MM-dd').format(d);
+      final log = logsByDate[dateStr];
+      if (log != null && log.totalProtein > 0) {
+        data.add(ChartDataPoint(d, log.totalProtein));
+      }
+    }
+
+    List<String> labels = [];
+    List<String> values = [];
+    final validMacros = data.map((d) => d.value).toList();
+    if (validMacros.isNotEmpty) {
+      final avg = validMacros.reduce((a, b) => a + b) / validMacros.length;
+      final maxVal = validMacros.reduce((a, b) => a > b ? a : b);
+      labels = ['AVERAGE\n(${validMacros.length} days)', 'MAX'];
+      values = ['${avg.toStringAsFixed(0)}g', '${maxVal.toStringAsFixed(0)}g'];
+    }
+
+    ChartTimeFormat format;
+    switch (_selectedRange) {
+      case TimeRange.weekly: format = ChartTimeFormat.weekly; break;
+      case TimeRange.monthly: format = ChartTimeFormat.monthly; break;
+      case TimeRange.sixMonths: format = ChartTimeFormat.sixMonths; break;
+    }
+
+    final isEmpty = validMacros.isEmpty;
+
+    return SharedChartCard(
+      title: 'Protein (g)',
+      data: isEmpty ? [] : data,
+      startDate: _startDate,
+      endDate: _endDate,
+      isSteps: false,
+      isCalories: false,
+      showKgLbToggle: false,
+      useKg: true,
+      onToggleUnit: () {},
+      statLabels: isEmpty ? [] : labels,
+      statValues: isEmpty ? [] : values,
+      timeFormat: format,
+      emptyMessage: 'No macros logged yet.',
+      targetValue: profile.targetProteinG.toDouble(),
+      onPointLongPress: null, // Deletion for macros should be via Meal UI
+    );
+  }
+
   String _rangeLabel(TimeRange range) {
     switch (range) {
       case TimeRange.weekly: return 'Weekly';
@@ -526,6 +602,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bmi: return 'BMI';
       case MetricType.bodyFat: return 'Body Fat';
       case MetricType.calories: return 'Calories';
+      case MetricType.macros: return 'Macros';
     }
   }
 
@@ -537,6 +614,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bmi: return 'BMI';
       case MetricType.bodyFat: return 'Body Fat';
       case MetricType.calories: return 'Calories';
+      case MetricType.macros: return 'Macros';
     }
   }
 
@@ -548,6 +626,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bmi: return Icons.speed_rounded;
       case MetricType.bodyFat: return Icons.water_drop_rounded;
       case MetricType.calories: return Icons.restaurant_rounded;
+      case MetricType.macros: return Icons.pie_chart_rounded;
     }
   }
 }

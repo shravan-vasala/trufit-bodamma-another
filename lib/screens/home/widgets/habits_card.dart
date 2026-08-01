@@ -15,75 +15,48 @@ class HabitsCard extends ConsumerWidget {
     final completions = ref.watch(habitCompletionsProvider);
     final dailyLog = ref.watch(dailyLogProvider);
     
-    final completedCount = habits.where((h) => isHabitCompleted(h, completions, dailyLog)).length;
-    
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.checklist_rounded,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'HABITS ($completedCount/${habits.length})',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textLight,
-                        ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ManageHabitsScreen(),
-                    ));
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...habits.map((habit) {
-              final isCompleted = isHabitCompleted(habit, completions, dailyLog);
-              return _HabitItem(
-                habit: habit,
-                isCompleted: isCompleted,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLight.withValues(alpha: 0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < habits.length; i++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: _HabitItem(
+                habit: habits[i],
+                isCompleted: isHabitCompleted(habits[i], completions, dailyLog),
                 isFuture: isFuture,
-                progress: getHabitProgress(habit, completions, dailyLog),
-              );
-            }),
-            if (habits.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Text('No habits yet. Tap the edit icon to add some!', style: TextStyle(color: AppColors.textMedium)),
-                ),
+                progress: getHabitProgress(habits[i], completions, dailyLog),
               ),
+            ),
+            if (i < habits.length - 1)
+              Divider(height: 1, color: AppColors.textLight.withValues(alpha: 0.1)),
           ],
-        ),
+          if (habits.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                child: Text('No habits yet. Tap the edit icon to add some!', style: TextStyle(color: AppColors.textMedium)),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -104,9 +77,7 @@ class _HabitItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+    return Row(
         children: [
           Expanded(
             child: GestureDetector(
@@ -146,27 +117,55 @@ class _HabitItem extends ConsumerWidget {
                             decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                           ),
                         ),
-                        if (habit.type != HabitType.checkbox)
-                          GestureDetector(
-                            onTap: (habit.type == HabitType.autoSleep && !isFuture)
-                                ? () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (_) => const SleepEntryDialog(),
-                                    );
-                                  }
-                                : null,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 2, bottom: 2, right: 8),
-                              child: Text(
-                                _formatProgress(),
-                                style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                        Row(
+                          children: [
+                            if (habit.type != HabitType.checkbox)
+                              GestureDetector(
+                                onTap: (habit.type == HabitType.autoSleep && !isFuture)
+                                    ? () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => const SleepEntryDialog(),
+                                        );
+                                      }
+                                    : null,
+                                behavior: HitTestBehavior.opaque,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 2, bottom: 2, right: 8),
+                                  child: Text(
+                                    _formatProgress(),
+                                    style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                                  ),
+                                ),
                               ),
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final streak = ref.watch(habitStreakProvider(habit.id));
+                                if (streak > 1) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(top: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.orange.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '🔥 $streak Day Streak',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.orange,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
                             ),
-                          ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -198,10 +197,26 @@ class _HabitItem extends ConsumerWidget {
               ],
             ),
             
-          Text(habit.icon, style: const TextStyle(fontSize: 20)),
+          _buildIcon(habit.name, habit.icon),
         ],
-      ),
     );
+  }
+
+  Widget _buildIcon(String name, String fallbackEmoji) {
+    IconData? outlineIcon;
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('sleep')) {
+      outlineIcon = Icons.bed_outlined;
+    } else if (lowerName.contains('steps') || lowerName.contains('walk')) {
+      outlineIcon = Icons.directions_walk_rounded;
+    } else if (lowerName.contains('water') || lowerName.contains('hydrate')) {
+      outlineIcon = Icons.local_drink_outlined;
+    }
+    
+    if (outlineIcon != null) {
+      return Icon(outlineIcon, color: AppColors.textLight, size: 24);
+    }
+    return Text(fallbackEmoji, style: const TextStyle(fontSize: 20));
   }
 
   String _formatProgress() {
