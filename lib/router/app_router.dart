@@ -51,9 +51,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/onboarding';
       }
       
-      if (state.uri.queryParameters['metric'] == 'calories') {
-        return '/home/meals';
-      }
       if (state.uri.path == '/' || state.uri.path.isEmpty) {
         return '/home';
       }
@@ -127,6 +124,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       break;
                     case 'bodyFat':
                       metric = MetricType.bodyFat;
+                      break;
+                    case 'calories':
+                      metric = MetricType.calories;
+                      break;
+                    case 'macros':
+                      metric = MetricType.macros;
                       break;
                   }
                 }
