@@ -282,6 +282,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     // Trigger UI updates
     ref.read(exerciseLogsUpdateProvider.notifier).state++;
     ref.invalidate(dailyScoreProvider);
+    ref.invalidate(dailyLogProvider);
     
     // Start rest timer if applicable
     if (widget.exercise.restSecondsAfterSet > 0) {
