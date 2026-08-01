@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../repositories/daily_log_repository.dart';
 import '../repositories/habit_repository.dart';
 
+import '../models/feature_availability.dart';
+
 enum StepsSource { healthConnect, manual, none }
 
 class HealthConnectService {
@@ -24,6 +26,12 @@ class HealthConnectService {
       await _health.configure();
       _configured = true;
     }
+  }
+
+  Future<FeatureAvailability> getAvailability() async {
+    if (!await isAvailable()) return FeatureAvailability.unavailable;
+    if (!await isAuthorized()) return FeatureAvailability.disabled;
+    return FeatureAvailability.available;
   }
 
   /// Check if Health Connect app is installed on the device.

@@ -112,6 +112,11 @@ class AppColorsDark implements AppColorsPalette {
       );
 }
 
+class AppColors {
+  static final light = AppColorsLight();
+  static final dark = AppColorsDark();
+}
+
 extension AppColorsExt on BuildContext {
-  AppColorsPalette get colors => Theme.of(this).brightness == Brightness.dark ? AppColorsDark() : AppColorsLight();
+  AppColorsPalette get colors => Theme.of(this).brightness == Brightness.dark ? AppColors.dark : AppColors.light;
 }

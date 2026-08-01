@@ -46,6 +46,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final hcService = ref.read(healthConnectServiceProvider);
     final dailyLogRepo = ref.read(dailyLogRepoProvider);
     final habitRepo = ref.read(habitRepoProvider);
+    final prefs = ref.read(sharedPreferencesProvider);
 
     // Always invalidate immediately to refresh manual entries on resume
     ref.invalidate(dailyLogProvider);
@@ -56,15 +57,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
     final isAuth = await hcService.isAuthorized();
     if (isAuth) {
-      // Sync today's steps
-      await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+      final lastSyncStr = prefs.getString('last_hc_sync_time');
+      final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
+      final now = DateTime.now();
+      
+      final shouldFullSync = isManualRefresh || lastSync == null || now.difference(lastSync).inMinutes >= 15;
 
-      // Sync last 7 days (Samsung Health can revise recent totals)
-      await hcService.syncLast7Days(dailyLogRepo, habitRepo);
-
-      // Backfill if first time
-      if (!hcService.isBackfillDone) {
-        await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
+      // Sync today's steps (always do this if it's cheap, or do everything inside the debounce?)
+      // Actually, syncTodayAndAutoCompleteHabit is also a HC sync, we should debounce it all or just the expensive parts?
+      // "only full sync if last sync > 15 minutes ago" implies the whole sync.
+      if (shouldFullSync) {
+        await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+        await hcService.syncLast7Days(dailyLogRepo, habitRepo);
+  
+        if (!hcService.isBackfillDone) {
+          await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
+        }
+        
+        await prefs.setString('last_hc_sync_time', now.toIso8601String());
       }
       
       // Invalidate again after sync completes so the synced data appears

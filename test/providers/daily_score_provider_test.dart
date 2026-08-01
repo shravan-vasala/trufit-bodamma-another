@@ -127,4 +127,44 @@ void main() {
     
     expect(fullScore.workoutsScore, 30.0); // Max score for workouts is 30
   });
+
+  test('Meal score uses slot.type not slot.name for completion', () async {
+    final mealRepo = container.read(mealRepoProvider);
+    
+    // Create a meal plan with a custom display name but standard type
+    final mockMealPlan = MealPlan(
+      planName: 'Test Meal Plan',
+      meals: [
+        MealSlot(type: 'breakfast', name: 'Morning Fuel', targetCalories: 500, targetProtein: 30, targetCarbs: 50, targetFat: 20),
+        MealSlot(type: 'lunch', name: 'Midday Power', targetCalories: 700, targetProtein: 40, targetCarbs: 80, targetFat: 25),
+      ]
+    );
+    await mealRepo.savePlanJson('test_meal_plan', jsonEncode(mockMealPlan.toJson()));
+    
+    // Set profile active meal plan
+    final profileRepo = container.read(profileRepoProvider);
+    final profile = profileRepo.getProfile();
+    await profileRepo.saveProfile(profile.copyWith(activeMealPlan: 'test_meal_plan'));
+    
+    container.invalidate(mealPlanProvider);
+    container.invalidate(dailyScoreProvider);
+
+    final initialScore = container.read(dailyScoreProvider);
+    expect(initialScore.mealsScore, 0.0);
+
+    // Add a meal log using the slot TYPE (breakfast), not the display NAME (Morning Fuel)
+    final mealLog = container.read(dailyMealLogProvider.notifier);
+    await mealLog.saveMealSlot('breakfast', MealSlotLog(
+      items: [],
+      totalCalories: 500,
+      totalProtein: 30,
+      totalCarbs: 50,
+      totalFat: 20,
+    ));
+
+    container.invalidate(dailyScoreProvider);
+    final partialScore = container.read(dailyScoreProvider);
+    // 1 out of 2 meals = 10 points (max 20)
+    expect(partialScore.mealsScore, 10.0);
+  });
 }

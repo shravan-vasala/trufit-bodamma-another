@@ -24,12 +24,23 @@ final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final _progressNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'progress');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  RouterNotifier(this._ref) {
+    _ref.listen(onboardingCompletedProvider, (_, __) => notifyListeners());
+    _ref.listen(themeModeProvider, (_, __) => notifyListeners());
+  }
+}
+
+final routerNotifierProvider = Provider((ref) => RouterNotifier(ref));
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/home',
+    refreshListenable: ref.watch(routerNotifierProvider),
     errorBuilder: (context, state) => Scaffold(
       body: Center(
         child: Column(
@@ -46,9 +57,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ),
     redirect: (context, state) {
-      final isCompleted = prefs.getBool('onboarding_completed') ?? false;
+      final isCompleted = ref.read(onboardingCompletedProvider);
+      
       if (!isCompleted && state.uri.path != '/onboarding') {
         return '/onboarding';
+      }
+      
+      if (isCompleted && state.uri.path == '/onboarding') {
+        return '/home';
       }
       
       if (state.uri.path == '/' || state.uri.path.isEmpty) {
@@ -59,7 +75,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => OnboardingScreen(),
+        builder: (context, state) => const OnboardingScreen(),
       ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -71,19 +87,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           routes: [
             GoRoute(
               path: '/home',
-              builder: (context, state) => HomeScreen(),
+              builder: (context, state) => const HomeScreen(),
               routes: [
                 GoRoute(
                   path: 'meals',
-                  builder: (context, state) => MealDetailScreen(),
+                  builder: (context, state) => const MealDetailScreen(),
                 ),
                 GoRoute(
                   path: 'body-stats',
-                  builder: (context, state) => BodyStatsScreen(),
+                  builder: (context, state) => const BodyStatsScreen(),
                 ),
                 GoRoute(
                   path: 'physique-pictures',
-                  builder: (context, state) => PhysiquePicturesScreen(),
+                  builder: (context, state) => const PhysiquePicturesScreen(),
                 ),
                 GoRoute(
                   path: 'workout/:dayId',
@@ -138,7 +154,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               routes: [
                 GoRoute(
                   path: 'weekly-summary',
-                  builder: (context, state) => WeeklySummaryScreen(),
+                  builder: (context, state) => const WeeklySummaryScreen(),
                 ),
               ],
             ),
@@ -149,20 +165,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           routes: [
             GoRoute(
               path: '/profile',
-              builder: (context, state) => ProfileScreen(),
+              builder: (context, state) => const ProfileScreen(),
               routes: [
 
                 GoRoute(
                   path: 'manage-plans',
-                  builder: (context, state) => ManagePlansScreen(),
+                  builder: (context, state) => const ManagePlansScreen(),
                 ),
                 GoRoute(
                   path: 'backup-restore',
-                  builder: (context, state) => BackupRestoreScreen(),
+                  builder: (context, state) => const BackupRestoreScreen(),
                 ),
                 GoRoute(
                   path: 'reminders',
-                  builder: (context, state) => RemindersScreen(),
+                  builder: (context, state) => const RemindersScreen(),
                 ),
               ],
             ),

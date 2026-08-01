@@ -110,4 +110,57 @@ void main() {
     expect(profileJson['targetProteinG'], 120); // Migrated
     expect(profileJson['targetCarbsG'], 150);   // Migrated
   });
+
+  test('backup round-trip with exercise_prs box', () async {
+    // 1. Setup Data
+    final box = await Hive.openBox<double>('exercise_prs');
+    await box.put('Bench Press', 100.0);
+    await box.put('Squat', 150.0);
+
+    // 2. Backup
+    final backupPath = await backupService.createBackup();
+    expect(backupPath, isNotNull);
+
+    // 3. Clear data
+    await box.clear();
+    expect(box.isEmpty, isTrue);
+
+    // 4. Restore
+    await backupService.restoreBackup(backupPath!);
+
+    // 5. Verify Data restored
+    final restoredBox = await Hive.openBox<double>('exercise_prs');
+    expect(restoredBox.get('Bench Press'), 100.0);
+    expect(restoredBox.get('Squat'), 150.0);
+  });
+
+  test('encrypted backup create + restore with password', () async {
+    final box = await Hive.openBox<String>('habit_config');
+    await box.put('test_habit', '{"id":"test_habit"}');
+
+    // Create encrypted backup
+    final backupPath = await backupService.createBackup(password: 'my_secure_password');
+    expect(backupPath, isNotNull);
+
+    // Verify manifest indicates encryption
+    final verifyResult = await backupService.verifyBackup(backupPath!);
+    expect(verifyResult.isValid, isTrue);
+    expect(verifyResult.isEncrypted, isTrue);
+
+    // Clear data
+    await box.clear();
+    expect(box.isEmpty, isTrue);
+
+    // Restore encrypted backup with wrong password should fail
+    expect(
+      () => backupService.restoreBackup(backupPath, password: 'wrong_password'),
+      throwsException,
+    );
+
+    // Restore encrypted backup with correct password should succeed
+    await backupService.restoreBackup(backupPath, password: 'my_secure_password');
+    
+    final restoredBox = await Hive.openBox<String>('habit_config');
+    expect(restoredBox.get('test_habit'), '{"id":"test_habit"}');
+  });
 }

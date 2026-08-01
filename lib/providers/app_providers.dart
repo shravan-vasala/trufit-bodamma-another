@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/coach_note_repository.dart';
 import '../repositories/workout_repository.dart';
 import '../repositories/meal_repository.dart';
@@ -25,6 +26,25 @@ export 'rest_timer_provider.dart';
 export 'phase_progress_provider.dart';
 export 'theme_provider.dart';
 export 'daily_score_provider.dart';
+
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('prefs must be overridden in ProviderScope');
+});
+
+final onboardingCompletedProvider = StateNotifierProvider<OnboardingCompletedNotifier, bool>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return OnboardingCompletedNotifier(prefs);
+});
+
+class OnboardingCompletedNotifier extends StateNotifier<bool> {
+  final SharedPreferences _prefs;
+  OnboardingCompletedNotifier(this._prefs) : super(_prefs.getBool('onboarding_completed') ?? false);
+
+  Future<void> completeOnboarding() async {
+    await _prefs.setBool('onboarding_completed', true);
+    state = true;
+  }
+}
 
 // ── Date ──
 
@@ -91,8 +111,8 @@ final csvExportServiceProvider = Provider<CsvExportService>((ref) {
 });
 
 final coachServiceProvider = Provider<CoachService>((ref) {
-  final profile = ref.watch(profileProvider);
-  return CoachService(apiKey: profile.geminiApiKey);
+  final apiKey = ref.watch(profileProvider.select((p) => p.geminiApiKey));
+  return CoachService(apiKey: apiKey);
 });
 
 // Tracks whether the current step value is from HC sync, manual, or nothing
@@ -226,6 +246,12 @@ final dailyLogProvider =
   return DailyLogNotifier(repo, date, ref);
 });
 
+final exercisePrProvider = Provider.family<double, String>((ref, exerciseName) {
+  // Watch logRepo to rebuild when PR updates
+  final repo = ref.watch(exerciseLogRepoProvider);
+  return repo.getPr(exerciseName);
+});
+
 // ── Habit Providers ──
 
 final habitsProvider = Provider<List<Habit>>((ref) {
@@ -270,9 +296,15 @@ final habitStreakProvider = Provider.family<int, String>((ref, habitId) {
   
   final dateStr = ref.watch(dateStringProvider);
   
-  // Reactive to today's changes
-  ref.watch(habitCompletionsProvider);
-  ref.watch(dailyLogProvider);
+  // Reactive to today's changes for THIS specific habit
+  ref.watch(habitCompletionsProvider.select((c) => c.completions[habitId]));
+  ref.watch(habitCompletionsProvider.select((c) => c.overrides[habitId]));
+  
+  if (habit.type == HabitType.autoSteps) {
+    ref.watch(dailyLogProvider.select((d) => d.steps));
+  } else if (habit.type == HabitType.autoSleep) {
+    ref.watch(dailyLogProvider.select((d) => d.sleepHours));
+  }
   
   final habitRepo = ref.watch(habitRepoProvider);
   final dailyLogRepo = ref.watch(dailyLogRepoProvider);
@@ -368,18 +400,7 @@ final dailyMealLogsRangeProvider =
   final (start, end) = range;
   final mealRepo = ref.watch(mealRepoProvider);
   
-  // Calculate days difference
-  final startDate = DateTime.parse(start);
-  final endDate = DateTime.parse(end);
-  final daysDiff = endDate.difference(startDate).inDays;
-  
-  final logs = <DailyMealLog>[];
-  for (int i = 0; i <= daysDiff; i++) {
-    final d = startDate.add(Duration(days: i));
-    final dateStr = '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-    logs.add(mealRepo.getDailyLog(dateStr));
-  }
-  return logs;
+  return mealRepo.getLogsInRange(start, end);
 });
 
 // ── Refresh trigger removed ──

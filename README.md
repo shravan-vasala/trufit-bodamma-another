@@ -17,6 +17,11 @@ The app is built using a modern Riverpod architecture:
 - **Services:** External integrations, such as `HealthConnectService` and `GeminiFoodService`.
 - **UI:** The app is divided into three main tabs: Home, Progress, and Profile.
 
+## Data Source of Truth Rules
+
+To prevent state desyncs across the app, follow these data rules:
+- **Workout Completions:** `ExerciseLog` is the single source of truth for all exercise and workout completions. Do NOT use separate "completion" boxes or booleans in the `WorkoutPlan` models. If an exercise is logged in `ExerciseLog` for a given date, it is considered completed.
+
 ## Local CI/CD (Building and Deploying)
 
 Because this app will never be pushed to a public or private repository, all CI/CD is handled locally via PowerShell scripts located in the `scripts/` directory.

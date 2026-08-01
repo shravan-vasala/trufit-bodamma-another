@@ -52,7 +52,11 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
   // 1. Habits (Max 40)
   final habits = ref.watch(habitsProvider);
   final habitCompletions = ref.watch(habitCompletionsProvider);
-  final dailyLog = ref.watch(dailyLogProvider);
+  
+  final steps = ref.watch(dailyLogProvider.select((d) => d.steps));
+  final sleepHours = ref.watch(dailyLogProvider.select((d) => d.sleepHours));
+  final workoutCompleted = ref.watch(dailyLogProvider.select((d) => d.workoutCompleted));
+  final dummyDailyLog = DailyLog(date: dateStr, steps: steps, sleepHours: sleepHours, workoutCompleted: workoutCompleted);
   
   double habitsScore = 0;
   double habitsMax = 40;
@@ -66,7 +70,7 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
         hasStepsHabit = true;
         stepsTarget = h.target.toDouble();
       }
-      if (isHabitCompleted(h, habitCompletions, dailyLog)) {
+      if (isHabitCompleted(h, habitCompletions, dummyDailyLog)) {
         habitsDone++;
       }
     }
@@ -76,19 +80,19 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
   // 2. Workouts (Max 30)
   double workoutsScore = 0;
   double workoutsMax = 30;
-  final workoutPlan = ref.watch(workoutPlanProvider);
+  final workoutPlanDays = ref.watch(workoutPlanProvider.select((p) => p?.days));
   
-  if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
+  if (workoutPlanDays != null && workoutPlanDays.isNotEmpty) {
     final weekday = date.weekday;
     final isSunday = weekday == DateTime.sunday;
-    final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlan.days.length - 1);
-    final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
-    final day = workoutPlan.days.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlan.days[dayIndex]);
+    final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlanDays.length - 1);
+    final dayIdTarget = isSunday ? 'Rest' : workoutPlanDays[dayIndex].dayId;
+    final day = workoutPlanDays.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlanDays[dayIndex]);
     
     final isRestDay = (isSunday || day.sections.isEmpty);
     
     if (isRestDay) {
-      if (dailyLog.workoutCompleted) workoutsScore = workoutsMax;
+      if (workoutCompleted) workoutsScore = workoutsMax;
     } else {
       final logRepo = ref.watch(exerciseLogRepoProvider);
       
@@ -106,21 +110,21 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
     }
   } else {
     // No plan, just rely on the manual workout completed button
-    if (dailyLog.workoutCompleted) workoutsScore = workoutsMax;
+    if (workoutCompleted) workoutsScore = workoutsMax;
   }
 
   // 3. Meals (Max 20)
   double mealsScore = 0;
   double mealsMax = 20;
-  final mealPlan = ref.watch(mealPlanProvider);
-  final mealLog = ref.watch(dailyMealLogProvider);
+  final mealPlanMeals = ref.watch(mealPlanProvider.select((p) => p?.meals.map((m) => m.type).toList()));
+  final mealLogSlots = ref.watch(dailyMealLogProvider.select((m) => m.customSlots.keys.toList()));
   
-  if (mealPlan != null && mealPlan.meals.isNotEmpty) {
+  if (mealPlanMeals != null && mealPlanMeals.isNotEmpty) {
     int slotsLogged = 0;
-    int slotsTotal = mealPlan.meals.length;
+    int slotsTotal = mealPlanMeals.length;
     
-    for (final slot in mealPlan.meals) {
-      if (mealLog.customSlots.containsKey(slot.type)) {
+    for (final slotType in mealPlanMeals) {
+      if (mealLogSlots.contains(slotType)) {
         slotsLogged++;
       }
     }
@@ -132,7 +136,7 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
   double stepsMax = hasStepsHabit ? 10 : 0;
   
   if (hasStepsHabit && stepsTarget > 0) {
-    final actualSteps = dailyLog.steps ?? 0;
+    final actualSteps = steps ?? 0;
     final fraction = (actualSteps / stepsTarget).clamp(0.0, 1.0);
     stepsScore = fraction * stepsMax;
   }

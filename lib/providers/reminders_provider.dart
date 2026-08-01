@@ -98,8 +98,3 @@ final remindersProvider = StateNotifierProvider<RemindersNotifier, ReminderConfi
   return RemindersNotifier(prefs, notificationService, ref);
 });
 
-// Assuming sharedPreferencesProvider exists in app_providers.dart or similar.
-// If it doesn't, we will provide it in main.dart:
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('prefs must be overridden in ProviderScope');
-});

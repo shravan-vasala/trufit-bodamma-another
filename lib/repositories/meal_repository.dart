@@ -82,6 +82,22 @@ class MealRepository {
     }
   }
 
+  List<DailyMealLog> getLogsInRange(String start, String end) {
+    final logs = <DailyMealLog>[];
+    for (final key in _dailyLogsBox.keys) {
+      final dateStr = key as String;
+      if (dateStr.compareTo(start) >= 0 && dateStr.compareTo(end) <= 0) {
+        final jsonStr = _dailyLogsBox.get(key);
+        if (jsonStr != null) {
+          try {
+            logs.add(DailyMealLog.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>));
+          } catch (_) {}
+        }
+      }
+    }
+    return logs;
+  }
+
   Future<void> saveDailyLog(DailyMealLog log) async {
     await _dailyLogsBox.put(log.date, jsonEncode(log.toJson()));
   }

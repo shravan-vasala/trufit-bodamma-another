@@ -2,10 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:math';
 
+import '../models/feature_availability.dart';
+
 class CoachService {
   final String? apiKey;
 
   CoachService({this.apiKey});
+
+  FeatureAvailability get availability {
+    if (apiKey == null || apiKey!.isEmpty) return FeatureAvailability.disabled;
+    return FeatureAvailability.available;
+  }
 
   Future<String> generateNote({
     required String userName,
