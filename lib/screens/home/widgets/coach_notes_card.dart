@@ -140,6 +140,14 @@ class CoachNotesCard extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (profile.geminiApiKey == null || profile.geminiApiKey!.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Tooltip(
+                      message: 'AI API Key not set',
+                      child: Icon(Icons.key_off_rounded, color: context.colors.orange, size: 20),
+                    ),
+                  ),
                 if (!noteAsync.isLoading)
                   IconButton(
                     icon: Icon(Icons.refresh_rounded, color: context.colors.primary, size: 20),
