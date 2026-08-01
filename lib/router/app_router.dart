@@ -144,8 +144,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     case 'calories':
                       metric = MetricType.calories;
                       break;
-                    case 'macros':
-                      metric = MetricType.macros;
+                    case 'protein':
+                    case 'macros': // legacy deep link
+                      metric = MetricType.protein;
                       break;
                   }
                 }

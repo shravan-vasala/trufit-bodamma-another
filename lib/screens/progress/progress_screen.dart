@@ -11,7 +11,7 @@ import '../home/weight_entry_dialog.dart';
 import '../home/steps_entry_dialog.dart';
 import '../home/sleep_entry_dialog.dart';
 
-enum MetricType { weight, steps, sleep, bmi, bodyFat, calories, macros }
+enum MetricType { weight, steps, sleep, bmi, bodyFat, calories, protein }
 enum TimeRange { weekly, monthly, sixMonths }
 
 class ProgressScreen extends ConsumerStatefulWidget {
@@ -307,8 +307,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 children: [
                   _selectedMetric == MetricType.calories
                     ? _buildCaloriesChart(startStr, endStr, profile)
-                    : _selectedMetric == MetricType.macros
-                      ? _buildMacrosChart(startStr, endStr, profile)
+                    : _selectedMetric == MetricType.protein
+                      ? _buildProteinChart(startStr, endStr, profile)
                       : _buildChart(logs, profile.useKg, profile),
                 ],
               ),
@@ -354,7 +354,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             val = log.bodyFat;
             break;
           case MetricType.calories:
-          case MetricType.macros:
+          case MetricType.protein:
             val = null;
             break;
         }
@@ -505,7 +505,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _buildMacrosChart(String startStr, String endStr, UserProfile profile) {
+  Widget _buildProteinChart(String startStr, String endStr, UserProfile profile) {
     final mealLogs = ref.watch(dailyMealLogsRangeProvider((startStr, endStr)));
     final daysDiff = _endDate.difference(_startDate).inDays;
     final logsByDate = {for (var l in mealLogs) l.date: l};
@@ -522,11 +522,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
     List<String> labels = [];
     List<String> values = [];
-    final validMacros = data.map((d) => d.value).toList();
-    if (validMacros.isNotEmpty) {
-      final avg = validMacros.reduce((a, b) => a + b) / validMacros.length;
-      final maxVal = validMacros.reduce((a, b) => a > b ? a : b);
-      labels = ['AVERAGE\n(${validMacros.length} days)', 'MAX'];
+    final validPoints = data.map((d) => d.value).toList();
+    if (validPoints.isNotEmpty) {
+      final avg = validPoints.reduce((a, b) => a + b) / validPoints.length;
+      final maxVal = validPoints.reduce((a, b) => a > b ? a : b);
+      labels = ['AVERAGE\n(${validPoints.length} days)', 'MAX'];
       values = ['${avg.toStringAsFixed(0)}g', '${maxVal.toStringAsFixed(0)}g'];
     }
 
@@ -537,7 +537,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case TimeRange.sixMonths: format = ChartTimeFormat.sixMonths; break;
     }
 
-    final isEmpty = validMacros.isEmpty;
+    final isEmpty = validPoints.isEmpty;
 
     return SharedChartCard(
       title: 'Protein (g)',
@@ -552,9 +552,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       statLabels: isEmpty ? [] : labels,
       statValues: isEmpty ? [] : values,
       timeFormat: format,
-      emptyMessage: 'No macros logged yet.',
+      emptyMessage: 'No protein logged yet.',
       targetValue: profile.targetProteinG.toDouble(),
-      onPointLongPress: null, // Deletion for macros should be via Meal UI
+      onPointLongPress: null, // Deletion for protein should be via Meal UI
     );
   }
 
@@ -574,7 +574,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bmi: return 'BMI';
       case MetricType.bodyFat: return 'Body Fat';
       case MetricType.calories: return 'Calories';
-      case MetricType.macros: return 'Macros';
+      case MetricType.protein: return 'Protein';
     }
   }
 
@@ -586,7 +586,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       case MetricType.bmi: return 'BMI';
       case MetricType.bodyFat: return 'Body Fat';
       case MetricType.calories: return 'Calories';
-      case MetricType.macros: return 'Macros';
+      case MetricType.protein: return 'Protein';
     }
   }
 }

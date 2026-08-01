@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
+import '../../../utils/workout_completion.dart';
 import 'past_day_summary_sheet.dart';
 import 'daily_score_sheet.dart';
 
@@ -248,14 +249,26 @@ class _DayCircle extends StatelessWidget {
     final completedHabits = applicableHabits.where((h) => isHabitCompleted(h, habitCompletions, dailyLog)).length;
     
     final isComplete = hasActivity || mealLog.loggedSlotsCount > 0 || completedHabits > 0;
-    
-    Color dotColor;
-    if (isFuture) {
-      dotColor = Color(0xFF1F2937); // black
+
+    // Planned rest: no activity dot — green/red would misread rest as success/failure.
+    final plan = ref.read(workoutPlanProvider);
+    final isRestDay = plan != null
+        ? WorkoutCompletion.isRestDay(
+            WorkoutCompletion.resolveWorkoutDay(plan, date),
+            date,
+          )
+        : date.weekday == DateTime.sunday;
+
+    final muted = context.colors.border;
+    Color? dotColor;
+    if (isRestDay) {
+      dotColor = null;
+    } else if (isFuture) {
+      dotColor = muted;
     } else if (isToday) {
-      dotColor = isComplete ? context.colors.green : Color(0xFFEF4444); // green if done, else red
+      dotColor = isComplete ? context.colors.green : context.colors.red;
     } else {
-      dotColor = isComplete ? context.colors.green : Color(0xFF1F2937); // green if done, else black
+      dotColor = isComplete ? context.colors.green : muted;
     }
 
     return GestureDetector(
@@ -307,14 +320,18 @@ class _DayCircle extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6),
-          // Activity dot
-          Container(
+          // Activity dot (hidden on rest days)
+          SizedBox(
             width: 5,
             height: 5,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: dotColor,
-            ),
+            child: dotColor == null
+                ? null
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: dotColor,
+                    ),
+                  ),
           ),
         ],
       ),
