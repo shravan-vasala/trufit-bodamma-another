@@ -279,6 +279,18 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
       repo.savePr(prResult.newPr);
     }
     
+    // Trigger UI updates
+    ref.read(exerciseLogsUpdateProvider.notifier).state++;
+    ref.invalidate(dailyScoreProvider);
+    
+    // Start rest timer if applicable
+    if (widget.exercise.restSecondsAfterSet > 0) {
+      ref.read(restTimerProvider.notifier).startTimer(
+            widget.exercise.restSecondsAfterSet,
+            exerciseName: widget.exercise.name,
+          );
+    }
+    
     Navigator.of(context).pop();
 
     String msg = 'Logged ${widget.exercise.name}';

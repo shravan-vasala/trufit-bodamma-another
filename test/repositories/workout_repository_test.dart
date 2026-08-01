@@ -18,25 +18,7 @@ void main() {
     await tearDownTestHive();
   });
 
-  test('toggleExerciseCompletion toggles boolean state in sessions', () async {
-    // Open session box manually for testing
-    await repository.init().catchError((_) {}); // catch asset load error
 
-    const date = '2023-10-01';
-    const dayId = 'day_1';
-    const exercise = 'Bench Press';
-
-    var completions = repository.getExerciseCompletions(date, dayId);
-    expect(completions[exercise], isNull);
-
-    await repository.toggleExerciseCompletion(date, dayId, exercise);
-    completions = repository.getExerciseCompletions(date, dayId);
-    expect(completions[exercise], isTrue);
-
-    await repository.toggleExerciseCompletion(date, dayId, exercise);
-    completions = repository.getExerciseCompletions(date, dayId);
-    expect(completions[exercise], isFalse);
-  });
 
   test('isWorkoutFinished correctly reflects workout completion', () async {
     await repository.init().catchError((_) {}); // catch asset load error

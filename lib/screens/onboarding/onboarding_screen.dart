@@ -112,6 +112,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         );
     // Save selected habits
     final habitRepo = ref.read(habitRepoProvider);
+    
+    // Remove any habits that were seeded but unselected by the user
+    final currentHabits = habitRepo.getHabits();
+    for (final habit in currentHabits) {
+      if (!_selectedHabitIds.contains(habit.id)) {
+        habitRepo.deleteHabit(habit.id);
+      }
+    }
+
     final selected = Habit.defaults
         .where((h) => _selectedHabitIds.contains(h.id))
         .toList();

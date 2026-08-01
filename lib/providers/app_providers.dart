@@ -108,28 +108,9 @@ final workoutDayProvider = Provider.family<WorkoutDay?, String>((ref, dayId) {
   return ref.watch(workoutRepoProvider).getWorkoutDay(dayId);
 });
 
-// Notifier for exercise completions
-class ExerciseCompletionsNotifier extends StateNotifier<Map<String, bool>> {
-  final WorkoutRepository _repo;
-  final String _date;
-  final String _dayId;
-  final Ref _ref;
+// Provider to trigger rebuilds when an exercise log is added/updated
+final exerciseLogsUpdateProvider = StateProvider<int>((ref) => 0);
 
-  ExerciseCompletionsNotifier(this._repo, this._date, this._dayId, this._ref)
-      : super(_repo.getExerciseCompletions(_date, _dayId));
-
-  void toggle(String exerciseName) {
-    _repo.toggleExerciseCompletion(_date, _dayId, exerciseName);
-    state = _repo.getExerciseCompletions(_date, _dayId);
-  }
-}
-
-final exerciseCompletionsProvider = StateNotifierProvider.family<
-    ExerciseCompletionsNotifier, Map<String, bool>, String>((ref, dayId) {
-  final repo = ref.watch(workoutRepoProvider);
-  final date = ref.watch(dateStringProvider);
-  return ExerciseCompletionsNotifier(repo, date, dayId, ref);
-});
 
 // ── Meal Providers ──
 

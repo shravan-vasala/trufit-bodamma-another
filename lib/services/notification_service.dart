@@ -4,6 +4,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:flutter_timezone/flutter_timezone.dart';
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -17,8 +19,14 @@ class NotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
-    // Assuming local time, you might want to use a more robust way to get local timezone
-    tz.setLocalLocation(tz.getLocation('America/Detroit')); // Or let it default/use flutter_timezone
+    
+    try {
+      final tzInfo = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
+    } catch (e) {
+      // Fallback if platform timezone cannot be determined
+      tz.setLocalLocation(tz.getLocation('America/Detroit'));
+    }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');

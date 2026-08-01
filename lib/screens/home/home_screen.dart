@@ -47,6 +47,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final dailyLogRepo = ref.read(dailyLogRepoProvider);
     final habitRepo = ref.read(habitRepoProvider);
 
+    // Always invalidate immediately to refresh manual entries on resume
+    ref.invalidate(dailyLogProvider);
+    ref.invalidate(habitCompletionsProvider);
+    
+    // Always fetch coach notes (force if manual refresh)
+    ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
+
     final isAuth = await hcService.isAuthorized();
     if (isAuth) {
       // Sync today's steps
@@ -59,14 +66,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       if (!hcService.isBackfillDone) {
         await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
       }
+      
+      // Invalidate again after sync completes so the synced data appears
+      ref.invalidate(dailyLogProvider);
+      ref.invalidate(habitCompletionsProvider);
     }
-
-    // Always invalidate after sync attempt (or skip)
-    ref.invalidate(dailyLogProvider);
-    ref.invalidate(habitCompletionsProvider);
-    
-    // Always fetch coach notes (force if manual refresh)
-    ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
   }
 
   Widget _buildSectionHeader(String title, {IconData? icon}) {
@@ -211,7 +215,8 @@ class _WorkoutsSection extends ConsumerWidget {
         (d) => d.dayId == dayIdTarget,
         orElse: () => workoutPlan.days[dayIndex]);
     
-    final logRepo = ref.read(exerciseLogRepoProvider);
+    final logRepo = ref.watch(exerciseLogRepoProvider);
+    ref.watch(exerciseLogsUpdateProvider); // Rebuild when logs are saved
     final isWholeDayCompleted = ref.watch(dailyLogProvider).workoutCompleted;
     
     List<Widget> cards = [];

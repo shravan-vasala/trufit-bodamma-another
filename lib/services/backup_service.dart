@@ -48,6 +48,7 @@ class BackupService {
     'habit_config',
     'habit_completions',
     'exercise_logs',
+    'exercise_prs',
     'daily_logs',
     'body_stats',
     'coach_notes',

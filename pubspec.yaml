@@ -38,6 +38,7 @@ dependencies:
   encrypt: ^5.0.3
   crypto: ^3.0.7
   csv: ^8.0.0
+  flutter_timezone: ^5.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

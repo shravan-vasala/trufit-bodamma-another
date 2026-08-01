@@ -66,11 +66,15 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
     final workoutDay = day;
 
-    final completions = ref.watch(exerciseCompletionsProvider(widget.dayId));
+    final logRepo = ref.watch(exerciseLogRepoProvider);
+    final dateStr = ref.watch(dateStringProvider);
+    ref.watch(exerciseLogsUpdateProvider); // Trigger rebuild on log save
+    
     final totalExercises = workoutDay.sections
         .fold<int>(0, (sum, s) => sum + s.exercises.length);
-    final completedExercises = completions.values.where((v) => v).length;
-    final dateStr = ref.watch(dateStringProvider);
+    final completedExercises = workoutDay.sections
+        .fold<int>(0, (sum, s) => sum + s.exercises.where((e) => logRepo.hasLog(dateStr, e.name)).length);
+    
     final isFinished =
         ref.watch(workoutRepoProvider).isWorkoutFinished(dateStr, widget.dayId);
 
@@ -93,7 +97,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
         : totalExercises;
     final viewCompleted = isFiltered
         ? workoutDay.sections[_activeSectionIndex!].exercises
-            .where((e) => completions[e.name] ?? false)
+            .where((e) => logRepo.hasLog(dateStr, e.name))
             .length
         : completedExercises;
 
@@ -256,7 +260,6 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     section: section,
                     sectionIndex: sectionIndex,
                     dayId: widget.dayId,
-                    completions: completions,
                   );
                 },
               ),
@@ -439,13 +442,11 @@ class _SectionWidget extends StatelessWidget {
     required this.section,
     required this.sectionIndex,
     required this.dayId,
-    required this.completions,
   });
 
   final WorkoutSection section;
   final int sectionIndex;
   final String dayId;
-  final Map<String, bool> completions;
 
   @override
   Widget build(BuildContext context) {
@@ -507,11 +508,9 @@ class _SectionWidget extends StatelessWidget {
             }
             final exerciseIndex = index ~/ 2;
             final exercise = section.exercises[exerciseIndex];
-            final isCompleted = completions[exercise.name] ?? false;
             return ExerciseCard(
               exercise: exercise,
               dayId: dayId,
-              isCompleted: isCompleted,
             );
           }),
           SizedBox(height: 8),

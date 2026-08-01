@@ -105,33 +105,7 @@ class WorkoutRepository {
     await _planBox.put(key, jsonStr);
   }
 
-  // Exercise completions for a workout session
-  Map<String, bool> getExerciseCompletions(String date, String dayId) {
-    final key = '${date}_$dayId';
-    final jsonStr = _sessionBox.get(key);
-    if (jsonStr == null) return {};
-    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-    return (data['completions'] as Map<String, dynamic>?)
-            ?.map((k, v) => MapEntry(k, v as bool)) ??
-        {};
-  }
 
-  Future<void> toggleExerciseCompletion(
-      String date, String dayId, String exerciseName) async {
-    final key = '${date}_$dayId';
-    final jsonStr = _sessionBox.get(key);
-    Map<String, dynamic> data = {};
-    if (jsonStr != null) {
-      data = jsonDecode(jsonStr) as Map<String, dynamic>;
-    }
-    final completions =
-        (data['completions'] as Map<String, dynamic>?) ?? {};
-    completions[exerciseName] = !(completions[exerciseName] as bool? ?? false);
-    data['completions'] = completions;
-    data['dayId'] = dayId;
-    data['date'] = date;
-    await _sessionBox.put(key, jsonEncode(data));
-  }
 
   Future<void> finishWorkout(String date, String dayId) async {
     final key = '${date}_$dayId';

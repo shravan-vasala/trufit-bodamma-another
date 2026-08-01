@@ -54,10 +54,10 @@ class PastDaySummarySheet extends ConsumerWidget {
         isRestDay = false;
         workoutDayName = workoutDay.label ?? 'Workout Day';
         currentWorkoutDayId = dailyLog.workoutDayId ?? workoutDay.dayId;
-        final exCompletions = ref.read(workoutRepoProvider).getExerciseCompletions(dateStr, currentWorkoutDayId);
+        final logRepo = ref.read(exerciseLogRepoProvider);
         
         totalExercises = workoutDay.sections.expand((s) => s.exercises).length;
-        completedExercises = exCompletions.values.where((v) => v).length;
+        completedExercises = workoutDay.sections.expand((s) => s.exercises).where((e) => logRepo.hasLog(dateStr, e.name)).length;
       }
     }
 

@@ -13,16 +13,17 @@ class ExerciseCard extends ConsumerWidget {
     super.key,
     required this.exercise,
     required this.dayId,
-    required this.isCompleted,
   });
 
   final Exercise exercise;
   final String dayId;
-  final bool isCompleted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pr = ref.watch(exerciseLogRepoProvider).getPr(exercise.name);
+    final logRepo = ref.watch(exerciseLogRepoProvider);
+    final dateStr = ref.watch(dateStringProvider);
+    final isCompleted = logRepo.hasLog(dateStr, exercise.name);
     
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -251,23 +252,12 @@ class ExerciseCard extends ConsumerWidget {
                   button: true,
                   child: GestureDetector(
                     onTap: () {
-                      ref
-                          .read(exerciseCompletionsProvider(dayId).notifier)
-                          .toggle(exercise.name);
-                          
-                      // If newly completed and has rest, start timer
-                      if (!isCompleted && exercise.restSecondsAfterSet > 0) {
-                        ref.read(restTimerProvider.notifier).startTimer(
-                              exercise.restSecondsAfterSet,
-                              exerciseName: exercise.name,
-                            );
-                      } else if (isCompleted) {
-                        // If un-completing, we could optionally stop the timer if it was for this exercise
-                        final timerState = ref.read(restTimerProvider);
-                        if (timerState.isActive && timerState.exerciseName == exercise.name) {
-                          ref.read(restTimerProvider.notifier).stopTimer();
-                        }
-                      }
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => LogDataDialog(exercise: exercise),
+                      );
                     },
                     child: SizedBox(
                       width: 48,

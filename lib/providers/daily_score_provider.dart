@@ -91,14 +91,13 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
       if (dailyLog.workoutCompleted) workoutsScore = workoutsMax;
     } else {
       final logRepo = ref.watch(exerciseLogRepoProvider);
-      final completionsMap = ref.watch(exerciseCompletionsProvider(day.dayId));
       
       int workoutsDone = 0;
       int workoutsTotal = day.sections.length;
       
       if (workoutsTotal > 0) {
         for (final sec in day.sections) {
-          if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name) || (completionsMap[ex.name] == true))) {
+          if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => logRepo.hasLog(dateStr, ex.name))) {
             workoutsDone++;
           }
         }
@@ -121,7 +120,7 @@ final dailyScoreProvider = Provider<DailyScore>((ref) {
     int slotsTotal = mealPlan.meals.length;
     
     for (final slot in mealPlan.meals) {
-      if (mealLog.customSlots.containsKey(slot.name)) {
+      if (mealLog.customSlots.containsKey(slot.type)) {
         slotsLogged++;
       }
     }

@@ -67,6 +67,10 @@ final phaseProgressProvider = Provider<PhaseProgress>((ref) {
   final currentWeek = (daysSinceStart ~/ 7) + 1;
   final weekStartDate = startDate.add(Duration(days: (currentWeek - 1) * 7));
 
+  final workoutPlan = ref.watch(workoutPlanProvider);
+  final exerciseLogRepo = ref.watch(exerciseLogRepoProvider);
+  ref.watch(exerciseLogsUpdateProvider); // rebuild on log changes
+
   int completedDaysThisWeek = 0;
   for (int i = 0; i < 7; i++) {
     final checkDate = weekStartDate.add(Duration(days: i));
@@ -75,8 +79,34 @@ final phaseProgressProvider = Provider<PhaseProgress>((ref) {
     final checkStr = DateFormat('yyyy-MM-dd').format(checkDate);
     final log = dailyLogRepo.getLog(checkStr);
     
-    if (log != null && log.workoutCompleted) {
-      completedDaysThisWeek++;
+    if (workoutPlan != null && workoutPlan.days.isNotEmpty) {
+      final weekday = checkDate.weekday;
+      final isSunday = weekday == DateTime.sunday;
+      final dayIndex = isSunday ? 0 : (weekday - 1).clamp(0, workoutPlan.days.length - 1);
+      final dayIdTarget = isSunday ? 'Rest' : workoutPlan.days[dayIndex].dayId;
+      final day = workoutPlan.days.firstWhere((d) => d.dayId == dayIdTarget, orElse: () => workoutPlan.days[dayIndex]);
+      
+      final isRestDay = (isSunday || day.sections.isEmpty);
+      
+      if (isRestDay) {
+        if (log != null && log.workoutCompleted) completedDaysThisWeek++;
+      } else {
+        int workoutsDone = 0;
+        int workoutsTotal = day.sections.length;
+        
+        if (workoutsTotal > 0) {
+          for (final sec in day.sections) {
+            if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => exerciseLogRepo.hasLog(checkStr, ex.name))) {
+              workoutsDone++;
+            }
+          }
+          if (workoutsDone == workoutsTotal) completedDaysThisWeek++;
+        }
+      }
+    } else {
+      if (log != null && log.workoutCompleted) {
+        completedDaysThisWeek++;
+      }
     }
   }
 
