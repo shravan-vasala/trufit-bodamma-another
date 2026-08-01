@@ -145,7 +145,8 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
 
   void _onTimerComplete() {
     _timer?.cancel();
-    state = state.copyWith(remainingSeconds: 0, isActive: false, isPaused: false);
+    final completedExercise = state.exerciseName;
+    state = RestTimerState(remainingSeconds: 0, isActive: false, isPaused: false);
     _clearPersistedTimer();
 
     // Trigger feedback based on profile settings
@@ -175,9 +176,9 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
                       'Rest Complete',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (state.exerciseName != null)
+                    if (completedExercise != null)
                       Text(
-                        'Time for ${state.exerciseName}',
+                        'Time for $completedExercise',
                         style: TextStyle(fontSize: 12, color: context.colors.onPrimary.withValues(alpha: 0.8)),
                       ),
                   ],
