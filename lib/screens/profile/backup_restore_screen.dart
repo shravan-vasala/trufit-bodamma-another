@@ -270,18 +270,21 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                 onPressed: () async {
                   Navigator.pop(ctx);
                   setState(() => _isLoading = true);
-                  try {
-                    final success = await backupService.restoreBackup(path, password: passwordUsed);
+                    try {
+                    final result = await backupService.restoreBackup(path, password: passwordUsed);
                     
                     if (!mounted) return;
 
-                    if (success) {
+                    if (result.success) {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
                         builder: (ctx) => AlertDialog(
-                          title: Text('Restore Complete 🎉', style: TextStyle(color: context.colors.green)),
-                          content: Text('Restore complete — please restart the app.'),
+                          title: Text(result.failedPhotosCount > 0 ? 'Restore Complete (with errors)' : 'Restore Complete 🎉', 
+                            style: TextStyle(color: result.failedPhotosCount > 0 ? context.colors.orange : context.colors.green)),
+                          content: Text(result.failedPhotosCount > 0 
+                            ? 'Restore complete, but ${result.failedPhotosCount} photos failed to decrypt and were skipped. Please restart the app.'
+                            : 'Restore complete — please restart the app.'),
                         ),
                       );
                     } else {

@@ -260,8 +260,14 @@ class BackupService {
     }
   }
 
+class BackupRestoreResult {
+  final bool success;
+  final int failedPhotosCount;
+  BackupRestoreResult({required this.success, this.failedPhotosCount = 0});
+}
+
   /// Restores a backup. WARNING: This will overwrite existing data.
-  Future<bool> restoreBackup(String zipPath, {String? password}) async {
+  Future<BackupRestoreResult> restoreBackup(String zipPath, {String? password}) async {
     try {
       final zipFile = File(zipPath);
       final bytes = await zipFile.readAsBytes();
@@ -284,7 +290,7 @@ class BackupService {
         manifestFile = archive.findFile('manifest.json');
         isEncrypted = false;
       }
-      if (manifestFile == null) return false;
+      if (manifestFile == null) return BackupRestoreResult(success: false);
 
       String manifestContent;
       if (isEncrypted) {
@@ -342,8 +348,7 @@ class BackupService {
       }
 
       // 2. Restore photos
-      // To correctly map paths, we must place them exactly where they were, or update the manifest.
-      // Since photos are saved to the app's documents directory, we can recreate them there.
+      int failedPhotosCount = 0;
       final docDir = await getApplicationDocumentsDirectory();
       final oldPathMap = <String, String>{};
       for (final file in archive) {
@@ -356,7 +361,7 @@ class BackupService {
             try {
               fileContent = BackupEncryptionService.decryptBytes(fileContent, password!);
             } catch (_) {
-              // Skip if decryption fails for a specific photo
+              failedPhotosCount++;
               continue;
             }
           }
@@ -435,12 +440,12 @@ class BackupService {
         }
       }
 
-      return true;
+      return BackupRestoreResult(success: true, failedPhotosCount: failedPhotosCount);
     } on FormatException {
       rethrow;
     } catch (e) {
       debugPrint('Restore error: $e');
-      return false;
+      return BackupRestoreResult(success: false);
     }
   }
 
