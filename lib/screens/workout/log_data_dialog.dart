@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/workout_plan.dart';
@@ -60,10 +61,20 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
             existing.sets[i].weight > 0 ? existing.sets[i].weight.toString() : '';
       }
     } else {
-      // Find the most recent log to use as ghost text
+      // Find the most recent log to use as ghost text and pre-fill weights
       final allLogs = repo.getLogsForExercise(widget.exercise.name);
-      if (allLogs.isNotEmpty) {
-        _lastLog = allLogs.last; // Since it's sorted by date
+      final beforeToday = allLogs.where((l) => l.date.compareTo(dateStr) < 0).toList();
+      if (beforeToday.isNotEmpty) {
+        beforeToday.sort((a, b) => a.date.compareTo(b.date));
+        _lastLog = beforeToday.last;
+        
+        // Pre-fill weight fields with last session values
+        for (int i = 0; i < _lastLog!.sets.length && i < _weightControllers.length; i++) {
+          final w = _lastLog!.sets[i].weight;
+          if (w > 0) {
+            _weightControllers[i].text = w.toString();
+          }
+        }
       }
     }
   }
@@ -79,8 +90,23 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     super.dispose();
   }
 
+  String? _getSubtitle() {
+    if (_lastLog == null || _lastLog!.sets.isEmpty) return null;
+    try {
+      final dt = DateTime.parse(_lastLog!.date);
+      final dateStr = DateFormat('MMM d').format(dt);
+      final weight = _lastLog!.sets.first.weight;
+      final reps = _lastLog!.sets.map((s) => s.reps).join(', ');
+      return 'Last time ($dateStr): ${weight > 0 ? '${weight}kg × ' : ''}$reps';
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final subtitle = _getSubtitle();
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -116,7 +142,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
             ),
             SizedBox(height: 4),
             Text(
-              '${widget.exercise.setCount} set${widget.exercise.setCount > 1 ? 's' : ''}',
+              subtitle ?? '${widget.exercise.setCount} set${widget.exercise.setCount > 1 ? 's' : ''}',
               style: TextStyle(
                 fontSize: 13,
                 color: context.colors.textMedium,

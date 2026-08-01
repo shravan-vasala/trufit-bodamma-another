@@ -108,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     
     // Fetch dynamic coach note only on manual refresh
     if (isManualRefresh) {
-      ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
+      ref.read(coachNoteProvider.notifier).fetchNote(force: true);
     }
   }
 

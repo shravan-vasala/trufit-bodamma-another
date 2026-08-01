@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 
@@ -206,6 +207,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context.go('/profile/backup-restore');
                 },
               ),
+              _MenuCard(
+                icon: Icons.table_chart_rounded,
+                title: 'Export Data',
+                subtitle: 'Download logs and stats as CSV',
+                onTap: () => _showExportDataSheet(context, ref),
+              ),
               SizedBox(height: 16),
               Text(
                 'Made with ❤️ for Bodamma',
@@ -340,7 +347,103 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _showExportDataSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: context.colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Export Data (CSV)',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.textDark,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            _ExportOptionTile(
+              title: 'Last 30 Days',
+              onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 30))),
+            ),
+            _ExportOptionTile(
+              title: 'Last 90 Days',
+              onTap: () => _handleExport(context, ref, DateTime.now().subtract(const Duration(days: 90))),
+            ),
+            _ExportOptionTile(
+              title: 'All Time',
+              onTap: () => _handleExport(context, ref, null),
+            ),
+            SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Future<void> _handleExport(BuildContext context, WidgetRef ref, DateTime? startDate) async {
+    Navigator.of(context).pop(); // close sheet
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final exportService = ref.read(csvExportServiceProvider);
+      final zipPath = await exportService.exportData(startDate);
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // hide loading
+
+      if (zipPath != null) {
+        await Share.shareXFiles(
+          [XFile(zipPath)],
+          text: 'TruFit Data Export',
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to export data or no data found'), backgroundColor: context.colors.red),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // hide loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export error: $e'), backgroundColor: context.colors.red),
+      );
+    }
+  }
+}
+
+class _ExportOptionTile extends StatelessWidget {
+  final String title;
+  final VoidCallback onTap;
+
+  const _ExportOptionTile({required this.title, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 24),
+      title: Text(title, style: TextStyle(color: context.colors.textDark, fontWeight: FontWeight.w600)),
+      trailing: Icon(Icons.chevron_right_rounded, color: context.colors.textMedium),
+      onTap: onTap,
+    );
+  }
 }
 
 class _MenuCard extends StatelessWidget {

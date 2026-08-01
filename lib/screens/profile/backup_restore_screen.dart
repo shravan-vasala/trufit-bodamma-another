@@ -20,11 +20,21 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
   String _lastBackupDate = 'Never';
   String _lastBackupSize = '';
   String _lastAutoBackupDate = 'Never';
+  bool _isLastBackupEncrypted = false;
+  
+  bool _encryptBackup = false;
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadMetadata();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadMetadata() async {
@@ -33,10 +43,11 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       _lastBackupDate = prefs.getString('last_backup_date') ?? 'Never';
       _lastBackupSize = prefs.getString('last_backup_size') ?? '';
       _lastAutoBackupDate = prefs.getString('last_auto_backup_display') ?? 'Never';
+      _isLastBackupEncrypted = prefs.getBool('last_backup_encrypted') ?? false;
     });
   }
 
-  Future<void> _saveMetadata(int sizeBytes) async {
+  Future<void> _saveMetadata(int sizeBytes, bool encrypted) async {
     final prefs = await SharedPreferences.getInstance();
     final dateStr = DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.now());
     
@@ -50,23 +61,34 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
     await prefs.setString('last_backup_date', dateStr);
     await prefs.setString('last_backup_size', sizeStr);
+    await prefs.setBool('last_backup_encrypted', encrypted);
     
     setState(() {
       _lastBackupDate = dateStr;
       _lastBackupSize = sizeStr;
+      _isLastBackupEncrypted = encrypted;
     });
   }
 
   Future<void> _handleCreateBackup() async {
+    if (_encryptBackup && _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter a password for encryption'), backgroundColor: context.colors.red),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final backupService = ref.read(backupServiceProvider);
       
-      final zipPath = await backupService.createBackup();
+      final zipPath = await backupService.createBackup(
+        password: _encryptBackup ? _passwordController.text : null,
+      );
       
       if (zipPath != null && mounted) {
         final file = File(zipPath);
-        await _saveMetadata(await file.length());
+        await _saveMetadata(await file.length(), _encryptBackup);
         
         await Share.shareXFiles(
           [XFile(zipPath)],
@@ -90,6 +112,42 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
     }
   }
 
+  Future<String?> _promptForPassword() async {
+    final TextEditingController pc = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Encrypted Backup', style: TextStyle(color: context.colors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('This backup is encrypted. Please enter the password to unlock it.'),
+            SizedBox(height: 16),
+            TextField(
+              controller: pc,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, pc.text),
+            child: Text('Unlock'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleVerifyBackup() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
@@ -100,9 +158,19 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       setState(() => _isLoading = true);
       try {
         final backupService = ref.read(backupServiceProvider);
-        final verify = await backupService.verifyBackup(result.files.single.path!);
+        var verify = await backupService.verifyBackup(result.files.single.path!);
 
         if (!mounted) return;
+        
+        if (verify.isEncrypted && !verify.isValid) {
+          setState(() => _isLoading = false);
+          final pwd = await _promptForPassword();
+          if (pwd == null || pwd.isEmpty) return;
+          
+          setState(() => _isLoading = true);
+          verify = await backupService.verifyBackup(result.files.single.path!, password: pwd);
+          if (!mounted) return;
+        }
 
         if (verify.isValid) {
           showDialog(
@@ -163,9 +231,20 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       setState(() => _isLoading = true);
       try {
         final backupService = ref.read(backupServiceProvider);
-        final verify = await backupService.verifyBackup(path);
+        var verify = await backupService.verifyBackup(path);
         
         if (!mounted) return;
+        
+        String? passwordUsed;
+        if (verify.isEncrypted && !verify.isValid) {
+          setState(() => _isLoading = false);
+          passwordUsed = await _promptForPassword();
+          if (passwordUsed == null || passwordUsed.isEmpty) return;
+          
+          setState(() => _isLoading = true);
+          verify = await backupService.verifyBackup(path, password: passwordUsed);
+          if (!mounted) return;
+        }
 
         if (!verify.isValid) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -192,7 +271,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                   Navigator.pop(ctx);
                   setState(() => _isLoading = true);
                   try {
-                    final success = await backupService.restoreBackup(path);
+                    final success = await backupService.restoreBackup(path, password: passwordUsed);
                     
                     if (!mounted) return;
 
@@ -267,9 +346,17 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Last Backup',
-                          style: TextStyle(fontSize: 14, color: context.colors.textMedium),
+                        Row(
+                          children: [
+                            Text(
+                              'Last Backup',
+                              style: TextStyle(fontSize: 14, color: context.colors.textMedium),
+                            ),
+                            if (_isLastBackupEncrypted) ...[
+                              SizedBox(width: 4),
+                              Icon(Icons.lock_rounded, size: 14, color: context.colors.textMedium),
+                            ],
+                          ],
                         ),
                         SizedBox(height: 8),
                         Text(
@@ -303,6 +390,36 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                     ),
                   ),
                   SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Text(
+                        'Encrypt Backup',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.colors.textDark),
+                      ),
+                      Spacer(),
+                      Switch(
+                        value: _encryptBackup,
+                        onChanged: (val) {
+                          setState(() {
+                            _encryptBackup = val;
+                            if (!val) _passwordController.clear();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_encryptBackup) ...[
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Backup Password',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 16),
                   _ActionCard(
                     title: 'Create Backup',
                     subtitle: 'Export a copy of all your data',

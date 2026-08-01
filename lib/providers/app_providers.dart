@@ -12,6 +12,7 @@ import '../repositories/exercise_log_repository.dart';
 import '../services/health_connect_service.dart';
 import '../services/backup_service.dart';
 import '../services/coach_service.dart';
+import '../services/csv_export_service.dart';
 import '../models/workout_plan.dart';
 import '../models/meal_plan.dart';
 import '../models/daily_meal_log.dart';
@@ -83,6 +84,10 @@ final healthConnectServiceProvider = Provider<HealthConnectService>((ref) {
 
 final backupServiceProvider = Provider<BackupService>((ref) {
   return BackupService();
+});
+
+final csvExportServiceProvider = Provider<CsvExportService>((ref) {
+  return CsvExportService();
 });
 
 final coachServiceProvider = Provider<CoachService>((ref) {
@@ -410,11 +415,11 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
 
   CoachNoteNotifier(this._ref) : super(AsyncValue.loading());
 
-  Future<void> fetchNote({bool forceRefresh = false}) async {
+  Future<void> fetchNote({bool force = false}) async {
     final dateStr = _ref.read(dateStringProvider);
     final repo = _ref.read(coachNoteRepoProvider);
     
-    if (!forceRefresh) {
+    if (!force) {
       final cached = repo.getNote(dateStr);
       if (cached != null) {
         if (mounted) state = AsyncValue.data(cached);

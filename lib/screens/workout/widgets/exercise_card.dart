@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/workout_plan.dart';
@@ -49,12 +50,18 @@ class ExerciseCard extends ConsumerWidget {
                   label: 'Play ${exercise.displayName ?? exercise.name} video tutorial',
                   button: true,
                   child: GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     final videoId = exercise.youtubeVideoId;
-                    if (videoId != null && videoId != 'XXXX') {
+                    if (videoId != null && videoId != 'XXXX' && videoId.isNotEmpty) {
                       context.push(
                         '/youtube-player?videoId=$videoId&title=${Uri.encodeComponent(exercise.displayName ?? exercise.name)}&subtitle=${Uri.encodeComponent(exercise.name)}&reps=${Uri.encodeComponent(exercise.repsDisplay)}',
                       );
+                    } else {
+                      final query = Uri.encodeComponent('${exercise.displayName ?? exercise.name} exercise tutorial');
+                      final url = Uri.parse('https://www.youtube.com/results?search_query=$query');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
                     }
                   },
                   child: Container(
@@ -64,58 +71,74 @@ class ExerciseCard extends ConsumerWidget {
                       color: context.colors.lavender,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (exercise.thumbnailUrl.isNotEmpty)
-                            CachedNetworkImage(
-                              imageUrl: exercise.thumbnailUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (ctx, url) => Center(
-                                child: Icon(
-                                  Icons.fitness_center_rounded,
+                    child: (exercise.youtubeVideoId == null || exercise.youtubeVideoId == 'XXXX' || exercise.youtubeVideoId!.isEmpty)
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_rounded, color: context.colors.primary, size: 24),
+                              SizedBox(height: 4),
+                              Text(
+                                'Search YT',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                   color: context.colors.primary,
-                                  size: 30,
                                 ),
                               ),
-                              errorWidget: (ctx, url, error) => Center(
-                                child: Icon(
-                                  Icons.fitness_center_rounded,
-                                  color: context.colors.primary,
-                                  size: 30,
-                                ),
-                              ),
-                            )
-                          else
-                            Center(
-                              child: Icon(
-                                Icons.fitness_center_rounded,
-                                color: context.colors.primary,
-                                size: 30,
-                              ),
+                            ],
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                if (exercise.thumbnailUrl.isNotEmpty)
+                                  CachedNetworkImage(
+                                    imageUrl: exercise.thumbnailUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (ctx, url) => Center(
+                                      child: Icon(
+                                        Icons.fitness_center_rounded,
+                                        color: context.colors.primary,
+                                        size: 30,
+                                      ),
+                                    ),
+                                    errorWidget: (ctx, url, error) => Center(
+                                      child: Icon(
+                                        Icons.fitness_center_rounded,
+                                        color: context.colors.primary,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Center(
+                                    child: Icon(
+                                      Icons.fitness_center_rounded,
+                                      color: context.colors.primary,
+                                      size: 30,
+                                    ),
+                                  ),
+                                // Play overlay
+                                if (exercise.youtubeUrl != null && exercise.youtubeUrl!.isNotEmpty)
+                                  Center(
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.play_arrow_rounded,
+                                        color: context.colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          // Play overlay
-                          if (exercise.youtubeUrl != null && exercise.youtubeUrl!.isNotEmpty)
-                            Center(
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.play_arrow_rounded,
-                                  color: context.colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                          ),
                   ),
                 ),
                 ),

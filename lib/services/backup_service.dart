@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'package:trufit_bodamma/services/backup_encryption_service.dart';
 import 'package:trufit_bodamma/services/schema_migration_service.dart';
 
 class BackupVerificationResult {
@@ -15,6 +16,7 @@ class BackupVerificationResult {
   final int totalEntries;
   final int photoCount;
   final String? errorMessage;
+  final bool isEncrypted;
 
   final int schemaVersion;
   final String appVersion;
@@ -25,6 +27,7 @@ class BackupVerificationResult {
     required this.totalEntries,
     required this.photoCount,
     this.errorMessage,
+    this.isEncrypted = false,
     this.schemaVersion = 0,
     this.appVersion = 'Unknown',
     this.createdAt = 'Unknown',
@@ -51,7 +54,7 @@ class BackupService {
   ];
 
   /// Creates a ZIP archive containing a manifest of all Hive data and the physical photos.
-  Future<String?> createBackup() async {
+  Future<String?> createBackup({String? password}) async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final manifestData = <String, dynamic>{
@@ -68,7 +71,20 @@ class BackupService {
         final box = await Hive.openBox<String>(boxName);
         final boxData = <String, dynamic>{};
         for (final key in box.keys) {
-          boxData[key.toString()] = box.get(key);
+          String valStr = box.get(key) ?? '';
+          
+          // Ensure geminiApiKey is never backed up
+          if (boxName == 'user_profile' && key == 'profile') {
+            try {
+              final Map<String, dynamic> map = jsonDecode(valStr);
+              if (map.containsKey('geminiApiKey')) {
+                map.remove('geminiApiKey');
+                valStr = jsonEncode(map);
+              }
+            } catch (_) {}
+          }
+          
+          boxData[key.toString()] = valStr;
         }
         manifestBoxes[boxName] = boxData;
       }
@@ -109,17 +125,32 @@ class BackupService {
       // 3. Create the Archive
       final archive = Archive();
       
+      final bool isEncrypted = password != null && password.isNotEmpty;
+      final securityBytes = utf8.encode(jsonEncode({'encrypted': isEncrypted}));
+      archive.addFile(ArchiveFile('security.json', securityBytes.length, securityBytes));
+      
       // Add manifest.json
-      final manifestBytes = utf8.encode(jsonEncode(manifestData));
-      archive.addFile(ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
+      Uint8List manifestBytes = utf8.encode(jsonEncode(manifestData));
+      if (isEncrypted) {
+        manifestBytes = BackupEncryptionService.encryptBytes(manifestBytes, password);
+        archive.addFile(ArchiveFile('manifest.enc', manifestBytes.length, manifestBytes));
+      } else {
+        archive.addFile(ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
+      }
 
       // Add photos
       for (final photoPath in photosToBackup) {
         final file = File(photoPath);
         if (await file.exists()) {
           final fileName = file.uri.pathSegments.last;
-          final bytes = await file.readAsBytes();
-          archive.addFile(ArchiveFile('photos/$fileName', bytes.length, bytes));
+          Uint8List bytes = await file.readAsBytes();
+          
+          if (isEncrypted) {
+            bytes = BackupEncryptionService.encryptBytes(bytes, password);
+            archive.addFile(ArchiveFile('photos/$fileName.enc', bytes.length, bytes));
+          } else {
+            archive.addFile(ArchiveFile('photos/$fileName', bytes.length, bytes));
+          }
         }
       }
 
@@ -140,7 +171,7 @@ class BackupService {
   }
 
   /// Extracts the backup to a temporary directory and verifies its contents.
-  Future<BackupVerificationResult> verifyBackup(String zipPath) async {
+  Future<BackupVerificationResult> verifyBackup(String zipPath, {String? password}) async {
     try {
       final zipFile = File(zipPath);
       if (!await zipFile.exists()) {
@@ -150,13 +181,42 @@ class BackupService {
       final bytes = await zipFile.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
 
+      bool isEncrypted = false;
+      final securityFile = archive.findFile('security.json');
+      if (securityFile != null) {
+        final securityContent = utf8.decode(securityFile.content as List<int>);
+        final securityMap = jsonDecode(securityContent) as Map<String, dynamic>;
+        isEncrypted = securityMap['encrypted'] == true;
+      }
+
+      if (isEncrypted && (password == null || password.isEmpty)) {
+        return BackupVerificationResult(isValid: false, totalEntries: 0, photoCount: 0, isEncrypted: true, errorMessage: 'Password required');
+      }
+
       // Find manifest
-      final manifestFile = archive.findFile('manifest.json');
+      ArchiveFile? manifestFile = archive.findFile(isEncrypted ? 'manifest.enc' : 'manifest.json');
+      if (manifestFile == null) {
+        // Fallback for older backups
+        manifestFile = archive.findFile('manifest.json');
+        isEncrypted = false;
+      }
+      
       if (manifestFile == null) {
         return BackupVerificationResult(isValid: false, totalEntries: 0, photoCount: 0, errorMessage: 'Missing manifest.json');
       }
 
-      final manifestContent = utf8.decode(manifestFile.content as List<int>);
+      String manifestContent;
+      if (isEncrypted) {
+        try {
+          final decrypted = BackupEncryptionService.decryptBytes(Uint8List.fromList(manifestFile.content as List<int>), password!);
+          manifestContent = utf8.decode(decrypted);
+        } catch (e) {
+          return BackupVerificationResult(isValid: false, totalEntries: 0, photoCount: 0, isEncrypted: true, errorMessage: 'Incorrect password or invalid backup file.');
+        }
+      } else {
+        manifestContent = utf8.decode(manifestFile.content as List<int>);
+      }
+      
       final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
 
       int schemaVersion = 0;
@@ -183,6 +243,7 @@ class BackupService {
         isValid: true,
         totalEntries: entriesCount,
         photoCount: photosCount,
+        isEncrypted: isEncrypted,
         schemaVersion: schemaVersion,
         appVersion: appVersion,
         createdAt: createdAt,
@@ -193,16 +254,43 @@ class BackupService {
   }
 
   /// Restores a backup. WARNING: This will overwrite existing data.
-  Future<bool> restoreBackup(String zipPath) async {
+  Future<bool> restoreBackup(String zipPath, {String? password}) async {
     try {
       final zipFile = File(zipPath);
       final bytes = await zipFile.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
 
-      final manifestFile = archive.findFile('manifest.json');
+      bool isEncrypted = false;
+      final securityFile = archive.findFile('security.json');
+      if (securityFile != null) {
+        final securityContent = utf8.decode(securityFile.content as List<int>);
+        final securityMap = jsonDecode(securityContent) as Map<String, dynamic>;
+        isEncrypted = securityMap['encrypted'] == true;
+      }
+
+      if (isEncrypted && (password == null || password.isEmpty)) {
+        throw Exception('Password required to restore this backup.');
+      }
+
+      ArchiveFile? manifestFile = archive.findFile(isEncrypted ? 'manifest.enc' : 'manifest.json');
+      if (manifestFile == null) {
+        manifestFile = archive.findFile('manifest.json');
+        isEncrypted = false;
+      }
       if (manifestFile == null) return false;
 
-      final manifestContent = utf8.decode(manifestFile.content as List<int>);
+      String manifestContent;
+      if (isEncrypted) {
+        try {
+          final decrypted = BackupEncryptionService.decryptBytes(Uint8List.fromList(manifestFile.content as List<int>), password!);
+          manifestContent = utf8.decode(decrypted);
+        } catch (e) {
+          throw Exception('Incorrect password or invalid backup file.');
+        }
+      } else {
+        manifestContent = utf8.decode(manifestFile.content as List<int>);
+      }
+      
       final manifestData = jsonDecode(manifestContent) as Map<String, dynamic>;
 
       Map<String, dynamic> boxes = manifestData;
@@ -248,10 +336,22 @@ class BackupService {
       final oldPathMap = <String, String>{};
       for (final file in archive) {
         if (file.isFile && file.name.startsWith('photos/')) {
-          final fileName = file.name.split('/').last;
+          String fileName = file.name.split('/').last;
+          Uint8List fileContent = Uint8List.fromList(file.content as List<int>);
+          
+          if (isEncrypted && fileName.endsWith('.enc')) {
+            fileName = fileName.substring(0, fileName.length - 4);
+            try {
+              fileContent = BackupEncryptionService.decryptBytes(fileContent, password!);
+            } catch (_) {
+              // Skip if decryption fails for a specific photo
+              continue;
+            }
+          }
+          
           final newFilePath = '${docDir.path}/$fileName';
           final newFile = File(newFilePath);
-          await newFile.writeAsBytes(file.content as List<int>);
+          await newFile.writeAsBytes(fileContent);
           oldPathMap[fileName] = newFilePath;
         }
       }

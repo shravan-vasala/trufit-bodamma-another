@@ -146,7 +146,7 @@ class CoachNotesCard extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                     onPressed: () {
-                      ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
+                      ref.read(coachNoteProvider.notifier).fetchNote(force: true);
                     },
                   ),
               ],
@@ -199,7 +199,7 @@ class CoachNotesCard extends ConsumerWidget {
                 message: 'Couldn\'t connect to AI coach. Keep up the great work today!',
                 actionText: 'Retry',
                 onRetry: () {
-                  ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
+                  ref.read(coachNoteProvider.notifier).fetchNote(force: true);
                 },
               ),
             ),

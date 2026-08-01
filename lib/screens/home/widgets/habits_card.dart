@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
@@ -85,134 +86,207 @@ class _HabitItem extends ConsumerWidget {
       button: true,
       enabled: !isFuture,
       onTapHint: isCompleted ? 'Mark as incomplete' : 'Mark as complete',
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: isFuture ? null : () => _handleTap(context, ref),
-              onLongPress: isFuture ? null : () => _handleLongPress(context, ref),
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Center(
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 200),
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isCompleted ? context.colors.green : (isFuture ? context.colors.textLight.withValues(alpha: 0.1) : Colors.transparent),
-                          border: isCompleted || isFuture
-                              ? null
-                              : Border.all(color: context.colors.border, width: 2),
+      child: Dismissible(
+        key: ValueKey(habit.id),
+        direction: isFuture ? DismissDirection.none : DismissDirection.horizontal,
+        confirmDismiss: (direction) => _handleSwipe(direction, context, ref),
+        background: _buildSwipeBackground(context, true),
+        secondaryBackground: _buildSwipeBackground(context, false),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: isFuture ? null : () => _handleTap(context, ref),
+                onLongPress: isFuture ? null : () => _handleLongPress(context, ref),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 200),
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCompleted ? context.colors.green : (isFuture ? context.colors.textLight.withValues(alpha: 0.1) : Colors.transparent),
+                            border: isCompleted || isFuture
+                                ? null
+                                : Border.all(color: context.colors.border, width: 2),
+                          ),
+                          child: isCompleted
+                              ? Icon(Icons.check, color: context.colors.white, size: 16)
+                              : (isFuture ? Icon(Icons.lock_outline_rounded, color: context.colors.textLight.withValues(alpha: 0.5), size: 14) : null),
                         ),
-                        child: isCompleted
-                            ? Icon(Icons.check, color: context.colors.white, size: 16)
-                            : (isFuture ? Icon(Icons.lock_outline_rounded, color: context.colors.textLight.withValues(alpha: 0.5), size: 14) : null),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 2),
-                  
-                  // Habit Name & Progress
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          habit.name,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: isCompleted ? context.colors.textLight : context.colors.textDark,
-                            decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                    SizedBox(width: 2),
+                    
+                    // Habit Name & Progress
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            habit.name,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: isCompleted ? context.colors.textLight : context.colors.textDark,
+                              decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                            ),
                           ),
-                        ),
-                        Row(
-                          children: [
-                            if (habit.type != HabitType.checkbox)
-                              GestureDetector(
-                                onTap: (habit.type == HabitType.autoSleep && !isFuture)
-                                    ? () {
-                                        showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (_) => SleepEntryDialog(),
-                                        );
-                                      }
-                                    : null,
-                                behavior: HitTestBehavior.opaque,
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: 2, bottom: 2, right: 8),
-                                  child: Text(
-                                    _formatProgress(),
-                                    style: TextStyle(fontSize: 12, color: context.colors.textMedium),
+                          Row(
+                            children: [
+                              if (habit.type != HabitType.checkbox)
+                                GestureDetector(
+                                  onTap: (habit.type == HabitType.autoSleep && !isFuture)
+                                      ? () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (_) => SleepEntryDialog(),
+                                          );
+                                        }
+                                      : null,
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(top: 2, bottom: 2, right: 8),
+                                    child: Text(
+                                      _formatProgress(),
+                                      style: TextStyle(fontSize: 12, color: context.colors.textMedium),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            Consumer(
-                              builder: (context, ref, child) {
-                                final streak = ref.watch(habitStreakProvider(habit.id));
-                                if (streak > 1) {
-                                  return Container(
-                                    margin: EdgeInsets.only(top: 2),
-                                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: context.colors.orange.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '🔥 $streak Day Streak',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: context.colors.orange,
+                              Consumer(
+                                builder: (context, ref, child) {
+                                  final streak = ref.watch(habitStreakProvider(habit.id));
+                                  if (streak > 1) {
+                                    return Container(
+                                      margin: EdgeInsets.only(top: 2),
+                                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: context.colors.orange.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
-                                    ),
-                                  );
-                                }
-                                return SizedBox.shrink();
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                                      child: Text(
+                                        '🔥 $streak Day Streak',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: context.colors.orange,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return SizedBox.shrink();
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          
-          // Action / Emoji
-          if (habit.type == HabitType.counter && !isFuture)
-            Row(
-              children: [
-                _MiniButton(
-                  icon: Icons.remove,
-                  onTap: () {
-                    final newProg = (progress - habit.step).clamp(0.0, habit.target);
-                    ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
-                  },
-                ),
-                SizedBox(width: 4),
-                _MiniButton(
-                  icon: Icons.add,
-                  onTap: () {
-                    final newProg = (progress + habit.step).clamp(0.0, habit.target);
-                    ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
-                  },
-                ),
-                SizedBox(width: 8),
-              ],
-            ),
             
-          _buildIcon(context, habit.name, habit.icon),
-        ],
+            // Action / Emoji
+            if (habit.type == HabitType.counter && !isFuture)
+              Row(
+                children: [
+                  _MiniButton(
+                    icon: Icons.remove,
+                    onTap: () {
+                      final newProg = (progress - habit.step).clamp(0.0, habit.target);
+                      ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
+                    },
+                  ),
+                  SizedBox(width: 4),
+                  _MiniButton(
+                    icon: Icons.add,
+                    onTap: () {
+                      final newProg = (progress + habit.step).clamp(0.0, habit.target);
+                      ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
+                    },
+                  ),
+                  SizedBox(width: 8),
+                ],
+              ),
+              
+            _buildIcon(context, habit.name, habit.icon),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwipeBackground(BuildContext context, bool isRight) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: isRight ? context.colors.green.withValues(alpha: 0.1) : context.colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      alignment: isRight ? Alignment.centerLeft : Alignment.centerRight,
+      child: Icon(
+        isRight ? Icons.check_circle_outline_rounded : Icons.cancel_outlined,
+        color: isRight ? context.colors.green : context.colors.red,
+      ),
+    );
+  }
+
+  Future<bool?> _handleSwipe(DismissDirection direction, BuildContext context, WidgetRef ref) async {
+    HapticFeedback.mediumImpact();
+    
+    if (direction == DismissDirection.startToEnd) { // Swipe Right -> Complete
+      if (habit.type == HabitType.counter) {
+        final newProg = (progress + habit.step).clamp(0.0, habit.target);
+        ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
+        _showUndo(context, 'Incremented ${habit.name}', () {
+          final oldProg = (newProg - habit.step).clamp(0.0, habit.target);
+          ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, oldProg);
+        });
+      } else {
+        if (!isCompleted) {
+          ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, 'done');
+          _showUndo(context, 'Completed ${habit.name}', () {
+            ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, null);
+          });
+        }
+      }
+    } else if (direction == DismissDirection.endToStart) { // Swipe Left -> Not done
+      if (habit.type == HabitType.counter) {
+        final newProg = (progress - habit.step).clamp(0.0, habit.target);
+        ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
+        _showUndo(context, 'Decremented ${habit.name}', () {
+          final oldProg = (newProg + habit.step).clamp(0.0, habit.target);
+          ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, oldProg);
+        });
+      } else {
+        ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, 'notDone');
+        _showUndo(context, 'Marked ${habit.name} incomplete', () {
+          ref.read(habitCompletionsProvider.notifier).setOverride(habit.id, null);
+        });
+      }
+    }
+    return false; // Prevent dismiss
+  }
+
+  void _showUndo(BuildContext context, String message, VoidCallback onUndo) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 2),
+        action: SnackBarAction(
+          label: 'UNDO',
+          onPressed: onUndo,
+        ),
       ),
     );
   }
