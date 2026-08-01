@@ -289,7 +289,7 @@ final habitStreakProvider = Provider.family<int, String>((ref, habitId) {
   
   // Go backward
   DateTime checkDate = current.subtract(Duration(days: 1));
-  while (true) {
+  while (streak < 365) {
     final dStr = '${checkDate.year.toString().padLeft(4, '0')}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
     final comp = habitRepo.getCompletions(dStr);
     final log = dailyLogRepo.getLog(dStr) ?? DailyLog(date: dStr);
