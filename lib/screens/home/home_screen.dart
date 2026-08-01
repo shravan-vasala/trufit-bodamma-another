@@ -26,48 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // Initial sync when screen first loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncSteps(isManualRefresh: true);
-      final profile = ref.read(profileProvider);
-      if (profile.name.isEmpty) {
-        _showNamePrompt();
-      }
     });
-  }
-
-  void _showNamePrompt() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: context.colors.white,
-        title: Text("What's your name?", style: TextStyle(color: context.colors.textDark)),
-        content: TextField(
-          controller: controller,
-          style: TextStyle(color: context.colors.textDark),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: TextStyle(color: context.colors.textLight),
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                final profile = ref.read(profileProvider);
-                ref.read(profileProvider.notifier).updateProfile(profile.copyWith(name: name));
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text('Save', style: TextStyle(color: context.colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

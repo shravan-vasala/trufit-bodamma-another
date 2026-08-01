@@ -12,44 +12,58 @@ import '../screens/progress/weekly_summary_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/profile/manage_plans_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
+import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/profile/reminders_screen.dart';
 import '../theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_providers.dart';
+import '../providers/reminders_provider.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final _progressNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'progress');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
-final appRouter = GoRouter(
-  navigatorKey: rootNavigatorKey,
-  initialLocation: '/home',
-  errorBuilder: (context, state) => Scaffold(
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Page Not Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark)),
-          SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => context.go('/home'),
-            child: Text('Go Home'),
-          ),
-        ],
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: '/home',
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Page Not Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark)),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.go('/home'),
+              child: Text('Go Home'),
+            ),
+          ],
+        ),
       ),
     ),
-  ),
-  redirect: (context, state) {
-    if (state.uri.queryParameters['metric'] == 'calories') {
-      return '/home/meals';
-    }
-    if (state.uri.path == '/' || state.uri.path.isEmpty) {
-      return '/home';
-    }
-    return null;
-  },
-  routes: [
+    redirect: (context, state) {
+      final isCompleted = prefs.getBool('onboarding_completed') ?? false;
+      if (!isCompleted && state.uri.path != '/onboarding') {
+        return '/onboarding';
+      }
+      
+      if (state.uri.queryParameters['metric'] == 'calories') {
+        return '/home/meals';
+      }
+      if (state.uri.path == '/' || state.uri.path.isEmpty) {
+        return '/home';
+      }
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => OnboardingScreen(),
+      ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -175,6 +189,7 @@ final appRouter = GoRouter(
     ),
   ],
 );
+});
 
 class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key, required this.navigationShell});

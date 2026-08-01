@@ -121,7 +121,7 @@ class _TruFitAppState extends ConsumerState<TruFitApp> {
       themeMode: themeMode,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      routerConfig: appRouter,
+      routerConfig: ref.watch(appRouterProvider),
     );
   }
 }

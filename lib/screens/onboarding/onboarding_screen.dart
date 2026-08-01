@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
+import '../../providers/reminders_provider.dart';
 import '../../models/habit.dart';
 
 String kOnboardingCompletedKey = 'onboarding_completed';
@@ -151,7 +152,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _complete() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = ref.read(sharedPreferencesProvider);
     await prefs.setBool(kOnboardingCompletedKey, true);
     if (mounted) {
       context.go('/home');
