@@ -74,5 +74,8 @@ class SchemaMigrationService {
     if (!map.containsKey('planStartDate')) {
       map['planStartDate'] = null;
     }
+    map.putIfAbsent('currentPhaseWeek', () => 1);
+    map.putIfAbsent('restTimerSound', () => true);
+    map.putIfAbsent('restTimerVibration', () => true);
   }
 }
