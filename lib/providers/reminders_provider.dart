@@ -50,9 +50,10 @@ class RemindersNotifier extends StateNotifier<ReminderConfig> {
         // Convert active days to list of ints (1=Monday, 7=Sunday)
         // workoutPlan.days has items. Index 0 is Monday (usually)
         List<int> activeDays = [];
-        for (int i = 0; i < workoutPlan.days.length; i++) {
-          if (workoutPlan.days[i].sections.isNotEmpty && workoutPlan.days[i].dayId != 'Rest') {
-            activeDays.add(i + 1); // 1 to 6
+        for (final day in workoutPlan.days) {
+          if (day.sections.isNotEmpty && day.dayId != 'Rest') {
+            final wday = day.weekday;
+            if (wday != null) activeDays.add(wday);
           }
         }
         if (activeDays.isNotEmpty) {

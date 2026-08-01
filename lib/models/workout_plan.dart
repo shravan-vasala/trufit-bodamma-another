@@ -26,6 +26,19 @@ class WorkoutDay {
 
   WorkoutDay({required this.dayId, this.label, required this.sections});
 
+  int? get weekday {
+    switch (dayId.toLowerCase()) {
+      case 'monday': return DateTime.monday;
+      case 'tuesday': return DateTime.tuesday;
+      case 'wednesday': return DateTime.wednesday;
+      case 'thursday': return DateTime.thursday;
+      case 'friday': return DateTime.friday;
+      case 'saturday': return DateTime.saturday;
+      case 'sunday': return DateTime.sunday;
+      default: return null;
+    }
+  }
+
   factory WorkoutDay.fromJson(Map<String, dynamic> json) {
     return WorkoutDay(
       dayId: json['dayId'] as String,
