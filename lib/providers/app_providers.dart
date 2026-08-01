@@ -208,14 +208,9 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
     state = _repo.getOrCreate(state.date);
 
     // Auto-start phase if not started
-    final profileRepo = _ref.read(profileRepoProvider);
-    final profile = profileRepo.getProfile();
+    final profile = _ref.read(profileProvider);
     if (profile.planStartDate == null) {
       final now = DateTime.now();
-      profileRepo.saveProfile(profile.copyWith(
-        planStartDate: DateTime(now.year, now.month, now.day),
-        currentPhaseWeek: 1,
-      ));
       _ref.read(profileProvider.notifier).updateProfile(profile.copyWith(
         planStartDate: DateTime(now.year, now.month, now.day),
         currentPhaseWeek: 1,
