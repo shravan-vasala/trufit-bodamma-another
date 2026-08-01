@@ -78,6 +78,8 @@ final weeklySummaryProvider = Provider<WeeklySummary>((ref) {
   
   final habitRepo = ref.watch(habitRepoProvider);
   final workoutPlan = ref.watch(workoutPlanProvider);
+  final exerciseLogRepo = ref.watch(exerciseLogRepoProvider);
+  ref.watch(exerciseLogsUpdateProvider);
   
   // Calculate Workouts
   int wCompleted = 0;
@@ -101,12 +103,13 @@ final weeklySummaryProvider = Provider<WeeklySummary>((ref) {
       if (isSunday || workoutDay.sections.isEmpty) {
         if (log.workoutCompleted) wCompleted++;
       } else {
-        // Need to check section completions. For simplicity in the summary, 
-        // we'll count it fully completed if dailyLog says workoutCompleted = true.
-        // Or we can count sections if we use the exerciseLogRepo.
-        if (log.workoutCompleted) {
-          wCompleted += sectionsTotal;
+        int sectionsCompleted = 0;
+        for (final sec in workoutDay.sections) {
+          if (sec.exercises.isNotEmpty && sec.exercises.every((ex) => exerciseLogRepo.hasLog(dateStr, ex.name))) {
+            sectionsCompleted++;
+          }
         }
+        wCompleted += sectionsCompleted;
       }
     }
   } else {
