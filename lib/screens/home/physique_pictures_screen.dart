@@ -23,6 +23,7 @@ class _PhysiquePicturesScreenState
 
   bool _isSelectionMode = false;
   final Set<String> _selectedPhotos = {};
+  String _currentFilter = 'all';
 
   void _toggleSelection(String path) {
     setState(() {
@@ -83,7 +84,23 @@ class _PhysiquePicturesScreenState
   @override
   Widget build(BuildContext context) {
     final mediaRepo = ref.watch(mediaRepoProvider);
-    final allPhotos = mediaRepo.getAllProgressPhotos();
+    final rawPhotos = mediaRepo.getAllProgressPhotos();
+    
+    // Filter the photos based on _currentFilter
+    final allPhotos = <MapEntry<String, List<String>>>[];
+    for (final entry in rawPhotos) {
+      final date = entry.key;
+      final filteredPaths = <String>[];
+      for (final path in entry.value) {
+        final meta = mediaRepo.getProgressPhotoMeta(date, path);
+        if (_currentFilter == 'all' || meta.pose == _currentFilter) {
+          filteredPaths.add(path);
+        }
+      }
+      if (filteredPaths.isNotEmpty) {
+        allPhotos.add(MapEntry(date, filteredPaths));
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -127,39 +144,85 @@ class _PhysiquePicturesScreenState
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add_a_photo_rounded, color: AppColors.white),
       ),
-      body: allPhotos.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.photo_library_outlined,
-                    size: 64,
-                    color: AppColors.textLight.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No progress photos yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMedium,
+      body: Column(
+        children: [
+          // Filter Toggle
+          if (rawPhotos.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'All',
+                      isSelected: _currentFilter == 'all',
+                      onTap: () => setState(() => _currentFilter = 'all'),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap the + button to add your first photo',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textLight,
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Front',
+                      isSelected: _currentFilter == 'front',
+                      onTap: () => setState(() => _currentFilter = 'front'),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Side',
+                      isSelected: _currentFilter == 'side',
+                      onTap: () => setState(() => _currentFilter = 'side'),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Back',
+                      isSelected: _currentFilter == 'back',
+                      onTap: () => setState(() => _currentFilter = 'back'),
+                    ),
+                  ],
+                ),
               ),
-            )
-          : ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(20),
+            ),
+          Expanded(
+            child: rawPhotos.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.photo_library_outlined,
+                          size: 64,
+                          color: AppColors.textLight.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No progress photos yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tap the + button to add your first photo',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : allPhotos.isEmpty 
+                    ? Center(
+                        child: Text(
+                          'No photos for this pose.',
+                          style: TextStyle(color: AppColors.textMedium),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
               itemCount: allPhotos.length,
               itemBuilder: (context, index) {
                 final entry = allPhotos[index];
@@ -193,7 +256,9 @@ class _PhysiquePicturesScreenState
                       itemCount: photos.length,
                       itemBuilder: (context, i) {
                         final photoPath = photos[i];
-                        final poseTag = ref.read(mediaRepoProvider).getPoseTag(photoPath);
+                        final meta = ref.read(mediaRepoProvider).getProgressPhotoMeta(date, photoPath);
+                        final poseTag = meta.pose;
+                        final weight = meta.weight;
 
                         final isSelected = _selectedPhotos.contains(photoPath);
 
@@ -249,13 +314,38 @@ class _PhysiquePicturesScreenState
                                   left: 4,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.6),
+                                      color: AppColors.textDark.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      _poseLabel(poseTag),
+                                      poseTag.toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (weight != null)
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(alpha: 0.8),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '${weight}kg',
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
@@ -400,8 +490,11 @@ class _PhysiquePicturesScreenState
     );
     if (image == null || !mounted) return;
 
-    // Ask for pose tag
-    final poseTag = await showModalBottomSheet<String>(
+    // Prompt for metadata (Pose, Weight, Note)
+    final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final currentWeight = ref.read(dailyLogRepoProvider).getDailyLog(date).weight;
+
+    final metadata = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
@@ -413,68 +506,35 @@ class _PhysiquePicturesScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Tag This Pose (Optional)',
+              'Photo Details',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Helps organize your progress pictures',
-              style: TextStyle(fontSize: 13, color: AppColors.textMedium),
+            const SizedBox(height: 16),
+            _CaptureMetadataForm(
+              initialWeight: currentWeight,
+              onComplete: (data) => Navigator.pop(ctx, data),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _PoseOption(
-                    icon: Icons.accessibility_new_rounded,
-                    label: 'Front',
-                    onTap: () => Navigator.pop(ctx, 'front'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _PoseOption(
-                    icon: Icons.sync_alt_rounded,
-                    label: 'Side',
-                    onTap: () => Navigator.pop(ctx, 'side'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _PoseOption(
-                    icon: Icons.turn_left_rounded,
-                    label: 'Back',
-                    onTap: () => Navigator.pop(ctx, 'back'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'none'),
-              child: const Text(
-                'Skip',
-                style: TextStyle(color: AppColors.textMedium),
-              ),
-            ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
     );
 
-    if (!mounted) return;
-    final selectedPose = poseTag ?? 'none';
+    if (!mounted || metadata == null) return;
+    
+    final selectedPose = metadata['pose'] as String;
+    final weight = metadata['weight'] as double?;
+    final note = metadata['note'] as String?;
 
-    final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final imageBytes = await image.readAsBytes();
     await ref.read(mediaRepoProvider).saveProgressPhoto(
       date,
       imageBytes,
       poseTag: selectedPose,
+      weight: weight,
+      note: note,
     );
     setState(() {}); // refresh
   }
@@ -514,6 +574,193 @@ class _PoseOption extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CaptureMetadataForm extends StatefulWidget {
+  final double initialWeight;
+  final Function(Map<String, dynamic>) onComplete;
+
+  const _CaptureMetadataForm({
+    required this.initialWeight,
+    required this.onComplete,
+  });
+
+  @override
+  State<_CaptureMetadataForm> createState() => _CaptureMetadataFormState();
+}
+
+class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
+  String? _selectedPose;
+  late TextEditingController _weightController;
+  late TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightController = TextEditingController(
+      text: widget.initialWeight > 0 ? widget.initialWeight.toString() : '',
+    );
+    _noteController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Pose (Required)',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _SelectablePoseOption(
+                icon: Icons.accessibility_new_rounded,
+                label: 'Front',
+                isSelected: _selectedPose == 'front',
+                onTap: () => setState(() => _selectedPose = 'front'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SelectablePoseOption(
+                icon: Icons.sync_alt_rounded,
+                label: 'Side',
+                isSelected: _selectedPose == 'side',
+                onTap: () => setState(() => _selectedPose = 'side'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SelectablePoseOption(
+                icon: Icons.turn_left_rounded,
+                label: 'Back',
+                isSelected: _selectedPose == 'back',
+                onTap: () => setState(() => _selectedPose = 'back'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _weightController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Weight (Optional)',
+            prefixIcon: Icon(Icons.monitor_weight_outlined),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _noteController,
+          decoration: const InputDecoration(
+            labelText: 'Note (Optional)',
+            prefixIcon: Icon(Icons.notes_rounded),
+            hintText: 'e.g. Post-workout pump',
+          ),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: _selectedPose == null
+              ? null
+              : () {
+                  widget.onComplete({
+                    'pose': _selectedPose,
+                    'weight': double.tryParse(_weightController.text),
+                    'note': _noteController.text,
+                  });
+                },
+          child: const Text('Save Photo'),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectablePoseOption extends StatelessWidget {
+  const _SelectablePoseOption({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.lavender,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? AppColors.white : AppColors.primary, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? AppColors.white : AppColors.textDark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.lavender,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? AppColors.white : AppColors.primary,
+          ),
         ),
       ),
     );

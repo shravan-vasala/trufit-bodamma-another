@@ -76,6 +76,24 @@ class _PhotoCompareScreenState extends ConsumerState<PhotoCompareScreen> {
     }
   }
 
+  String _getTimeDeltaText() {
+    if (_leftPhoto == null || _rightPhoto == null) return '';
+    try {
+      final d1 = DateTime.parse(_leftPhoto!.date);
+      final d2 = DateTime.parse(_rightPhoto!.date);
+      final diff = d2.difference(d1).inDays.abs();
+      if (diff == 0) return 'Same day';
+      if (diff < 30) return '$diff days apart';
+      final months = (diff / 30).round();
+      if (months == 1) return '1 month apart';
+      if (months < 12) return '$months months apart';
+      final years = (months / 12).toStringAsFixed(1);
+      return '$years years apart';
+    } catch (_) {
+      return '';
+    }
+  }
+
   String _getWeightStr(String date) {
     final log = ref.read(dailyLogRepoProvider).getLog(date);
     if (log != null && log.weight != null) {
@@ -250,11 +268,47 @@ class _PhotoCompareScreenState extends ConsumerState<PhotoCompareScreen> {
         title: const Text('Compare', style: TextStyle(color: Colors.white)),
         elevation: 0,
       ),
-      body: Row(
+      body: Stack(
         children: [
-          _buildPhotoColumn(_leftPhoto, true),
-          Container(width: 2, color: Colors.white24),
-          _buildPhotoColumn(_rightPhoto, false),
+          Positioned.fill(
+            child: Row(
+              children: [
+                _buildPhotoColumn(_leftPhoto, true),
+                Container(width: 2, color: Colors.white24),
+                _buildPhotoColumn(_rightPhoto, false),
+              ],
+            ),
+          ),
+          if (_leftPhoto != null && _rightPhoto != null && _getTimeDeltaText().isNotEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 32,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    _getTimeDeltaText(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

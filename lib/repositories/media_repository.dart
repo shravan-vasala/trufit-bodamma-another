@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import '../models/progress_photo.dart';
 
 class MediaRepository {
   static const String _boxName = 'media_metadata';
@@ -23,7 +24,13 @@ class MediaRepository {
   }
 
   // Save a progress photo from raw bytes (works on both web and mobile)
-  Future<String> saveProgressPhoto(String date, Uint8List imageBytes, {String poseTag = 'none'}) async {
+  Future<String> saveProgressPhoto(
+    String date,
+    Uint8List imageBytes, {
+    String poseTag = 'none',
+    double? weight,
+    String? note,
+  }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final destPath = kIsWeb
         ? 'web_photo_${date}_$timestamp.jpg'
@@ -39,14 +46,30 @@ class MediaRepository {
     photos.add(destPath);
     await _box.put('photos_$date', jsonEncode(photos));
 
-    // Update pose tag metadata
+    // Update pose tag metadata (legacy)
     await _box.put('pose_$destPath', poseTag);
+    
+    // Save detailed metadata
+    final meta = ProgressPhoto(
+      path: destPath,
+      date: date,
+      pose: poseTag,
+      weight: weight,
+      note: note,
+    );
+    await _box.put('meta_$destPath', jsonEncode(meta.toJson()));
 
     return destPath;
   }
 
   // Save a progress photo from a file path (legacy, mobile-only)
-  Future<String> saveProgressPhotoFromPath(String date, String sourcePath, {String poseTag = 'none'}) async {
+  Future<String> saveProgressPhotoFromPath(
+    String date,
+    String sourcePath, {
+    String poseTag = 'none',
+    double? weight,
+    String? note,
+  }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final destPath = kIsWeb
         ? sourcePath
@@ -60,10 +83,30 @@ class MediaRepository {
     photos.add(destPath);
     await _box.put('photos_$date', jsonEncode(photos));
 
-    // Update pose tag metadata
+    // Update pose tag metadata (legacy)
     await _box.put('pose_$destPath', poseTag);
+    
+    // Save detailed metadata
+    final meta = ProgressPhoto(
+      path: destPath,
+      date: date,
+      pose: poseTag,
+      weight: weight,
+      note: note,
+    );
+    await _box.put('meta_$destPath', jsonEncode(meta.toJson()));
 
     return destPath;
+  }
+
+  ProgressPhoto getProgressPhotoMeta(String date, String photoPath) {
+    final jsonStr = _box.get('meta_$photoPath');
+    if (jsonStr != null) {
+      return ProgressPhoto.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    }
+    // Fallback for older photos
+    final poseTag = getPoseTag(photoPath);
+    return ProgressPhoto(path: photoPath, date: date, pose: poseTag);
   }
 
   String getPoseTag(String photoPath) {
@@ -92,6 +135,17 @@ class MediaRepository {
     return result;
   }
 
+  List<ProgressPhoto> getAllProgressPhotosDetailed() {
+    final result = <ProgressPhoto>[];
+    final allDatesAndPhotos = getAllProgressPhotos();
+    for (final entry in allDatesAndPhotos) {
+      for (final path in entry.value) {
+        result.add(getProgressPhotoMeta(entry.key, path));
+      }
+    }
+    return result;
+  }
+
   int getAllPhotoCount() {
     int count = 0;
     for (final key in _box.keys) {
@@ -114,8 +168,9 @@ class MediaRepository {
       await _box.put('photos_$date', jsonEncode(photos));
     }
 
-    // 2. Remove pose tag
+    // 2. Remove pose tag and metadata
     await _box.delete('pose_$photoPath');
+    await _box.delete('meta_$photoPath');
 
     // 3. Delete physical file (if not web)
     if (!kIsWeb) {

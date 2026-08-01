@@ -16,6 +16,9 @@ class ReminderConfig {
   final int backupDayOfWeek; // 1 = Monday, 7 = Sunday
   final TimeOfDay backupTime;
 
+  final bool photosEnabled;
+  final TimeOfDay photoTime;
+
   ReminderConfig({
     this.habitsEnabled = false,
     this.habitTime = const TimeOfDay(hour: 21, minute: 0),
@@ -27,6 +30,8 @@ class ReminderConfig {
     this.backupEnabled = false,
     this.backupDayOfWeek = DateTime.sunday,
     this.backupTime = const TimeOfDay(hour: 10, minute: 0),
+    this.photosEnabled = true,
+    this.photoTime = const TimeOfDay(hour: 10, minute: 0),
   });
 
   ReminderConfig copyWith({
@@ -40,6 +45,8 @@ class ReminderConfig {
     bool? backupEnabled,
     int? backupDayOfWeek,
     TimeOfDay? backupTime,
+    bool? photosEnabled,
+    TimeOfDay? photoTime,
   }) {
     return ReminderConfig(
       habitsEnabled: habitsEnabled ?? this.habitsEnabled,
@@ -52,6 +59,8 @@ class ReminderConfig {
       backupEnabled: backupEnabled ?? this.backupEnabled,
       backupDayOfWeek: backupDayOfWeek ?? this.backupDayOfWeek,
       backupTime: backupTime ?? this.backupTime,
+      photosEnabled: photosEnabled ?? this.photosEnabled,
+      photoTime: photoTime ?? this.photoTime,
     );
   }
 
@@ -67,6 +76,8 @@ class ReminderConfig {
       'backupEnabled': backupEnabled,
       'backupDayOfWeek': backupDayOfWeek,
       'backupTime': '${backupTime.hour}:${backupTime.minute}',
+      'photosEnabled': photosEnabled,
+      'photoTime': '${photoTime.hour}:${photoTime.minute}',
     };
   }
 
@@ -94,6 +105,8 @@ class ReminderConfig {
       backupEnabled: map['backupEnabled'] ?? false,
       backupDayOfWeek: map['backupDayOfWeek'] ?? DateTime.sunday,
       backupTime: parseTime(map['backupTime'], const TimeOfDay(hour: 10, minute: 0)),
+      photosEnabled: map['photosEnabled'] ?? true,
+      photoTime: parseTime(map['photoTime'], const TimeOfDay(hour: 10, minute: 0)),
     );
   }
 

@@ -99,6 +99,60 @@ class NotificationService {
     }
   }
 
+  Future<void> schedulePhotoReminder(TimeOfDay time, DateTime? lastPhotoDate) async {
+    // ID 50 for photo reminder
+    await _notificationsPlugin.cancel(50);
+    
+    // If last photo is null, or it's been more than 14 days, remind them today/tomorrow
+    final now = DateTime.now();
+    bool needsNudge = false;
+    
+    if (lastPhotoDate == null) {
+      needsNudge = true;
+    } else {
+      if (now.difference(lastPhotoDate).inDays >= 14) {
+        needsNudge = true;
+      }
+    }
+
+    if (needsNudge) {
+      // Schedule a daily nudge until they take a photo
+      await _scheduleDaily(
+        id: 50,
+        title: 'Time for a Progress Photo',
+        body: 'It\'s been a while! Update your physique pictures.',
+        time: time,
+      );
+    } else {
+      // Schedule exactly 14 days from the last photo date at the preferred time
+      final scheduledDay = lastPhotoDate!.add(const Duration(days: 14));
+      var scheduledDate = tz.TZDateTime(tz.local, scheduledDay.year, scheduledDay.month, scheduledDay.day, time.hour, time.minute);
+      
+      if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) {
+         // Fallback if we somehow got here
+         scheduledDate = tz.TZDateTime.now(tz.local).add(const Duration(days: 1));
+      }
+
+      await _notificationsPlugin.zonedSchedule(
+        50,
+        'Progress Photo Due',
+        'It\'s been 2 weeks! Time for a new progress picture.',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'weekly_channel',
+            'Weekly Reminders',
+            channelDescription: 'Weekly reminders for workouts and backups',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+  }
+
   Future<void> _scheduleDaily({
     required int id,
     required String title,
