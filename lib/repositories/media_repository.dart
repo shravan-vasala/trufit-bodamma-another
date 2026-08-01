@@ -143,6 +143,7 @@ class MediaRepository {
         result.add(getProgressPhotoMeta(entry.key, path));
       }
     }
+    result.sort((a, b) => b.date.compareTo(a.date));
     return result;
   }
 
