@@ -84,7 +84,7 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.all(24),
@@ -232,7 +232,7 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: isFuture ? context.colors.textLight : context.colors.white,
+                      color: isFuture ? context.colors.textLight : context.colors.onPrimary,
                     ),
                   ),
                 ),
@@ -264,7 +264,7 @@ class _TimePickerCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: context.colors.border),
         ),

@@ -64,7 +64,7 @@ class MealsCard extends ConsumerWidget {
           margin: EdgeInsets.symmetric(horizontal: 20),
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(

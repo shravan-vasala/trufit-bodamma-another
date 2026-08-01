@@ -113,7 +113,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.all(24),

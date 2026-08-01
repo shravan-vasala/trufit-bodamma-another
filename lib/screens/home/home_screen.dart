@@ -48,27 +48,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final habitRepo = ref.read(habitRepoProvider);
 
     final isAuth = await hcService.isAuthorized();
-    if (!isAuth) return;
+    if (isAuth) {
+      // Sync today's steps
+      await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
 
-    // Sync today's steps
-    await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+      // Sync last 7 days (Samsung Health can revise recent totals)
+      await hcService.syncLast7Days(dailyLogRepo, habitRepo);
 
-    // Sync last 7 days (Samsung Health can revise recent totals)
-    await hcService.syncLast7Days(dailyLogRepo, habitRepo);
-
-    // Backfill if first time
-    if (!hcService.isBackfillDone) {
-      await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
+      // Backfill if first time
+      if (!hcService.isBackfillDone) {
+        await hcService.backfillLast90Days(dailyLogRepo, habitRepo);
+      }
     }
 
-    // Refresh UI
+    // Always invalidate after sync attempt (or skip)
     ref.invalidate(dailyLogProvider);
     ref.invalidate(habitCompletionsProvider);
     
-    // Fetch dynamic coach note only on manual refresh
-    if (isManualRefresh) {
-      ref.read(coachNoteProvider.notifier).fetchNote(force: true);
-    }
+    // Always fetch coach notes (force if manual refresh)
+    ref.read(coachNoteProvider.notifier).fetchNote(force: isManualRefresh);
   }
 
   Widget _buildSectionHeader(String title, {IconData? icon}) {
@@ -329,7 +327,7 @@ class _WorkoutsSection extends ConsumerWidget {
       child: Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(20),
           border: isCompleted ? Border.all(color: context.colors.green.withValues(alpha: 0.3), width: 1.5) : null,
           boxShadow: [

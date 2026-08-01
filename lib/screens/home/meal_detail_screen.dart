@@ -90,7 +90,7 @@ class MealDetailScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('${dailyLog.totalCalories}', style: TextStyle(color: context.colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                    Text('${dailyLog.totalCalories}', style: TextStyle(color: context.colors.onPrimary, fontSize: 36, fontWeight: FontWeight.bold)),
                     Text(' / $targetCalories Kcal', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -160,7 +160,7 @@ class _MacroInfo extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         children: [
-          Text('${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)}g', style: TextStyle(color: context.colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+          Text('${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)}g', style: TextStyle(color: context.colors.onPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
           SizedBox(height: 2),
           Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
           SizedBox(height: 6),
@@ -199,7 +199,7 @@ class _MealSlotCard extends ConsumerWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: context.colors.primary.withValues(alpha: 0.05), blurRadius: 10, offset: Offset(0, 2))],
       ),

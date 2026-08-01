@@ -98,7 +98,7 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
                   child: Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.white,
+                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.card,
                       border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
                       borderRadius: BorderRadius.circular(12),
                     ),

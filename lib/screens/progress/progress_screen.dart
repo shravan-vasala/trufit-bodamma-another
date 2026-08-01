@@ -184,7 +184,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                         duration: Duration(milliseconds: 200),
                         padding: EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? context.colors.white : Colors.transparent,
+                          color: isSelected ? context.colors.card : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: isSelected
                               ? [
@@ -286,7 +286,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           Container(
             padding: EdgeInsets.fromLTRB(8, 12, 8, 16),
             decoration: BoxDecoration(
-              color: context.colors.white,
+              color: context.colors.card,
               boxShadow: [
                 BoxShadow(
                   color: context.colors.primary.withValues(alpha: 0.06),

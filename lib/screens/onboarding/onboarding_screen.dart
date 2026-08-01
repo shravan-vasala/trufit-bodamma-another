@@ -346,7 +346,7 @@ class _PrimaryButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: context.colors.white,
+            color: context.colors.onPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 15,
           ),
@@ -446,7 +446,7 @@ class _FeaturePill extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -569,7 +569,7 @@ class _ProfilePage extends StatelessWidget {
           SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: context.colors.white,
+              color: context.colors.card,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -616,7 +616,7 @@ class _UnitTab extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: selected ? context.colors.white : context.colors.textMedium,
+                color: selected ? context.colors.onPrimary : context.colors.textMedium,
               ),
             ),
           ),
@@ -732,7 +732,7 @@ class _GoalsPage extends StatelessWidget {
                 margin: EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: selected ? context.colors.lavender : context.colors.white,
+                  color: selected ? context.colors.lavender : context.colors.card,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: selected ? context.colors.primary : context.colors.border,
@@ -906,15 +906,15 @@ class _HealthConnectPage extends StatelessWidget {
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                            color: context.colors.white,
+                            color: context.colors.onPrimary,
                             strokeWidth: 2,
                           ),
                         )
-                      : Icon(Icons.link_rounded, color: context.colors.white),
+                      : Icon(Icons.link_rounded, color: context.colors.onPrimary),
                   label: Text(
                     connecting ? 'Connecting...' : 'Connect Health Connect',
                     style: TextStyle(
-                      color: context.colors.white,
+                      color: context.colors.onPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -1126,7 +1126,7 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

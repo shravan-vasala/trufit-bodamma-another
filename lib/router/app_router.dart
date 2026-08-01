@@ -233,7 +233,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     children: [
                       Icon(
                         timerState.isPaused ? Icons.pause_circle_filled : Icons.timer,
-                        color: context.colors.white,
+                        color: context.colors.onPrimary,
                         size: 28,
                       ),
                       SizedBox(width: 12),
@@ -259,7 +259,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: context.colors.white,
+                                color: context.colors.onPrimary,
                               ),
                             ),
                           ],
@@ -315,7 +315,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              color: context.colors.white,
+              color: context.colors.card,
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
@@ -395,7 +395,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? context.colors.white : context.colors.textLight,
+              color: isSelected ? context.colors.onPrimary : context.colors.textLight,
               size: 24,
             ),
             if (isSelected) ...[
@@ -405,7 +405,7 @@ class _NavItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: context.colors.white,
+                  color: context.colors.onPrimary,
                 ),
               ),
             ],
@@ -444,7 +444,7 @@ class _TimerControlButton extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: context.colors.white,
+                  color: context.colors.card,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),

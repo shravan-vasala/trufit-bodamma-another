@@ -27,7 +27,7 @@ class ExerciseCard extends ConsumerWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -131,7 +131,7 @@ class ExerciseCard extends ConsumerWidget {
                                       ),
                                       child: Icon(
                                         Icons.play_arrow_rounded,
-                                        color: context.colors.white,
+                                        color: context.colors.card,
                                         size: 20,
                                       ),
                                     ),
@@ -285,7 +285,7 @@ class ExerciseCard extends ConsumerWidget {
                                 : Border.all(color: context.colors.border, width: 2),
                           ),
                           child: isCompleted
-                              ? Icon(Icons.check, color: context.colors.white, size: 18)
+                              ? Icon(Icons.check, color: context.colors.onPrimary, size: 18)
                               : null,
                         ),
                       ),

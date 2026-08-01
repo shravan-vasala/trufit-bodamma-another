@@ -39,7 +39,7 @@ class ManagePlansScreen extends ConsumerWidget {
             // Active Plans Selection
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              color: context.colors.white,
+              color: context.colors.card,
               child: Row(
                 children: [
                   Expanded(
@@ -360,7 +360,7 @@ class _PlanEditorState extends State<_PlanEditor> {
             padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Container(
               decoration: BoxDecoration(
-                color: context.colors.white,
+                color: context.colors.card,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: context.colors.border),
               ),

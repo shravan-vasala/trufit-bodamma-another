@@ -27,7 +27,7 @@ class HabitsCard extends ConsumerWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -117,7 +117,7 @@ class _HabitItem extends ConsumerWidget {
                                 : Border.all(color: context.colors.border, width: 2),
                           ),
                           child: isCompleted
-                              ? Icon(Icons.check, color: context.colors.white, size: 16)
+                              ? Icon(Icons.check, color: context.colors.onPrimary, size: 16)
                               : (isFuture ? Icon(Icons.lock_outline_rounded, color: context.colors.textLight.withValues(alpha: 0.5), size: 14) : null),
                         ),
                       ),

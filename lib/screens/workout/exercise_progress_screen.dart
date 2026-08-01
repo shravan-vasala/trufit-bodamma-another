@@ -230,7 +230,7 @@ class _HistoryCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 8),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(

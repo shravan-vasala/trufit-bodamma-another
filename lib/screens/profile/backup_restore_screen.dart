@@ -471,7 +471,7 @@ class _ActionCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(

@@ -56,7 +56,7 @@ class SharedChartCard extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: context.colors.white,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -128,7 +128,7 @@ class SharedChartCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: context.colors.white,
+              color: context.colors.card,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -331,7 +331,7 @@ class SharedChartCard extends StatelessWidget {
                 return LineTooltipItem(
                   '$dateStr\n$valStr',
                   TextStyle(
-                    color: context.colors.white,
+                    color: context.colors.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

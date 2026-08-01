@@ -71,9 +71,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: context.colors.white.withValues(alpha: 0.2),
+                        color: context.colors.card.withValues(alpha: 0.2),
                         border: Border.all(
-                          color: context.colors.white.withValues(alpha: 0.5),
+                          color: context.colors.card.withValues(alpha: 0.5),
                           width: 3,
                         ),
                       ),
@@ -92,10 +92,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.w800,
-                                          color: context.colors.white,
+                                          color: context.colors.onPrimary,
                                         ),
                                       )
-                                    : Icon(Icons.person, size: 40, color: context.colors.white),
+                                    : Icon(Icons.person, size: 40, color: context.colors.onPrimary),
                               ),
                       ),
                     ),
@@ -105,7 +105,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: context.colors.white,
+                        color: context.colors.onPrimary,
                       ),
                     ),
                     SizedBox(height: 4),
@@ -113,7 +113,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       'Height: ${profile.height.toStringAsFixed(0)} cm',
                       style: TextStyle(
                         fontSize: 14,
-                        color: context.colors.white.withValues(alpha: 0.8),
+                        color: context.colors.onPrimary.withValues(alpha: 0.8),
                       ),
                     ),
                     if (profile.targetWeight != null) ...[
@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         'Target: ${profile.targetWeight!.toStringAsFixed(1)} ${profile.weightUnit}',
                         style: TextStyle(
                           fontSize: 14,
-                          color: context.colors.white.withValues(alpha: 0.8),
+                          color: context.colors.onPrimary.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -244,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: context.colors.white,
+          backgroundColor: context.colors.card,
           title: Text('Select Theme', style: TextStyle(color: context.colors.textDark)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -282,7 +282,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: context.colors.white,
+            color: context.colors.card,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: EdgeInsets.all(24),
@@ -353,7 +353,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.symmetric(vertical: 24),
@@ -467,7 +467,7 @@ class _MenuCard extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 12),
         padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -543,7 +543,7 @@ class _SettingsSwitch extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -685,7 +685,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.symmetric(vertical: 24),
@@ -745,7 +745,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.all(24),
@@ -815,9 +815,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                         decoration: BoxDecoration(
                           color: context.colors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: context.colors.white, width: 2),
+                          border: Border.all(color: context.colors.card, width: 2),
                         ),
-                        child: Icon(Icons.camera_alt, color: context.colors.white, size: 14),
+                        child: Icon(Icons.camera_alt, color: context.colors.onPrimary, size: 14),
                       ),
                     ),
                   ],

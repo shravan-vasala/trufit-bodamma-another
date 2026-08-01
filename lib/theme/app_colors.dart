@@ -9,6 +9,10 @@ abstract class AppColorsPalette {
   Color get scaffoldBg;
   Color get background;
   Color get white;
+  Color get surface;
+  Color get card;
+  Color get onPrimary;
+  Color get onSurface;
   Color get orange;
   Color get green;
   Color get greenLight;
@@ -37,6 +41,10 @@ class AppColorsLight implements AppColorsPalette {
   @override Color get scaffoldBg => const Color(0xFFF8F7FC);
   @override Color get background => scaffoldBg;
   @override Color get white => const Color(0xFFFFFFFF);
+  @override Color get surface => const Color(0xFFFFFFFF);
+  @override Color get card => const Color(0xFFFFFFFF);
+  @override Color get onPrimary => const Color(0xFFFFFFFF);
+  @override Color get onSurface => const Color(0xFF1F2937);
   @override Color get orange => const Color(0xFFF97316);
   @override Color get green => const Color(0xFF22C55E);
   @override Color get greenLight => const Color(0xFFDCFCE7);
@@ -72,7 +80,11 @@ class AppColorsDark implements AppColorsPalette {
   @override Color get lavender => const Color(0xFF1A1A24); // Darker container
   @override Color get scaffoldBg => const Color(0xFF0F0F14); // Very dark scaffold
   @override Color get background => scaffoldBg;
-  @override Color get white => const Color(0xFF1A1A24); // Maps white cards to dark gray
+  @override Color get white => const Color(0xFFFFFFFF); // Literal white
+  @override Color get surface => const Color(0xFF1A1A24);
+  @override Color get card => const Color(0xFF1A1A24); // Maps white cards to dark gray
+  @override Color get onPrimary => const Color(0xFFFFFFFF);
+  @override Color get onSurface => const Color(0xFFF3F4F6);
   @override Color get orange => const Color(0xFFF97316);
   @override Color get green => const Color(0xFF22C55E);
   @override Color get greenLight => const Color(0xFF14532D); 

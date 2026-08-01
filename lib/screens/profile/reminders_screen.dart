@@ -202,7 +202,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.border),
       ),

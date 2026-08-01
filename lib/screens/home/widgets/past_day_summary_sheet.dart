@@ -313,7 +313,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: context.colors.white,
+                      color: context.colors.onPrimary,
                     ),
                   ),
                 ),
@@ -351,7 +351,7 @@ class _SummaryRow extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -419,7 +419,7 @@ class _MetricBox extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

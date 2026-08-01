@@ -164,7 +164,7 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.timer_off_rounded, color: context.colors.white),
+              Icon(Icons.timer_off_rounded, color: context.colors.onPrimary),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -178,7 +178,7 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
                     if (state.exerciseName != null)
                       Text(
                         'Time for ${state.exerciseName}',
-                        style: TextStyle(fontSize: 12, color: context.colors.white.withValues(alpha: 0.8)),
+                        style: TextStyle(fontSize: 12, color: context.colors.onPrimary.withValues(alpha: 0.8)),
                       ),
                   ],
                 ),

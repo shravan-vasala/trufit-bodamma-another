@@ -59,8 +59,8 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showEditorDialog(context, ref, null),
         backgroundColor: context.colors.primary,
-        icon: Icon(Icons.add, color: context.colors.white),
-        label: Text('Add Habit', style: TextStyle(color: context.colors.white)),
+        icon: Icon(Icons.add, color: context.colors.card),
+        label: Text('Add Habit', style: TextStyle(color: context.colors.onPrimary)),
       ),
     );
   }
@@ -251,7 +251,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                   child: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.white,
+                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.card,
                       border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
                       borderRadius: BorderRadius.circular(12),
                     ),

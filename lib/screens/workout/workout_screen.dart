@@ -294,14 +294,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.emoji_events_rounded,
-                            color: context.colors.white, size: 24),
+                            color: context.colors.onPrimary, size: 24),
                         SizedBox(width: 10),
                         Text(
                           'Finish Workout',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: context.colors.white,
+                            color: context.colors.onPrimary,
                           ),
                         ),
                       ],

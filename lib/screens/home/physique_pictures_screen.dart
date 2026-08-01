@@ -141,7 +141,7 @@ class _PhysiquePicturesScreenState
       floatingActionButton: FloatingActionButton(
         onPressed: _addPhoto,
         backgroundColor: context.colors.primary,
-        child: Icon(Icons.add_a_photo_rounded, color: context.colors.white),
+        child: Icon(Icons.add_a_photo_rounded, color: context.colors.onPrimary),
       ),
       body: Column(
         children: [
@@ -325,7 +325,7 @@ class _PhysiquePicturesScreenState
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: context.colors.white,
+                                        color: context.colors.onPrimary,
                                       ),
                                     ),
                                   ),
@@ -348,7 +348,7 @@ class _PhysiquePicturesScreenState
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: context.colors.white,
+                                        color: context.colors.onPrimary,
                                       ),
                                     ),
                                   ),
@@ -362,7 +362,7 @@ class _PhysiquePicturesScreenState
                                       border: Border.all(color: context.colors.primary, width: 3),
                                     ),
                                     child: Center(
-                                      child: Icon(Icons.check_circle_rounded, color: context.colors.white, size: 32),
+                                      child: Icon(Icons.check_circle_rounded, color: context.colors.onPrimary, size: 32),
                                     ),
                                   ),
                                 ),
@@ -449,7 +449,7 @@ class _PhysiquePicturesScreenState
   Future<void> _addPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: context.colors.white,
+      backgroundColor: context.colors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -497,7 +497,7 @@ class _PhysiquePicturesScreenState
 
     final metadata = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      backgroundColor: context.colors.white,
+      backgroundColor: context.colors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -717,14 +717,14 @@ class _SelectablePoseOption extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? context.colors.white : context.colors.primary, size: 24),
+            Icon(icon, color: isSelected ? context.colors.onPrimary : context.colors.primary, size: 24),
             SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? context.colors.white : context.colors.textDark,
+                color: isSelected ? context.colors.onPrimary : context.colors.textDark,
               ),
             ),
           ],
@@ -760,7 +760,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isSelected ? context.colors.white : context.colors.primary,
+            color: isSelected ? context.colors.onPrimary : context.colors.primary,
           ),
         ),
       ),

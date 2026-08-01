@@ -58,7 +58,7 @@ class CoachNotesCard extends ConsumerWidget {
                       return Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: context.colors.white,
+                          color: context.colors.card,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: context.colors.border),
                         ),
@@ -127,7 +127,7 @@ class CoachNotesCard extends ConsumerWidget {
                     color: context.colors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.sports_rounded, color: context.colors.white, size: 18),
+                  child: Icon(Icons.sports_rounded, color: context.colors.onPrimary, size: 18),
                 ),
                 SizedBox(width: 12),
                 Expanded(

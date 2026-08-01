@@ -36,7 +36,7 @@ class _StepsEntryDialogState extends ConsumerState<StepsEntryDialog> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: context.colors.white,
+          color: context.colors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.all(24),
@@ -127,7 +127,7 @@ class _StepsEntryDialogState extends ConsumerState<StepsEntryDialog> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: context.colors.white,
+                      color: context.colors.onPrimary,
                     ),
                   ),
                 ),

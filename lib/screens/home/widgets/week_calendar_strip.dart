@@ -55,7 +55,7 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
       margin: EdgeInsets.symmetric(horizontal: 20),
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

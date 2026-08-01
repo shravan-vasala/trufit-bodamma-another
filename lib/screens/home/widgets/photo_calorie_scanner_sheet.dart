@@ -255,7 +255,7 @@ class _PhotoCalorieScannerSheetState
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -365,9 +365,9 @@ class _PhotoCalorieScannerSheetState
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(color: context.colors.white, strokeWidth: 3),
+                            CircularProgressIndicator(color: context.colors.card, strokeWidth: 3),
                             SizedBox(height: 16),
-                            Text('AI Analyzing Food Picture...', style: TextStyle(color: context.colors.white, fontWeight: FontWeight.w700)),
+                            Text('AI Analyzing Food Picture...', style: TextStyle(color: context.colors.onPrimary, fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
@@ -382,7 +382,7 @@ class _PhotoCalorieScannerSheetState
                       child: Container(
                         padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: Icon(Icons.close_rounded, color: context.colors.white, size: 20),
+                        child: Icon(Icons.close_rounded, color: context.colors.onPrimary, size: 20),
                       ),
                     ),
                   ),
@@ -461,8 +461,8 @@ class _PhotoCalorieScannerSheetState
               height: 52,
               child: ElevatedButton.icon(
                 onPressed: _saveMeal,
-                icon: Icon(Icons.check_circle_rounded, color: context.colors.white),
-                label: Text('Save Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.colors.white)),
+                icon: Icon(Icons.check_circle_rounded, color: context.colors.onPrimary),
+                label: Text('Save Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.colors.onPrimary)),
               ),
             ),
           ],

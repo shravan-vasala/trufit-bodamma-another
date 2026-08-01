@@ -174,7 +174,7 @@ class _ScoreHeroCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 64,
               fontWeight: FontWeight.w900,
-              color: context.colors.white,
+              color: context.colors.onPrimary,
               height: 1.0,
             ),
           ),
@@ -184,7 +184,7 @@ class _ScoreHeroCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: context.colors.white,
+              color: context.colors.onPrimary,
             ),
           ),
         ],
@@ -204,7 +204,7 @@ class _HabitChartCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -315,7 +315,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.colors.white,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

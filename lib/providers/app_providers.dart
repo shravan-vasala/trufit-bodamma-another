@@ -413,7 +413,17 @@ final dailyMealLogsRangeProvider =
 class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
   final Ref _ref;
 
-  CoachNoteNotifier(this._ref) : super(AsyncValue.loading());
+  CoachNoteNotifier(this._ref) : super(AsyncValue.loading()) {
+    // Auto-fetch on first build if no cache exists
+    final dateStr = _ref.read(dateStringProvider);
+    final repo = _ref.read(coachNoteRepoProvider);
+    final cached = repo.getNote(dateStr);
+    if (cached != null) {
+      state = AsyncValue.data(cached);
+    } else {
+      fetchNote();
+    }
+  }
 
   Future<void> fetchNote({bool force = false}) async {
     final dateStr = _ref.read(dateStringProvider);
@@ -524,7 +534,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
         weightTrend: weightTrend,
         isRestDay: isRestDay,
         daysSinceLastWorkout: daysSinceLastWorkout,
-      );
+      ).timeout(Duration(seconds: 15));
       
       final isAi = coachService.apiKey != null && coachService.apiKey!.isNotEmpty;
       final newNote = CoachNote(date: dateStr, note: noteStr, isAi: isAi);
