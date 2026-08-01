@@ -57,15 +57,22 @@ void main() {
     
     // Set current date to today
     final todayStr = DateTime.now().toIso8601String().split('T').first;
-    container.read(dateStringProvider.notifier).state = todayStr;
     
-    final progress = container.read(phaseProgressProvider);
+    final testContainer = ProviderContainer(
+      parent: container,
+      overrides: [
+        dateStringProvider.overrideWithValue(todayStr),
+      ],
+    );
+    
+    final progress = testContainer.read(phaseProgressProvider);
     
     // Since 7 days have passed, we should be precisely on week 2, day 1
     // daysSinceStart = 7
     // currentWeek = (7 ~/ 7) + 1 = 2
     expect(progress.currentWeek, 2);
     expect(progress.isPhaseActive, true);
+    testContainer.dispose();
   });
 
   test('phaseProgressProvider week 1 day 7 calculation', () async {
@@ -78,14 +85,21 @@ void main() {
     
     // Set current date to today
     final todayStr = DateTime.now().toIso8601String().split('T').first;
-    container.read(dateStringProvider.notifier).state = todayStr;
+
+    final testContainer = ProviderContainer(
+      parent: container,
+      overrides: [
+        dateStringProvider.overrideWithValue(todayStr),
+      ],
+    );
     
-    final progress = container.read(phaseProgressProvider);
+    final progress = testContainer.read(phaseProgressProvider);
     
     // Since 6 days have passed, we should be on week 1, day 7
     // daysSinceStart = 6
     // currentWeek = (6 ~/ 7) + 1 = 1
     expect(progress.currentWeek, 1);
     expect(progress.isPhaseActive, true);
+    testContainer.dispose();
   });
 }

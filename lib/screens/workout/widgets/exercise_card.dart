@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/workout_plan.dart';
+import '../../../models/exercise_pr.dart';
 import '../log_data_dialog.dart';
 
 class ExerciseCard extends ConsumerWidget {

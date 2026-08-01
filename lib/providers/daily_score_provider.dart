@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_providers.dart';
 import '../models/habit.dart';
+import '../models/daily_log.dart';
 
 class DailyScore {
   final int totalScore;

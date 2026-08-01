@@ -11,6 +11,12 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:trufit_bodamma/services/backup_encryption_service.dart';
 import 'package:trufit_bodamma/services/schema_migration_service.dart';
 
+class BackupRestoreResult {
+  final bool success;
+  final int failedPhotosCount;
+  BackupRestoreResult({required this.success, this.failedPhotosCount = 0});
+}
+
 class BackupVerificationResult {
   final bool isValid;
   final int totalEntries;
@@ -259,12 +265,6 @@ class BackupService {
       return BackupVerificationResult(isValid: false, totalEntries: 0, photoCount: 0, errorMessage: e.toString());
     }
   }
-
-class BackupRestoreResult {
-  final bool success;
-  final int failedPhotosCount;
-  BackupRestoreResult({required this.success, this.failedPhotosCount = 0});
-}
 
   /// Restores a backup. WARNING: This will overwrite existing data.
   Future<BackupRestoreResult> restoreBackup(String zipPath, {String? password}) async {

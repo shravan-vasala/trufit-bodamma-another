@@ -16,11 +16,13 @@ void main() {
       }
     };
 
-    final migrated = SchemaMigrationService.migrate(v1Manifest);
-
-    expect(migrated['schemaVersion'], 2);
+    final boxes = v1Manifest['boxes'] as Map<String, dynamic>;
+    final version = v1Manifest['schemaVersion'] as int;
     
-    final profileJsonStr = migrated['boxes']['user_profile']['profile'] as String;
+    final migratedBoxes = SchemaMigrationService.runMigrationsForRestore(boxes, version);
+    
+    // Test verification
+    final profileJsonStr = migratedBoxes['user_profile']['profile'] as String;
     final profileJson = jsonDecode(profileJsonStr) as Map<String, dynamic>;
     
     expect(profileJson['name'], 'Old User');

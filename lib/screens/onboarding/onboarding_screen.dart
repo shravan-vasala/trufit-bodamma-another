@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/user_profile.dart';
+import '../../models/habit.dart';
 
 String kOnboardingCompletedKey = 'onboarding_completed';
 

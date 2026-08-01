@@ -22,6 +22,8 @@ import '../models/daily_log.dart';
 import '../models/body_stats.dart';
 import '../models/exercise_log.dart';
 import '../models/user_profile.dart';
+import '../models/coach_note.dart';
+import '../models/exercise_pr.dart';
 export 'rest_timer_provider.dart';
 export 'phase_progress_provider.dart';
 export 'theme_provider.dart';
@@ -246,7 +248,7 @@ final dailyLogProvider =
   return DailyLogNotifier(repo, date, ref);
 });
 
-final exercisePrProvider = Provider.family<double, String>((ref, exerciseName) {
+final exercisePrProvider = Provider.family<ExercisePr?, String>((ref, exerciseName) {
   // Watch logRepo to rebuild when PR updates
   final repo = ref.watch(exerciseLogRepoProvider);
   return repo.getPr(exerciseName);
