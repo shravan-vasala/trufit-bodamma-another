@@ -44,12 +44,12 @@ class _PhysiquePicturesScreenState
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Photos?'),
+        title: Text('Delete Photos?'),
         content: Text('Delete ${_selectedPhotos.length} photo(s)? This can\'t be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
@@ -73,7 +73,7 @@ class _PhysiquePicturesScreenState
                 _isSelectionMode = false;
               });
             },
-            child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+            child: Text('Delete', style: TextStyle(color: context.colors.red)),
           ),
         ],
       ),
@@ -102,7 +102,7 @@ class _PhysiquePicturesScreenState
     }
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
         title: Text(_isSelectionMode ? '${_selectedPhotos.length} Selected' : 'Physique Pictures'),
         leading: IconButton(
@@ -121,7 +121,7 @@ class _PhysiquePicturesScreenState
         actions: [
           if (_isSelectionMode)
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+              icon: Icon(Icons.delete_outline_rounded, color: context.colors.red),
               onPressed: () {
                 final Map<String, List<String>> photosByDate = {};
                 for (final entry in allPhotos) {
@@ -133,25 +133,25 @@ class _PhysiquePicturesScreenState
           else if (allPhotos.isNotEmpty)
             TextButton.icon(
               onPressed: () => _openCompareMode(allPhotos),
-              icon: const Icon(Icons.compare_rounded, color: AppColors.primary),
-              label: const Text('Compare', style: TextStyle(color: AppColors.primary)),
+              icon: Icon(Icons.compare_rounded, color: context.colors.primary),
+              label: Text('Compare', style: TextStyle(color: context.colors.primary)),
             ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addPhoto,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add_a_photo_rounded, color: AppColors.white),
+        backgroundColor: context.colors.primary,
+        child: Icon(Icons.add_a_photo_rounded, color: context.colors.white),
       ),
       body: Column(
         children: [
           // Filter Toggle
           if (rawPhotos.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                physics: BouncingScrollPhysics(),
                 child: Row(
                   children: [
                     _FilterChip(
@@ -159,19 +159,19 @@ class _PhysiquePicturesScreenState
                       isSelected: _currentFilter == 'all',
                       onTap: () => setState(() => _currentFilter = 'all'),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _FilterChip(
                       label: 'Front',
                       isSelected: _currentFilter == 'front',
                       onTap: () => setState(() => _currentFilter = 'front'),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _FilterChip(
                       label: 'Side',
                       isSelected: _currentFilter == 'side',
                       onTap: () => setState(() => _currentFilter = 'side'),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _FilterChip(
                       label: 'Back',
                       isSelected: _currentFilter == 'back',
@@ -190,23 +190,23 @@ class _PhysiquePicturesScreenState
                         Icon(
                           Icons.photo_library_outlined,
                           size: 64,
-                          color: AppColors.textLight.withValues(alpha: 0.5),
+                          color: context.colors.textLight.withValues(alpha: 0.5),
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
+                        SizedBox(height: 16),
+                        Text(
                           'No progress photos yet',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textMedium,
+                            color: context.colors.textMedium,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8),
+                        Text(
                           'Tap the + button to add your first photo',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textLight,
+                            color: context.colors.textLight,
                           ),
                         ),
                       ],
@@ -216,12 +216,12 @@ class _PhysiquePicturesScreenState
                     ? Center(
                         child: Text(
                           'No photos for this pose.',
-                          style: TextStyle(color: AppColors.textMedium),
+                          style: TextStyle(color: context.colors.textMedium),
                         ),
                       )
                     : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(20),
+                        physics: BouncingScrollPhysics(),
+                        padding: EdgeInsets.all(20),
               itemCount: allPhotos.length,
               itemBuilder: (context, index) {
                 final entry = allPhotos[index];
@@ -233,21 +233,21 @@ class _PhysiquePicturesScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(bottom: 12),
                       child: Text(
                         formattedDate,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                       ),
                     ),
                     GridView.builder(
                       shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: NeverScrollableScrollPhysics(),
                       gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+                          SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
@@ -287,10 +287,10 @@ class _PhysiquePicturesScreenState
                                           photoPath,
                                           fit: BoxFit.cover,
                                           errorBuilder: (_, e, s) => Container(
-                                            color: AppColors.lavender,
-                                            child: const Icon(
+                                            color: context.colors.lavender,
+                                            child: Icon(
                                               Icons.broken_image_rounded,
-                                              color: AppColors.textLight,
+                                              color: context.colors.textLight,
                                             ),
                                           ),
                                         )
@@ -298,10 +298,10 @@ class _PhysiquePicturesScreenState
                                           File(photoPath),
                                           fit: BoxFit.cover,
                                           errorBuilder: (_, e, s) => Container(
-                                            color: AppColors.lavender,
-                                            child: const Icon(
+                                            color: context.colors.lavender,
+                                            child: Icon(
                                               Icons.broken_image_rounded,
-                                              color: AppColors.textLight,
+                                              color: context.colors.textLight,
                                             ),
                                           ),
                                         ),
@@ -312,20 +312,20 @@ class _PhysiquePicturesScreenState
                                   bottom: 4,
                                   left: 4,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: EdgeInsets.symmetric(
                                       horizontal: 6,
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.textDark.withValues(alpha: 0.6),
+                                      color: context.colors.textDark.withValues(alpha: 0.6),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       poseTag.toUpperCase(),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.white,
+                                        color: context.colors.white,
                                       ),
                                     ),
                                   ),
@@ -335,20 +335,20 @@ class _PhysiquePicturesScreenState
                                   top: 4,
                                   right: 4,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: EdgeInsets.symmetric(
                                       horizontal: 6,
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.8),
+                                      color: context.colors.primary.withValues(alpha: 0.8),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       '${weight}kg',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.white,
+                                        color: context.colors.white,
                                       ),
                                     ),
                                   ),
@@ -357,12 +357,12 @@ class _PhysiquePicturesScreenState
                                 Positioned.fill(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.4),
+                                      color: context.colors.primary.withValues(alpha: 0.4),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: AppColors.primary, width: 3),
+                                      border: Border.all(color: context.colors.primary, width: 3),
                                     ),
-                                    child: const Center(
-                                      child: Icon(Icons.check_circle_rounded, color: AppColors.white, size: 32),
+                                    child: Center(
+                                      child: Icon(Icons.check_circle_rounded, color: context.colors.white, size: 32),
                                     ),
                                   ),
                                 ),
@@ -371,7 +371,7 @@ class _PhysiquePicturesScreenState
                         );
                       },
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                   ],
                 );
               },
@@ -432,7 +432,7 @@ class _PhysiquePicturesScreenState
   void _openCompareMode(List<MapEntry<String, List<String>>> allPhotos) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const PhotoCompareScreen(), // Will implement next
+        builder: (_) => PhotoCompareScreen(), // Will implement next
       ),
     );
   }
@@ -449,34 +449,34 @@ class _PhysiquePicturesScreenState
   Future<void> _addPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: context.colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Add Progress Photo',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-              title: const Text('Take Photo'),
+              leading: Icon(Icons.camera_alt, color: context.colors.primary),
+              title: Text('Take Photo'),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
-              title: const Text('Choose from Gallery'),
+              leading: Icon(Icons.photo_library, color: context.colors.primary),
+              title: Text('Choose from Gallery'),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -497,23 +497,23 @@ class _PhysiquePicturesScreenState
 
     final metadata = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: context.colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Photo Details',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _CaptureMetadataForm(
               initialWeight: currentWeight ?? 0.0,
               onComplete: (data) => Navigator.pop(ctx, data),
@@ -557,21 +557,21 @@ class _PoseOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.lavender,
+          color: context.colors.lavender,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.primary, size: 28),
-            const SizedBox(height: 6),
+            Icon(icon, color: context.colors.primary, size: 28),
+            SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+                color: context.colors.textDark,
               ),
             ),
           ],
@@ -621,11 +621,11 @@ class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Pose (Required)',
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -636,7 +636,7 @@ class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
                 onTap: () => setState(() => _selectedPose = 'front'),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: _SelectablePoseOption(
                 icon: Icons.sync_alt_rounded,
@@ -645,7 +645,7 @@ class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
                 onTap: () => setState(() => _selectedPose = 'side'),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: _SelectablePoseOption(
                 icon: Icons.turn_left_rounded,
@@ -656,25 +656,25 @@ class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         TextField(
           controller: _weightController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
             labelText: 'Weight (Optional)',
             prefixIcon: Icon(Icons.monitor_weight_outlined),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         TextField(
           controller: _noteController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Note (Optional)',
             prefixIcon: Icon(Icons.notes_rounded),
             hintText: 'e.g. Post-workout pump',
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         ElevatedButton(
           onPressed: _selectedPose == null
               ? null
@@ -685,7 +685,7 @@ class _CaptureMetadataFormState extends State<_CaptureMetadataForm> {
                     'note': _noteController.text,
                   });
                 },
-          child: const Text('Save Photo'),
+          child: Text('Save Photo'),
         ),
       ],
     );
@@ -710,21 +710,21 @@ class _SelectablePoseOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.lavender,
+          color: isSelected ? context.colors.primary : context.colors.lavender,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppColors.white : AppColors.primary, size: 24),
-            const SizedBox(height: 4),
+            Icon(icon, color: isSelected ? context.colors.white : context.colors.primary, size: 24),
+            SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? AppColors.white : AppColors.textDark,
+                color: isSelected ? context.colors.white : context.colors.textDark,
               ),
             ),
           ],
@@ -750,9 +750,9 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.lavender,
+          color: isSelected ? context.colors.primary : context.colors.lavender,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -760,7 +760,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isSelected ? AppColors.white : AppColors.primary,
+            color: isSelected ? context.colors.white : context.colors.primary,
           ),
         ),
       ),

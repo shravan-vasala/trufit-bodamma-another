@@ -59,11 +59,11 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Body Stats'),
+        title: Text('Body Stats'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -76,8 +76,8 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
             },
             child: Text(
               _isEditing ? 'Save' : 'Edit',
-              style: const TextStyle(
-                color: AppColors.primary,
+              style: TextStyle(
+                color: context.colors.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -85,43 +85,43 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
         ],
       ),
       body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
+        physics: BouncingScrollPhysics(),
+        padding: EdgeInsets.all(20),
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.lavender,
+              color: context.colors.lavender,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.straighten_rounded,
-                  color: AppColors.primary,
+                  color: context.colors.primary,
                   size: 36,
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Body Measurements',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.colors.textDark,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'All measurements in cm',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textMedium,
+                    color: context.colors.textMedium,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           ..._fields.map((field) => _buildField(field)),
         ],
       ),
@@ -130,16 +130,16 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
 
   Widget _buildField(String field) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.04),
+            color: context.colors.primary.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -148,10 +148,10 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
           Expanded(
             child: Text(
               field,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
+                color: context.colors.textDark,
               ),
             ),
           ),
@@ -161,14 +161,14 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
                 ? TextField(
                     controller: _controllers[field],
                     keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                        TextInputType.numberWithOptions(decimal: true),
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 8,
@@ -186,8 +186,8 @@ class _BodyStatsScreenState extends ConsumerState<BodyStatsScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: _controllers[field]!.text.isEmpty
-                          ? AppColors.textLight
-                          : AppColors.primary,
+                          ? context.colors.textLight
+                          : context.colors.primary,
                     ),
                   ),
           ),

@@ -18,25 +18,25 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
     final habits = ref.watch(habitsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Manage Habits'),
+        title: Text('Manage Habits'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_rounded, color: AppColors.primary),
+            icon: Icon(Icons.notifications_rounded, color: context.colors.primary),
             tooltip: 'Remind me daily',
             onPressed: () => context.go('/profile/reminders'),
           ),
         ],
       ),
       body: habits.isEmpty
-          ? const Center(child: Text('No habits found. Add one!'))
+          ? Center(child: Text('No habits found. Add one!'))
           : ReorderableListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 8),
               itemCount: habits.length,
               // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
@@ -58,9 +58,9 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showEditorDialog(context, ref, null),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: AppColors.white),
-        label: const Text('Add Habit', style: TextStyle(color: AppColors.white)),
+        backgroundColor: context.colors.primary,
+        icon: Icon(Icons.add, color: context.colors.white),
+        label: Text('Add Habit', style: TextStyle(color: context.colors.white)),
       ),
     );
   }
@@ -81,16 +81,16 @@ class _HabitListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       key: key,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
-        leading: Text(habit.icon, style: const TextStyle(fontSize: 24)),
-        title: Text(habit.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: Text(habit.icon, style: TextStyle(fontSize: 24)),
+        title: Text(habit.name, style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(_getTypeDescription(habit)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+              icon: Icon(Icons.edit_rounded, color: context.colors.primary),
               onPressed: () {
                 showDialog(
                   context: context,
@@ -99,15 +99,15 @@ class _HabitListTile extends ConsumerWidget {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+              icon: Icon(Icons.delete_outline_rounded, color: context.colors.red),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Delete Habit?'),
-                    content: const Text('Are you sure you want to delete this habit? History will be kept for past days, but it won\'t appear anymore.'),
+                    title: Text('Delete Habit?'),
+                    content: Text('Are you sure you want to delete this habit? History will be kept for past days, but it won\'t appear anymore.'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
                       TextButton(
                         onPressed: () {
                           ref.read(habitRepoProvider).deleteHabit(habit.id).then((_) {
@@ -116,15 +116,15 @@ class _HabitListTile extends ConsumerWidget {
                             Navigator.pop(ctx);
                           });
                         },
-                        child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+                        child: Text('Delete', style: TextStyle(color: context.colors.red)),
                       ),
                     ],
                   ),
                 );
               },
             ),
-            const SizedBox(width: 16),
-            const Icon(Icons.drag_handle_rounded, color: AppColors.textMedium),
+            SizedBox(width: 16),
+            Icon(Icons.drag_handle_rounded, color: context.colors.textMedium),
           ],
         ),
       ),
@@ -222,9 +222,9 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: Text(widget.habit == null ? 'Add Habit' : 'Edit Habit', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+      title: Text(widget.habit == null ? 'Add Habit' : 'Edit Habit', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -238,9 +238,9 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('Emoji', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMedium)),
-            const SizedBox(height: 8),
+            SizedBox(height: 16),
+            Text('Emoji', style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textMedium)),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -249,25 +249,25 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                 return GestureDetector(
                   onTap: () => setState(() => _selectedEmoji = emoji),
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.white,
-                      border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.white,
+                      border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                    child: Text(emoji, style: TextStyle(fontSize: 20)),
                   ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             DropdownButtonFormField<HabitType>(
-              value: _type,
+              initialValue: _type,
               decoration: InputDecoration(
                 labelText: 'Type',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(value: HabitType.checkbox, child: Text('Checkbox (Tick daily)')),
                 DropdownMenuItem(value: HabitType.counter, child: Text('Counter (Step-by-step)')),
                 DropdownMenuItem(value: HabitType.autoSteps, child: Text('Auto from Steps')),
@@ -278,7 +278,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
               },
             ),
             if (_type != HabitType.checkbox) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -288,10 +288,10 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                         labelText: 'Target',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _unitCtrl,
@@ -305,14 +305,14 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
               ),
             ],
             if (_type == HabitType.counter) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: _stepCtrl,
                 decoration: InputDecoration(
                   labelText: 'Increment Step (e.g. 0.25)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
               ),
             ],
           ],
@@ -321,16 +321,16 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: AppColors.textLight)),
+          child: Text('Cancel', style: TextStyle(color: context.colors.textLight)),
         ),
         ElevatedButton(
           onPressed: _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
+            backgroundColor: context.colors.primary,
+            foregroundColor: context.colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Text('Save'),
+          child: Text('Save'),
         ),
       ],
     );

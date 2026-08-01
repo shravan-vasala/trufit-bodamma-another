@@ -54,15 +54,15 @@ class SharedChartCard extends StatelessWidget {
       children: [
         // Chart Card
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.05),
+                color: context.colors.primary.withValues(alpha: 0.05),
                 blurRadius: 10,
-                offset: const Offset(0, 2),
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -73,68 +73,68 @@ class SharedChartCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                     ),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   if (showKgLbToggle)
                     GestureDetector(
                       onTap: onToggleUnit,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.lavender,
+                          color: context.colors.lavender,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           useKg ? 'KG' : 'LB',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: context.colors.primary,
                           ),
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               SizedBox(
                 height: 200,
                 child: data.isEmpty
                     ? Center(
                         child: Text(
                           emptyMessage,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textLight,
+                            color: context.colors.textLight,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       )
-                    : _buildLineChart(),
+                    : _buildLineChart(context),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         
         // Stats Strip
         if (statLabels.isNotEmpty && statValues.isNotEmpty)
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.04),
+                  color: context.colors.primary.withValues(alpha: 0.04),
                   blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -150,21 +150,21 @@ class SharedChartCard extends StatelessWidget {
                           children: [
                             Text(
                               statLabels[index],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textLight,
+                                color: context.colors.textLight,
                                 letterSpacing: 1,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               statValues[index],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textDark,
+                                color: context.colors.textDark,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -175,7 +175,7 @@ class SharedChartCard extends StatelessWidget {
                         Container(
                           width: 1,
                           height: 30,
-                          color: AppColors.border,
+                          color: context.colors.border,
                         ),
                     ],
                   ),
@@ -187,7 +187,7 @@ class SharedChartCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLineChart() {
+  Widget _buildLineChart(BuildContext context) {
     final spots = data.map((d) {
       final x = d.date.difference(startDate).inDays.toDouble();
       return FlSpot(x, d.value);
@@ -224,7 +224,7 @@ class SharedChartCard extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: AppColors.border,
+            color: context.colors.border,
             strokeWidth: 1,
             dashArray: [4, 4],
           ),
@@ -238,7 +238,7 @@ class SharedChartCard extends StatelessWidget {
               getTitlesWidget: (value, meta) {
                 final int daysOffset = value.toInt();
                 if (daysOffset < 0 || daysOffset > maxXValue) {
-                  return const SizedBox.shrink();
+                  return SizedBox.shrink();
                 }
 
                 final date = startDate.add(Duration(days: daysOffset));
@@ -251,24 +251,24 @@ class SharedChartCard extends StatelessWidget {
                   if (date.day == 1 || date.day % 5 == 0) {
                     label = date.day.toString();
                   } else {
-                    return const SizedBox.shrink();
+                    return SizedBox.shrink();
                   }
                 } else {
                   // sixMonths
                   if (date.day == 1) {
                     label = DateFormat('MMM').format(date);
                   } else {
-                    return const SizedBox.shrink();
+                    return SizedBox.shrink();
                   }
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: EdgeInsets.only(top: 8),
                   child: Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                     ),
                   ),
                 );
@@ -280,7 +280,7 @@ class SharedChartCard extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               getTitlesWidget: (value, meta) {
-                if (isCount && value < 0) return const SizedBox.shrink();
+                if (isCount && value < 0) return SizedBox.shrink();
                 
                 String label;
                 if (isCount) {
@@ -296,16 +296,16 @@ class SharedChartCard extends StatelessWidget {
 
                 return Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textLight,
+                    color: context.colors.textLight,
                   ),
                 );
               },
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
@@ -322,7 +322,7 @@ class SharedChartCard extends StatelessWidget {
             }
           },
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => AppColors.textDark,
+            getTooltipColor: (touchedSpot) => context.colors.textDark,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final date = startDate.add(Duration(days: spot.x.toInt()));
@@ -330,8 +330,8 @@ class SharedChartCard extends StatelessWidget {
                 final valStr = spot.y.toStringAsFixed(isCount ? 0 : 1);
                 return LineTooltipItem(
                   '$dateStr\n$valStr',
-                  const TextStyle(
-                    color: AppColors.white,
+                  TextStyle(
+                    color: context.colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -344,7 +344,7 @@ class SharedChartCard extends StatelessWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: const Color(0xFF8B5CF6),
+            color: Color(0xFF8B5CF6),
             barWidth: 2.5,
             dotData: FlDotData(
               show: spots.length == 1,
@@ -353,7 +353,7 @@ class SharedChartCard extends StatelessWidget {
               show: true,
               gradient: isCount
                   ? null
-                  : const LinearGradient(
+                  : LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
@@ -361,7 +361,7 @@ class SharedChartCard extends StatelessWidget {
                         Color(0x00C4B5FD),
                       ],
                     ),
-              color: isCount ? const Color(0xCCC4B5FD) : null,
+              color: isCount ? Color(0xCCC4B5FD) : null,
             ),
           ),
         ],

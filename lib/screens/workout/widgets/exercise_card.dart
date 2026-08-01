@@ -24,15 +24,15 @@ class ExerciseCard extends ConsumerWidget {
     final pr = ref.watch(exerciseLogRepoProvider).getPr(exercise.name);
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.04),
+            color: context.colors.primary.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -40,12 +40,15 @@ class ExerciseCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // YouTube Thumbnail
-                GestureDetector(
+                Semantics(
+                  label: 'Play ${exercise.displayName ?? exercise.name} video tutorial',
+                  button: true,
+                  child: GestureDetector(
                   onTap: () {
                     final videoId = exercise.youtubeVideoId;
                     if (videoId != null && videoId != 'XXXX') {
@@ -58,7 +61,7 @@ class ExerciseCard extends ConsumerWidget {
                     width: 90,
                     height: 68,
                     decoration: BoxDecoration(
-                      color: AppColors.lavender,
+                      color: context.colors.lavender,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ClipRRect(
@@ -70,26 +73,26 @@ class ExerciseCard extends ConsumerWidget {
                             CachedNetworkImage(
                               imageUrl: exercise.thumbnailUrl,
                               fit: BoxFit.cover,
-                              placeholder: (ctx, url) => const Center(
+                              placeholder: (ctx, url) => Center(
                                 child: Icon(
                                   Icons.fitness_center_rounded,
-                                  color: AppColors.primary,
+                                  color: context.colors.primary,
                                   size: 30,
                                 ),
                               ),
-                              errorWidget: (ctx, url, error) => const Center(
+                              errorWidget: (ctx, url, error) => Center(
                                 child: Icon(
                                   Icons.fitness_center_rounded,
-                                  color: AppColors.primary,
+                                  color: context.colors.primary,
                                   size: 30,
                                 ),
                               ),
                             )
                           else
-                            const Center(
+                            Center(
                               child: Icon(
                                 Icons.fitness_center_rounded,
-                                color: AppColors.primary,
+                                color: context.colors.primary,
                                 size: 30,
                               ),
                             ),
@@ -103,9 +106,9 @@ class ExerciseCard extends ConsumerWidget {
                                   color: Colors.black.withValues(alpha: 0.5),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.play_arrow_rounded,
-                                  color: AppColors.white,
+                                  color: context.colors.white,
                                   size: 20,
                                 ),
                               ),
@@ -115,7 +118,8 @@ class ExerciseCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                ),
+                SizedBox(width: 12),
 
                 // Exercise info
                 Expanded(
@@ -124,85 +128,85 @@ class ExerciseCard extends ConsumerWidget {
                     children: [
                       Text(
                         exercise.displayName ?? exercise.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.lavender,
+                              color: context.colors.lavender,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               'Reps: ${exercise.repsDisplay}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                color: context.colors.primary,
                               ),
                             ),
                           ),
                           if (exercise.weightKg != null) ...[
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppColors.lavender,
+                                color: context.colors.lavender,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '${exercise.weightKg} kg',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  color: context.colors.primary,
                                 ),
                               ),
                             ),
                           ],
                           if (exercise.sideInfo != 'None') ...[
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppColors.mint,
+                                color: context.colors.mint,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 exercise.sideInfo,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.mintIcon,
+                                  color: context.colors.mintIcon,
                                 ),
                               ),
                             ),
                           ],
                           if (pr != null) ...[
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFD700).withValues(alpha: 0.2), // Gold tint
+                                color: Color(0xFFFFD700).withValues(alpha: 0.2), // Gold tint
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.emoji_events, size: 12, color: Color(0xFFB8860B)),
-                                  const SizedBox(width: 2),
+                                  Icon(Icons.emoji_events, size: 12, color: Color(0xFFB8860B)),
+                                  SizedBox(width: 2),
                                   Text(
                                     pr.maxWeight > 0 ? '${pr.maxWeight}kg' : '${pr.maxReps} reps',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFFB8860B),
@@ -219,40 +223,50 @@ class ExerciseCard extends ConsumerWidget {
                 ),
 
                 // Checkmark
-                GestureDetector(
-                  onTap: () {
-                    ref
-                        .read(exerciseCompletionsProvider(dayId).notifier)
-                        .toggle(exercise.name);
-                        
-                    // If newly completed and has rest, start timer
-                    if (!isCompleted && exercise.restSecondsAfterSet > 0) {
-                      ref.read(restTimerProvider.notifier).startTimer(
-                            exercise.restSecondsAfterSet,
-                            exerciseName: exercise.name,
-                          );
-                    } else if (isCompleted) {
-                      // If un-completing, we could optionally stop the timer if it was for this exercise
-                      final timerState = ref.read(restTimerProvider);
-                      if (timerState.isActive && timerState.exerciseName == exercise.name) {
-                        ref.read(restTimerProvider.notifier).stopTimer();
+                Semantics(
+                  label: 'Mark ${exercise.displayName ?? exercise.name} as ${isCompleted ? 'incomplete' : 'complete'}',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () {
+                      ref
+                          .read(exerciseCompletionsProvider(dayId).notifier)
+                          .toggle(exercise.name);
+                          
+                      // If newly completed and has rest, start timer
+                      if (!isCompleted && exercise.restSecondsAfterSet > 0) {
+                        ref.read(restTimerProvider.notifier).startTimer(
+                              exercise.restSecondsAfterSet,
+                              exerciseName: exercise.name,
+                            );
+                      } else if (isCompleted) {
+                        // If un-completing, we could optionally stop the timer if it was for this exercise
+                        final timerState = ref.read(restTimerProvider);
+                        if (timerState.isActive && timerState.exerciseName == exercise.name) {
+                          ref.read(restTimerProvider.notifier).stopTimer();
+                        }
                       }
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted ? AppColors.green : Colors.transparent,
-                      border: isCompleted
-                          ? null
-                          : Border.all(color: AppColors.border, width: 2),
+                    },
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 200),
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCompleted ? context.colors.green : Colors.transparent,
+                            border: isCompleted
+                                ? null
+                                : Border.all(color: context.colors.border, width: 2),
+                          ),
+                          child: isCompleted
+                              ? Icon(Icons.check, color: context.colors.white, size: 18)
+                              : null,
+                        ),
+                      ),
                     ),
-                    child: isCompleted
-                        ? const Icon(Icons.check, color: AppColors.white, size: 18)
-                        : null,
                   ),
                 ),
               ],
@@ -262,30 +276,30 @@ class ExerciseCard extends ConsumerWidget {
           // Coach note
           if (exercise.note.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              padding: EdgeInsets.fromLTRB(14, 0, 14, 10),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.lavender.withValues(alpha: 0.6),
+                  color: context.colors.lavender.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.lightbulb_outline_rounded,
                       size: 16,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         exercise.note,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textMedium,
+                          color: context.colors.textMedium,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -297,7 +311,7 @@ class ExerciseCard extends ConsumerWidget {
 
           // Button row
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: Row(
               children: [
                 Expanded(
@@ -314,7 +328,7 @@ class ExerciseCard extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
-                        textStyle: const TextStyle(
+                        textStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -322,11 +336,11 @@ class ExerciseCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Log Data'),
+                      child: Text('Log Data'),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: SizedBox(
                     height: 36,
@@ -338,7 +352,7 @@ class ExerciseCard extends ConsumerWidget {
                       },
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.zero,
-                        textStyle: const TextStyle(
+                        textStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -346,7 +360,7 @@ class ExerciseCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Progress'),
+                      child: Text('Progress'),
                     ),
                   ),
                 ),

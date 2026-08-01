@@ -18,48 +18,48 @@ class WeeklySummaryScreen extends ConsumerWidget {
     // Get week bounds for title
     final weekday = selectedDate.weekday;
     final startOfWeek = selectedDate.subtract(Duration(days: weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+    final endOfWeek = startOfWeek.add(Duration(days: 6));
     final titleText = '${DateFormat('MMM d').format(startOfWeek)} - ${DateFormat('MMM d').format(endOfWeek)}';
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Weekly Summary'),
+        title: Text('Weekly Summary'),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          physics: BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 titleText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textMedium,
+                  color: context.colors.textMedium,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               
               // ── Score Hero Card ──
               _ScoreHeroCard(score: summary.weekScore),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               
               // ── Habits Chart ──
               if (summary.habitCompletionRate > 0)
                 _HabitChartCard(rates: summary.dailyHabitRates),
               if (summary.habitCompletionRate > 0)
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
               // ── Grid Stats ──
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                physics: NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
                 childAspectRatio: 1.1, // slightly wide cards
@@ -106,7 +106,7 @@ class WeeklySummaryScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               // ── Share Button ──
               ElevatedButton.icon(
@@ -114,16 +114,16 @@ class WeeklySummaryScreen extends ConsumerWidget {
                   final text = summary.generateShareText();
                   Share.share(text);
                 },
-                icon: const Icon(Icons.ios_share_rounded),
-                label: const Text('Share Summary'),
+                icon: Icon(Icons.ios_share_rounded),
+                label: Text('Share Summary'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
             ],
           ),
         ),
@@ -139,27 +139,28 @@ class _ScoreHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String message;
-    if (score >= 90) message = 'Crushing it! 🔥';
-    else if (score >= 70) message = 'Great week! 👏';
+    if (score >= 90) {
+      message = 'Crushing it! 🔥';
+    } else if (score >= 70) message = 'Great week! 👏';
     else if (score >= 50) message = 'Good effort! 👍';
     else message = 'Room to grow 🌱';
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      padding: EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: context.colors.primaryGradient,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: context.colors.primary.withValues(alpha: 0.3),
             blurRadius: 16,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Week Score',
             style: TextStyle(
               fontSize: 16,
@@ -167,23 +168,23 @@ class _ScoreHeroCard extends StatelessWidget {
               color: Colors.white70,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '$score',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 64,
               fontWeight: FontWeight.w900,
-              color: AppColors.white,
+              color: context.colors.white,
               height: 1.0,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.white,
+              color: context.colors.white,
             ),
           ),
         ],
@@ -201,36 +202,36 @@ class _HabitChartCard extends StatelessWidget {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: context.colors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+              Icon(Icons.bar_chart_rounded, color: context.colors.primary, size: 20),
               SizedBox(width: 8),
               Text(
                 'Daily Habits',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           SizedBox(
             height: 120,
             child: BarChart(
@@ -246,13 +247,13 @@ class _HabitChartCard extends StatelessWidget {
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final i = value.toInt();
-                        if (i < 0 || i > 6) return const SizedBox.shrink();
+                        if (i < 0 || i > 6) return SizedBox.shrink();
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
+                          padding: EdgeInsets.only(top: 8.0),
                           child: Text(
                             days[i],
-                            style: const TextStyle(
-                              color: AppColors.textMedium,
+                            style: TextStyle(
+                              color: context.colors.textMedium,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -261,11 +262,11 @@ class _HabitChartCard extends StatelessWidget {
                       },
                     ),
                   ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: const FlGridData(show: false),
+                gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 barGroups: List.generate(7, (i) {
                   return BarChartGroupData(
@@ -273,13 +274,13 @@ class _HabitChartCard extends StatelessWidget {
                     barRods: [
                       BarChartRodData(
                         toY: rates[i],
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         width: 14,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: 1.0,
-                          color: AppColors.lavender,
+                          color: context.colors.lavender,
                         ),
                       ),
                     ],
@@ -312,15 +313,15 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: context.colors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -330,21 +331,21 @@ class _StatCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.lavender,
+                  color: context.colors.lavender,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 16, color: AppColors.primary),
+                child: Icon(icon, size: 16, color: context.colors.primary),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textMedium,
+                    color: context.colors.textMedium,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -352,35 +353,35 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
+          Spacer(),
           Text(
             primaryValue,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
               height: 1.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textLight,
+              color: context.colors.textLight,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           if (tertiaryText != null) ...[
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               tertiaryText!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.red,
+                color: context.colors.red,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,

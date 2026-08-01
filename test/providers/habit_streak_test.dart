@@ -9,7 +9,7 @@ import 'package:trufit_bodamma/models/habit.dart';
 // Fake repositories for testing without Hive
 class FakeHabitRepository extends HabitRepository {
   final Map<String, HabitCompletion> completions = {};
-  List<Habit> _habits = [
+  final List<Habit> _habits = [
     Habit.defaults.firstWhere((h) => h.id == 'water')
   ];
 

@@ -20,11 +20,11 @@ class AsyncErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.red.withValues(alpha: 0.05),
+        color: context.colors.red.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.red.withValues(alpha: 0.2)),
+        border: Border.all(color: context.colors.red.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,40 +32,40 @@ class AsyncErrorCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.red, size: 20),
-              const SizedBox(width: 8),
+              Icon(icon, color: context.colors.red, size: 20),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.red,
+                    color: context.colors.red,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
               height: 1.4,
             ),
           ),
           if (onRetry != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
+                icon: Icon(Icons.refresh_rounded, size: 16),
                 label: Text(actionText ?? 'Retry'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  foregroundColor: context.colors.red,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

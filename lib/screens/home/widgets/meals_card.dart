@@ -53,20 +53,24 @@ class MealsCard extends ConsumerWidget {
     final progress = (completedCal / totalCal).clamp(0.0, 1.0);
     final isOverTarget = completedCal > totalCal;
 
-    return GestureDetector(
-      onTap: () => context.go('/home/meals'),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(20),
+    return Semantics(
+      label: 'Meals Card. $completedMeals of $totalMeals meals logged. $completedCal of $totalCal calories consumed.',
+      button: true,
+      onTapHint: 'Open meals',
+      child: GestureDetector(
+        onTap: () => context.go('/home/meals'),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.textLight.withValues(alpha: 0.1),
+              color: context.colors.textLight.withValues(alpha: 0.1),
               blurRadius: 16,
-              offset: const Offset(0, 6),
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -84,22 +88,22 @@ class MealsCard extends ConsumerWidget {
                 ),
                 Text(
                   emojiDisplay,
-                  style: const TextStyle(fontSize: 22),
+                  style: TextStyle(fontSize: 22),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             // Progress bar
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: AppColors.lavender,
-                valueColor: AlwaysStoppedAnimation<Color>(isOverTarget ? AppColors.orange : AppColors.green),
+                backgroundColor: context.colors.lavender,
+                valueColor: AlwaysStoppedAnimation<Color>(isOverTarget ? context.colors.orange : context.colors.green),
                 minHeight: 6,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -111,39 +115,40 @@ class MealsCard extends ConsumerWidget {
                       '$completedMeals/$totalMeals meals  |  $completedCal/$totalCal Kcal',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textMedium,
+                            color: context.colors.textMedium,
                           ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Row(
                       children: [
-                        _MacroPill(label: 'P', value: '${dailyLog.totalProtein.toStringAsFixed(0)}g', color: AppColors.green),
-                        const SizedBox(width: 6),
-                        _MacroPill(label: 'C', value: '${dailyLog.totalCarbs.toStringAsFixed(0)}g', color: AppColors.orange),
-                        const SizedBox(width: 6),
-                        _MacroPill(label: 'F', value: '${dailyLog.totalFat.toStringAsFixed(0)}g', color: AppColors.primary),
+                        _MacroPill(label: 'P', value: '${dailyLog.totalProtein.toStringAsFixed(0)}g', color: context.colors.green),
+                        SizedBox(width: 6),
+                        _MacroPill(label: 'C', value: '${dailyLog.totalCarbs.toStringAsFixed(0)}g', color: context.colors.orange),
+                        SizedBox(width: 6),
+                        _MacroPill(label: 'F', value: '${dailyLog.totalFat.toStringAsFixed(0)}g', color: context.colors.primary),
                       ],
                     ),
                   ],
                 ),
                 if (!isFuture)
-                  GestureDetector(
-                    onTap: () {
-                       context.go('/home/meals');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  ExcludeSemantics(
+                    child: GestureDetector(
+                      onTap: () {
+                         context.go('/home/meals');
+                      },
+                      child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
+                        color: context.colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.add_circle_outline_rounded,
                             size: 14,
-                            color: AppColors.primary,
+                            color: context.colors.primary,
                           ),
                           SizedBox(width: 4),
                           Text(
@@ -151,17 +156,19 @@ class MealsCard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: context.colors.primary,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
+                  ),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -176,7 +183,7 @@ class _MacroPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),

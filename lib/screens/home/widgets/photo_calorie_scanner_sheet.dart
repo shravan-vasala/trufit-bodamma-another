@@ -151,28 +151,28 @@ class _PhotoCalorieScannerSheetState
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Item'),
+        title: Text('Edit Item'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-              TextField(controller: portionCtrl, decoration: const InputDecoration(labelText: 'Portion')),
-              TextField(controller: calsCtrl, decoration: const InputDecoration(labelText: 'Calories'), keyboardType: TextInputType.number),
+              TextField(controller: nameCtrl, decoration: InputDecoration(labelText: 'Name')),
+              TextField(controller: portionCtrl, decoration: InputDecoration(labelText: 'Portion')),
+              TextField(controller: calsCtrl, decoration: InputDecoration(labelText: 'Calories'), keyboardType: TextInputType.number),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: pCtrl, decoration: const InputDecoration(labelText: 'Protein (g)'), keyboardType: TextInputType.number)),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: cCtrl, decoration: const InputDecoration(labelText: 'Carbs (g)'), keyboardType: TextInputType.number)),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: fCtrl, decoration: const InputDecoration(labelText: 'Fat (g)'), keyboardType: TextInputType.number)),
+                  Expanded(child: TextField(controller: pCtrl, decoration: InputDecoration(labelText: 'Protein (g)'), keyboardType: TextInputType.number)),
+                  SizedBox(width: 8),
+                  Expanded(child: TextField(controller: cCtrl, decoration: InputDecoration(labelText: 'Carbs (g)'), keyboardType: TextInputType.number)),
+                  SizedBox(width: 8),
+                  Expanded(child: TextField(controller: fCtrl, decoration: InputDecoration(labelText: 'Fat (g)'), keyboardType: TextInputType.number)),
                 ],
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               setState(() {
@@ -188,7 +188,7 @@ class _PhotoCalorieScannerSheetState
               });
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -244,7 +244,7 @@ class _PhotoCalorieScannerSheetState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Logged $_totalCalories Kcal for ${widget.slotDisplayName}! 🥗'),
-          backgroundColor: AppColors.green,
+          backgroundColor: context.colors.green,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -254,17 +254,17 @@ class _PhotoCalorieScannerSheetState
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: context.colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      padding: EdgeInsets.fromLTRB(24, 16, 24, 24),
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_isOffline && !_analysisComplete)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 12.0),
               child: OfflineBanner(),
             ),
@@ -272,60 +272,60 @@ class _PhotoCalorieScannerSheetState
             child: Container(
               width: 40,
               height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: context.colors.border, borderRadius: BorderRadius.circular(2)),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.center_focus_strong_rounded, color: AppColors.primary, size: 24),
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(color: context.colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.center_focus_strong_rounded, color: context.colors.primary, size: 24),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Log ${widget.slotDisplayName}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-                    const Text('Snap a food picture to count calories & macros', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                    Text('Log ${widget.slotDisplayName}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.colors.textDark)),
+                    Text('Snap a food picture to count calories & macros', style: TextStyle(fontSize: 12, color: context.colors.textMedium)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           if (_selectedImage == null && !widget.isManualEntry) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+              padding: EdgeInsets.symmetric(vertical: 36, horizontal: 20),
               decoration: BoxDecoration(
-                color: AppColors.lavender,
+                color: context.colors.lavender,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                border: Border.all(color: context.colors.primary.withValues(alpha: 0.2)),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.camera_alt_rounded, size: 48, color: AppColors.primary),
-                  const SizedBox(height: 12),
-                  const Text('Upload or Take a Food Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                  const SizedBox(height: 20),
+                  Icon(Icons.camera_alt_rounded, size: 48, color: context.colors.primary),
+                  SizedBox(height: 12),
+                  Text('Upload or Take a Food Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.colors.textDark)),
+                  SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton.icon(
                         onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.camera_rounded, size: 18),
-                        label: const Text('Camera'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                        icon: Icon(Icons.camera_rounded, size: 18),
+                        label: Text('Camera'),
+                        style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_rounded, size: 18),
-                        label: const Text('Gallery'),
+                        icon: Icon(Icons.photo_library_rounded, size: 18),
+                        label: Text('Gallery'),
                       ),
                     ],
                   ),
@@ -339,7 +339,7 @@ class _PhotoCalorieScannerSheetState
               onRetry: () => _pickImage(ImageSource.gallery), // Give them a chance to try again easily
               actionText: 'Try Another Photo',
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -347,7 +347,7 @@ class _PhotoCalorieScannerSheetState
                   _analysisComplete = true;
                 });
               },
-              child: const Text('Enter Manually'),
+              child: Text('Enter Manually'),
             ),
           ] else if (_selectedImage != null) ...[
             ClipRRect(
@@ -361,13 +361,13 @@ class _PhotoCalorieScannerSheetState
                     Container(
                       height: 160,
                       color: Colors.black.withValues(alpha: 0.65),
-                      child: const Center(
+                      child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(color: AppColors.white, strokeWidth: 3),
+                            CircularProgressIndicator(color: context.colors.white, strokeWidth: 3),
                             SizedBox(height: 16),
-                            Text('AI Analyzing Food Picture...', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w700)),
+                            Text('AI Analyzing Food Picture...', style: TextStyle(color: context.colors.white, fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
@@ -380,9 +380,9 @@ class _PhotoCalorieScannerSheetState
                         _analysisComplete = false;
                       }),
                       child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: const Icon(Icons.close_rounded, color: AppColors.white, size: 20),
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                        child: Icon(Icons.close_rounded, color: context.colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -392,77 +392,77 @@ class _PhotoCalorieScannerSheetState
           ],
           
           if (_analysisComplete) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (_confidence == 'low')
               Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Row(
+                margin: EdgeInsets.only(bottom: 12),
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(color: context.colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: AppColors.orange, size: 20),
+                    Icon(Icons.warning_amber_rounded, color: context.colors.orange, size: 20),
                     SizedBox(width: 8),
-                    Expanded(child: Text('Low confidence estimate — please check portions.', style: TextStyle(color: AppColors.orange, fontSize: 13, fontWeight: FontWeight.w600))),
+                    Expanded(child: Text('Low confidence estimate — please check portions.', style: TextStyle(color: context.colors.orange, fontSize: 13, fontWeight: FontWeight.w600))),
                   ],
                 ),
               ),
             Expanded(
               child: ListView.separated(
-                physics: const BouncingScrollPhysics(),
+                physics: BouncingScrollPhysics(),
                 itemCount: _items.length,
-                separatorBuilder: (_, index) => const SizedBox(height: 8),
+                separatorBuilder: (_, index) => SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: context.colors.background, borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              Text('${item.portion} • ${item.calories} Kcal', style: const TextStyle(fontSize: 13, color: AppColors.textMedium)),
-                              Text('P: ${item.proteinG}g  C: ${item.carbsG}g  F: ${item.fatG}g', style: const TextStyle(fontSize: 11, color: AppColors.textMedium)),
+                              Text(item.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text('${item.portion} • ${item.calories} Kcal', style: TextStyle(fontSize: 13, color: context.colors.textMedium)),
+                              Text('P: ${item.proteinG}g  C: ${item.carbsG}g  F: ${item.fatG}g', style: TextStyle(fontSize: 11, color: context.colors.textMedium)),
                             ],
                           ),
                         ),
-                        IconButton(icon: const Icon(Icons.edit_rounded, size: 20, color: AppColors.primary), onPressed: () => _editItem(index)),
-                        IconButton(icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.red), onPressed: () => _removeItem(index)),
+                        IconButton(icon: Icon(Icons.edit_rounded, size: 20, color: context.colors.primary), onPressed: () => _editItem(index)),
+                        IconButton(icon: Icon(Icons.delete_outline_rounded, size: 20, color: context.colors.red), onPressed: () => _removeItem(index)),
                       ],
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: AppColors.lavender, borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: context.colors.lavender, borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       children: [
-                        const Text('TOTAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                        Text('$_totalCalories Kcal', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                        Text('TOTAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.colors.primary)),
+                        Text('$_totalCalories Kcal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark)),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                TextButton.icon(onPressed: _addItem, icon: const Icon(Icons.add), label: const Text('Add Item')),
+                SizedBox(width: 8),
+                TextButton.icon(onPressed: _addItem, icon: Icon(Icons.add), label: Text('Add Item')),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
                 onPressed: _saveMeal,
-                icon: const Icon(Icons.check_circle_rounded, color: AppColors.white),
-                label: const Text('Save Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white)),
+                icon: Icon(Icons.check_circle_rounded, color: context.colors.white),
+                label: Text('Save Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.colors.white)),
               ),
             ),
           ],

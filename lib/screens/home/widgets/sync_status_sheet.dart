@@ -26,11 +26,11 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,25 +40,25 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Row(
               children: [
                 Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.15),
+                    color: context.colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.sync_rounded, color: AppColors.green, size: 22),
+                  child: Icon(Icons.sync_rounded, color: context.colors.green, size: 22),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -67,7 +67,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                       ),
                       Text(
@@ -75,7 +75,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textMedium,
+                          color: context.colors.textMedium,
                         ),
                       ),
                     ],
@@ -83,33 +83,33 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Center(
               child: Column(
                 children: [
                   Text(
                     '$steps',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                       height: 1.0,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Steps Today',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textMedium,
+                      color: context.colors.textMedium,
                     ),
                   ),
                 ],
               ),
             ),
             if (_errorMessage != null) ...[
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               AsyncErrorCard(
                 title: 'Sync Failed',
                 message: _errorMessage!,
@@ -126,7 +126,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                 } : null,
               ),
             ],
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -168,22 +168,22 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: context.colors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Refresh Now',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.white,
+                    color: context.colors.white,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -194,7 +194,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (_) => const StepsEntryDialog(),
+                    builder: (_) => StepsEntryDialog(),
                   );
                 },
                 style: TextButton.styleFrom(
@@ -202,17 +202,17 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Log Manually Instead',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),

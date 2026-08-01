@@ -2,10 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'app_providers.dart';
 import '../models/daily_log.dart';
-import '../models/daily_meal_log.dart';
 import '../models/habit.dart';
-import '../repositories/habit_repository.dart';
-import '../repositories/workout_repository.dart';
 
 class WeeklySummary {
   final int workoutsCompleted;
@@ -69,7 +66,7 @@ final weeklySummaryProvider = Provider<WeeklySummary>((ref) {
   // Find Monday (1) and Sunday (7)
   final weekday = selectedDate.weekday;
   final startOfWeek = selectedDate.subtract(Duration(days: weekday - 1));
-  final endOfWeek = startOfWeek.add(const Duration(days: 6));
+  final endOfWeek = startOfWeek.add(Duration(days: 6));
   
   final startStr = DateFormat('yyyy-MM-dd').format(startOfWeek);
   final endStr = DateFormat('yyyy-MM-dd').format(endOfWeek);

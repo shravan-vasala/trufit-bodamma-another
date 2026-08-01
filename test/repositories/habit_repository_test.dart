@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trufit_bodamma/repositories/habit_repository.dart';
-import 'package:trufit_bodamma/models/habit.dart';
 import '../helpers/test_hive_setup.dart';
 
 void main() {

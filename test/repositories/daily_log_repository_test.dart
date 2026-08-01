@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trufit_bodamma/repositories/daily_log_repository.dart';
-import 'package:trufit_bodamma/models/daily_log.dart';
 import '../helpers/test_hive_setup.dart';
 
 void main() {

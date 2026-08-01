@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/habit.dart';
@@ -40,14 +39,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.white,
-        title: const Text("What's your name?", style: TextStyle(color: AppColors.textDark)),
+        backgroundColor: context.colors.white,
+        title: Text("What's your name?", style: TextStyle(color: context.colors.textDark)),
         content: TextField(
           controller: controller,
-          style: const TextStyle(color: AppColors.textDark),
-          decoration: const InputDecoration(
+          style: TextStyle(color: context.colors.textDark),
+          decoration: InputDecoration(
             hintText: 'Enter your name',
-            hintStyle: TextStyle(color: AppColors.textLight),
+            hintStyle: TextStyle(color: context.colors.textLight),
             border: OutlineInputBorder(),
           ),
           autofocus: true,
@@ -55,7 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
             onPressed: () {
               final name = controller.text.trim();
               if (name.isNotEmpty) {
@@ -64,7 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 Navigator.of(context).pop();
               }
             },
-            child: const Text('Save', style: TextStyle(color: AppColors.white)),
+            child: Text('Save', style: TextStyle(color: context.colors.white)),
           ),
         ],
       ),
@@ -115,19 +114,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   Widget _buildSectionHeader(String title, {IconData? icon}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, color: AppColors.primary, size: 18),
-            const SizedBox(width: 6),
+            Icon(icon, color: context.colors.primary, size: 18),
+            SizedBox(width: 6),
           ],
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               letterSpacing: 1.2,
               fontWeight: FontWeight.w800,
-              color: AppColors.primary,
+              color: context.colors.primary,
               fontSize: 13,
             ),
           ),
@@ -141,47 +140,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final plan = ref.watch(workoutPlanProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.primary,
+          color: context.colors.primary,
           onRefresh: () => _syncSteps(isManualRefresh: true),
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 
                 // Coach Notes
-                const CoachNotesCard(),
+                CoachNotesCard(),
 
                 // Week Calendar Strip (Wrapped in card inside widget now)
-                const WeekCalendarStrip(),
+                WeekCalendarStrip(),
                   
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 // Today's Workouts
                 if (plan != null && plan.days.isNotEmpty) ...[
                   _WorkoutsSection(plan: plan),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                 ],
 
                 // Meals Section
                 _buildSectionHeader('MEALS'),
-                const MealsCard(),
-                const SizedBox(height: 24),
+                MealsCard(),
+                SizedBox(height: 24),
 
                 // Habits Section
-                const _HabitsSectionHeader(),
-                const HabitsCard(),
-                const SizedBox(height: 24),
+                _HabitsSectionHeader(),
+                HabitsCard(),
+                SizedBox(height: 24),
 
                 // Daily Progress Section
                 _buildSectionHeader('DAILY PROGRESS', icon: Icons.show_chart_rounded),
-                const SizedBox(height: 12),
-                const DailyProgressGrid(),
-                const SizedBox(height: 40),
+                SizedBox(height: 12),
+                DailyProgressGrid(),
+                SizedBox(height: 40),
               ],
             ),
           ),
@@ -202,24 +201,24 @@ class _HabitsSectionHeader extends ConsumerWidget {
     final completedCount = habits.where((h) => isHabitCompleted(h, completions, dailyLog)).length;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             'HABITS ($completedCount/${habits.length})',
-            style: const TextStyle(
+            style: TextStyle(
               letterSpacing: 1.2,
               fontWeight: FontWeight.w800,
-              color: AppColors.primary,
+              color: context.colors.primary,
               fontSize: 13,
             ),
           ),
           GestureDetector(
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageHabitsScreen()));
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => ManageHabitsScreen()));
             },
-            child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 18),
+            child: Icon(Icons.edit_rounded, color: context.colors.primary, size: 18),
           ),
         ],
       ),
@@ -236,7 +235,7 @@ class _WorkoutsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final workoutPlan = ref.watch(workoutPlanProvider);
     final phaseProgress = ref.watch(phaseProgressProvider);
-    if (workoutPlan == null || workoutPlan.days.isEmpty) return const SizedBox();
+    if (workoutPlan == null || workoutPlan.days.isEmpty) return SizedBox();
 
     final dateStr = ref.watch(dateStringProvider);
     final weekday = DateTime.parse(dateStr).weekday;
@@ -289,7 +288,7 @@ class _WorkoutsSection extends ConsumerWidget {
         String subtitle = (i == 0) ? 'Complete your scheduled workout' : '${sec.exercises.length} exercises';
         
         cards.add(Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: EdgeInsets.only(top: 8),
           child: _buildCard(
             context,
             title: title,
@@ -309,16 +308,16 @@ class _WorkoutsSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'WORKOUTS ($completedCount/$total)',
-                style: const TextStyle(
+                style: TextStyle(
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: context.colors.primary,
                   fontSize: 13,
                 ),
               ),
@@ -327,21 +326,21 @@ class _WorkoutsSection extends ConsumerWidget {
                   children: [
                     Text(
                       'Week ${phaseProgress.currentWeek} of ${phaseProgress.totalWeeks}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         value: (phaseProgress.currentWeek - 1) / phaseProgress.totalWeeks,
                         strokeWidth: 2,
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                        color: AppColors.primary,
+                        backgroundColor: context.colors.primary.withValues(alpha: 0.2),
+                        color: context.colors.primary,
                       ),
                     ),
                   ],
@@ -350,7 +349,7 @@ class _WorkoutsSection extends ConsumerWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 20),
           child: Column(children: cards),
         ),
       ],
@@ -369,16 +368,16 @@ class _WorkoutsSection extends ConsumerWidget {
       onTap: isFuture ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: isCompleted ? Border.all(color: AppColors.green.withValues(alpha: 0.3), width: 1.5) : null,
+          border: isCompleted ? Border.all(color: context.colors.green.withValues(alpha: 0.3), width: 1.5) : null,
           boxShadow: [
             BoxShadow(
-              color: AppColors.textLight.withValues(alpha: 0.1),
+              color: context.colors.textLight.withValues(alpha: 0.1),
               blurRadius: 16,
-              offset: const Offset(0, 6),
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -390,17 +389,17 @@ class _WorkoutsSection extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
+                    style: TextStyle(
+                      color: context.colors.textDark,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppColors.textMedium,
+                    style: TextStyle(
+                      color: context.colors.textMedium,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -408,20 +407,20 @@ class _WorkoutsSection extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             if (isCompleted)
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppColors.green.withValues(alpha: 0.1),
+                  color: context.colors.green.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded, color: AppColors.green, size: 20),
+                child: Icon(Icons.check_rounded, color: context.colors.green, size: 20),
               )
             else if (isRest)
-              const Icon(Icons.self_improvement_rounded, color: AppColors.textLight, size: 26)
+              Icon(Icons.self_improvement_rounded, color: context.colors.textLight, size: 26)
             else
-              const Icon(Icons.fitness_center_outlined, color: AppColors.textDark, size: 26),
+              Icon(Icons.fitness_center_outlined, color: context.colors.textDark, size: 26),
           ],
         ),
       ),

@@ -50,8 +50,8 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
 
   Future<void> _pickTime(bool isBedtime) async {
     final initialTime = isBedtime 
-        ? (_bedtime ?? const TimeOfDay(hour: 22, minute: 0)) 
-        : (_waketime ?? const TimeOfDay(hour: 6, minute: 0));
+        ? (_bedtime ?? TimeOfDay(hour: 22, minute: 0)) 
+        : (_waketime ?? TimeOfDay(hour: 6, minute: 0));
         
     final time = await showTimePicker(
       context: context,
@@ -83,11 +83,11 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,21 +97,21 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Log Sleep',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.colors.textDark,
                   ),
                 ),
                 if (_hasExistingEntry)
@@ -121,29 +121,29 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                       Navigator.of(context).pop();
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.pink,
+                      foregroundColor: context.colors.pink,
                       padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 0),
+                      minimumSize: Size(0, 0),
                     ),
-                    child: const Text('Clear entry'),
+                    child: Text('Clear entry'),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Enter your sleep for $dateFormatted',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             
             // Mode 1: Hours field
             TextField(
               controller: _controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: AppColors.primary,
+                color: context.colors.primary,
               ),
               textAlign: TextAlign.center,
               enabled: !isFuture,
@@ -152,28 +152,28 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                 hintStyle: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textLight.withValues(alpha: 0.5),
+                  color: context.colors.textLight.withValues(alpha: 0.5),
                 ),
                 suffixText: 'hrs',
-                suffixStyle: const TextStyle(
+                suffixStyle: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textMedium,
+                  color: context.colors.textMedium,
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             
             // Mode 2: Time Pickers
-            const Text(
+            Text(
               'Or calculate from times:',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMedium,
+                color: context.colors.textMedium,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -183,7 +183,7 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                     onTap: isFuture ? null : () => _pickTime(true),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: _TimePickerCard(
                     title: 'Wake up',
@@ -193,21 +193,21 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             
             SizedBox(
               width: double.infinity,
               height: 52,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: isFuture ? null : AppColors.primaryGradient,
-                  color: isFuture ? AppColors.divider : null,
+                  gradient: isFuture ? null : context.colors.primaryGradient,
+                  color: isFuture ? context.colors.divider : null,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: isFuture ? null : [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: context.colors.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -219,7 +219,7 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                       Navigator.of(context).pop();
                     } else if (sleepHours != null && sleepHours > 16) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a value between 0 and 16 hours')),
+                        SnackBar(content: Text('Please enter a value between 0 and 16 hours')),
                       );
                     }
                   },
@@ -232,13 +232,13 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: isFuture ? AppColors.textLight : AppColors.white,
+                      color: isFuture ? context.colors.textLight : context.colors.white,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -262,30 +262,30 @@ class _TimePickerCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textMedium,
+                color: context.colors.textMedium,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               time != null ? time!.format(context) : '--:--',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: time != null ? AppColors.textDark : AppColors.textLight,
+                color: time != null ? context.colors.textDark : context.colors.textLight,
               ),
             ),
           ],

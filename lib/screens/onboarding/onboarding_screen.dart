@@ -6,12 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
-import '../../models/user_profile.dart';
 import '../../models/habit.dart';
-import '../../repositories/habit_repository.dart';
-import '../../services/health_connect_service.dart';
 
-const String kOnboardingCompletedKey = 'onboarding_completed';
+String kOnboardingCompletedKey = 'onboarding_completed';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -65,7 +62,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         _saveGoals();
       }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
+        duration: Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     } else {
@@ -76,7 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _goBack() {
     if (_currentPage > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 350),
+        duration: Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     }
@@ -86,9 +83,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Please enter your name'),
-          backgroundColor: AppColors.red,
+          backgroundColor: context.colors.red,
         ),
       );
       return false;
@@ -164,7 +161,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -174,7 +171,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
+                physics: NeverScrollableScrollPhysics(),
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 children: [
                   _WelcomePage(),
@@ -243,18 +240,18 @@ class _ProgressDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: EdgeInsets.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           total,
           (i) => AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            duration: Duration(milliseconds: 250),
+            margin: EdgeInsets.symmetric(horizontal: 4),
             width: i == current ? 24 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: i == current ? AppColors.primary : AppColors.border,
+              color: i == current ? context.colors.primary : context.colors.border,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -287,25 +284,25 @@ class _NavButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      padding: EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Row(
         children: [
           if (currentPage > 0)
             TextButton(
               onPressed: onBack,
-              child: const Text('Back',
-                  style: TextStyle(color: AppColors.textMedium)),
+              child: Text('Back',
+                  style: TextStyle(color: context.colors.textMedium)),
             )
           else
-            const SizedBox(width: 64),
-          const Spacer(),
+            SizedBox(width: 64),
+          Spacer(),
           if (_isOptionalPage && !_isLastPage)
             TextButton(
               onPressed: onSkip,
               child: Text('Skip',
-                  style: TextStyle(color: AppColors.primary.withValues(alpha: 0.7))),
+                  style: TextStyle(color: context.colors.primary.withValues(alpha: 0.7))),
             ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           _PrimaryButton(
             label: _isLastPage ? 'Get Started 🚀' : 'Next',
             onPressed: onNext,
@@ -326,13 +323,13 @@ class _PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: context.colors.primaryGradient,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: context.colors.primary.withValues(alpha: 0.3),
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -340,15 +337,15 @@ class _PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         onPressed: onPressed,
         child: Text(
           label,
-          style: const TextStyle(
-            color: AppColors.white,
+          style: TextStyle(
+            color: context.colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 15,
           ),
@@ -364,49 +361,49 @@ class _WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         children: [
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
           // Logo
           Container(
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradientVertical,
+              gradient: context.colors.primaryGradientVertical,
               borderRadius: BorderRadius.circular(36),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
+                  color: context.colors.primary.withValues(alpha: 0.35),
                   blurRadius: 30,
-                  offset: const Offset(0, 12),
+                  offset: Offset(0, 12),
                 ),
               ],
             ),
-            child: const Center(
+            child: Center(
               child: Text('💪', style: TextStyle(fontSize: 52)),
             ),
           ),
-          const SizedBox(height: 32),
-          const Text(
+          SizedBox(height: 32),
+          Text(
             'TruFit Bodamma',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Your private fitness companion',
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.textMedium,
+              color: context.colors.textMedium,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 48),
+          SizedBox(height: 48),
           ...[
             _FeaturePill(
               emoji: '🔒',
@@ -424,7 +421,7 @@ class _WelcomePage extends StatelessWidget {
               subtitle: 'Export & restore any time with one tap',
             ),
           ],
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -445,16 +442,16 @@ class _FeaturePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
+            color: context.colors.primary.withValues(alpha: 0.06),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -464,30 +461,30 @@ class _FeaturePill extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.lavender,
+              color: context.colors.lavender,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+            child: Center(child: Text(emoji, style: TextStyle(fontSize: 22))),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: context.colors.textDark,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textMedium,
+                    color: context.colors.textMedium,
                   ),
                 ),
               ],
@@ -519,20 +516,20 @@ class _ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _StepHeader(emoji: '👤', title: "Let's set up\nyour profile"),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _FieldLabel('Your Name *'),
           _InputField(
             controller: nameController,
             hint: 'e.g. Santhosh',
             capitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Row(
             children: [
               Expanded(
@@ -549,7 +546,7 @@ class _ProfilePage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,16 +563,16 @@ class _ProfilePage extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _FieldLabel('Weight Unit'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.06),
+                  color: context.colors.primary.withValues(alpha: 0.06),
                   blurRadius: 8,
                 ),
               ],
@@ -587,7 +584,7 @@ class _ProfilePage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -607,10 +604,10 @@ class _UnitTab extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          duration: Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? AppColors.primary : Colors.transparent,
+            color: selected ? context.colors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Center(
@@ -618,7 +615,7 @@ class _UnitTab extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: selected ? AppColors.white : AppColors.textMedium,
+                color: selected ? context.colors.white : context.colors.textMedium,
               ),
             ),
           ),
@@ -646,39 +643,39 @@ class _GoalsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _StepHeader(emoji: '🎯', title: 'Set your\ndaily goals'),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _SectionCard(
             children: [
               Row(
                 children: [
-                  const Text('🔥', style: TextStyle(fontSize: 20)),
-                  const SizedBox(width: 10),
-                  const Text(
+                  Text('🔥', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 10),
+                  Text(
                     'Daily Calorie Target',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                     ),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.lavender,
+                      color: context.colors.lavender,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${targetCalories.round()} kcal',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         fontSize: 15,
                       ),
                     ),
@@ -687,10 +684,10 @@ class _GoalsPage extends StatelessWidget {
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: AppColors.primary,
-                  thumbColor: AppColors.primary,
-                  inactiveTrackColor: AppColors.border,
-                  overlayColor: AppColors.primary.withValues(alpha: 0.1),
+                  activeTrackColor: context.colors.primary,
+                  thumbColor: context.colors.primary,
+                  inactiveTrackColor: context.colors.border,
+                  overlayColor: context.colors.primary.withValues(alpha: 0.1),
                   trackHeight: 4,
                 ),
                 child: Slider(
@@ -704,65 +701,65 @@ class _GoalsPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('1200', style: TextStyle(fontSize: 11, color: AppColors.textLight)),
-                  Text('2500', style: TextStyle(fontSize: 11, color: AppColors.textLight)),
+                  Text('1200', style: TextStyle(fontSize: 11, color: context.colors.textLight)),
+                  Text('2500', style: TextStyle(fontSize: 11, color: context.colors.textLight)),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Text(
+          SizedBox(height: 20),
+          Text(
             'Default Habits',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Pick habits to track daily',
-            style: TextStyle(fontSize: 13, color: AppColors.textMedium),
+            style: TextStyle(fontSize: 13, color: context.colors.textMedium),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ...Habit.defaults.map((habit) {
             final selected = selectedHabitIds.contains(habit.id);
             return GestureDetector(
               onTap: () => onHabitToggled(habit.id, !selected),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                duration: Duration(milliseconds: 200),
+                margin: EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.lavender : AppColors.white,
+                  color: selected ? context.colors.lavender : context.colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: selected ? AppColors.primary : AppColors.border,
+                    color: selected ? context.colors.primary : context.colors.border,
                     width: selected ? 1.5 : 1,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Text(habit.icon, style: const TextStyle(fontSize: 22)),
-                    const SizedBox(width: 12),
+                    Text(habit.icon, style: TextStyle(fontSize: 22)),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         habit.name,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: selected ? AppColors.primary : AppColors.textDark,
+                          color: selected ? context.colors.primary : context.colors.textDark,
                         ),
                       ),
                     ),
                     if (selected)
-                      const Icon(Icons.check_circle_rounded,
-                          color: AppColors.primary, size: 20),
+                      Icon(Icons.check_circle_rounded,
+                          color: context.colors.primary, size: 20),
                   ],
                 ),
               ),
             );
           }),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -787,18 +784,18 @@ class _HealthConnectPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _StepHeader(emoji: '❤️', title: 'Sync health\ndata (optional)'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Connect to Health Connect to automatically sync your daily steps and sleep hours from Samsung Health or other health apps.',
-            style: TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
+            style: TextStyle(fontSize: 14, color: context.colors.textMedium, height: 1.5),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           _SectionCard(
             children: [
               Row(
@@ -807,42 +804,42 @@ class _HealthConnectPage extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.mint,
+                      color: context.colors.mint,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(child: Text('🚶', style: TextStyle(fontSize: 22))),
+                    child: Center(child: Text('🚶', style: TextStyle(fontSize: 22))),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
+                  SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Daily Steps', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                        Text('Auto-synced from Samsung Health', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                        Text('Daily Steps', style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textDark)),
+                        Text('Auto-synced from Samsung Health', style: TextStyle(fontSize: 12, color: context.colors.textMedium)),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.lavenderCard,
+                      color: context.colors.lavenderCard,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(child: Text('😴', style: TextStyle(fontSize: 22))),
+                    child: Center(child: Text('😴', style: TextStyle(fontSize: 22))),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
+                  SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sleep Hours', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                        Text('Auto-synced from Health Connect', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                        Text('Sleep Hours', style: TextStyle(fontWeight: FontWeight.w700, color: context.colors.textDark)),
+                        Text('Auto-synced from Health Connect', style: TextStyle(fontSize: 12, color: context.colors.textMedium)),
                       ],
                     ),
                   ),
@@ -850,28 +847,28 @@ class _HealthConnectPage extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           if (status.isNotEmpty)
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: connected ? AppColors.greenLight : AppColors.lavender,
+                color: connected ? context.colors.greenLight : context.colors.lavender,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
                 children: [
                   Icon(
                     connected ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                    color: connected ? AppColors.green : AppColors.primary,
+                    color: connected ? context.colors.green : context.colors.primary,
                     size: 18,
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       status,
                       style: TextStyle(
                         fontSize: 13,
-                        color: connected ? AppColors.green : AppColors.primary,
+                        color: connected ? context.colors.green : context.colors.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -879,19 +876,19 @@ class _HealthConnectPage extends StatelessWidget {
                 ],
               ),
             ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           if (!connected)
             SizedBox(
               width: double.infinity,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: context.colors.primaryGradient,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: context.colors.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -899,24 +896,24 @@ class _HealthConnectPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: connecting ? null : onConnect,
                   icon: connecting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                            color: AppColors.white,
+                            color: context.colors.white,
                             strokeWidth: 2,
                           ),
                         )
-                      : const Icon(Icons.link_rounded, color: AppColors.white),
+                      : Icon(Icons.link_rounded, color: context.colors.white),
                   label: Text(
                     connecting ? 'Connecting...' : 'Connect Health Connect',
-                    style: const TextStyle(
-                      color: AppColors.white,
+                    style: TextStyle(
+                      color: context.colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -924,7 +921,7 @@ class _HealthConnectPage extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -951,87 +948,87 @@ class _AiSetupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _StepHeader(emoji: '🤖', title: 'AI-powered\nfeatures (optional)'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Add a free Gemini API key to unlock AI meal scanning from photos and personalized daily coach notes.',
-            style: TextStyle(fontSize: 14, color: AppColors.textMedium, height: 1.5),
+            style: TextStyle(fontSize: 14, color: context.colors.textMedium, height: 1.5),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _SectionCard(
             children: [
               Row(children: [
                 Container(
                   width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.pink, borderRadius: BorderRadius.circular(12)),
-                  child: const Center(child: Text('📸', style: TextStyle(fontSize: 18))),
+                  decoration: BoxDecoration(color: context.colors.pink, borderRadius: BorderRadius.circular(12)),
+                  child: Center(child: Text('📸', style: TextStyle(fontSize: 18))),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(child: Column(
+                SizedBox(width: 12),
+                Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Meal Photo Scanning', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textDark)),
-                    Text('AI estimates calories from photos', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                    Text('Meal Photo Scanning', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: context.colors.textDark)),
+                    Text('AI estimates calories from photos', style: TextStyle(fontSize: 12, color: context.colors.textMedium)),
                   ],
                 )),
               ]),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(children: [
                 Container(
                   width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.lavenderCard, borderRadius: BorderRadius.circular(12)),
-                  child: const Center(child: Text('🧠', style: TextStyle(fontSize: 18))),
+                  decoration: BoxDecoration(color: context.colors.lavenderCard, borderRadius: BorderRadius.circular(12)),
+                  child: Center(child: Text('🧠', style: TextStyle(fontSize: 18))),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(child: Column(
+                SizedBox(width: 12),
+                Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Daily Coach Notes', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textDark)),
-                    Text('Personalized encouragement every day', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                    Text('Daily Coach Notes', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: context.colors.textDark)),
+                    Text('Personalized encouragement every day', style: TextStyle(fontSize: 12, color: context.colors.textMedium)),
                   ],
                 )),
               ]),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _FieldLabel('Gemini API Key'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: controller,
             obscureText: obscure,
-            style: const TextStyle(color: AppColors.textDark, fontSize: 14),
+            style: TextStyle(color: context.colors.textDark, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Paste your API key here...',
-              hintStyle: TextStyle(color: AppColors.textLight),
+              hintStyle: TextStyle(color: context.colors.textLight),
               filled: true,
-              fillColor: AppColors.white,
+              fillColor: context.colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: context.colors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                borderSide: BorderSide(color: context.colors.primary, width: 1.5),
               ),
               suffixIcon: IconButton(
                 icon: Icon(
                   obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                 ),
                 onPressed: onToggleObscure,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               GestureDetector(
@@ -1040,47 +1037,47 @@ class _AiSetupPage extends StatelessWidget {
                   'Get a free key from Google AI Studio →',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                     decoration: TextDecoration.underline,
-                    decorationColor: AppColors.primary,
+                    decorationColor: context.colors.primary,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           if (!keySaved)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  foregroundColor: context.colors.primary,
+                  side: BorderSide(color: context.colors.primary),
+                  padding: EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.save_outlined),
-                label: const Text('Save API Key', style: TextStyle(fontWeight: FontWeight.w700)),
+                icon: Icon(Icons.save_outlined),
+                label: Text('Save API Key', style: TextStyle(fontWeight: FontWeight.w700)),
                 onPressed: onSaveKey,
               ),
             )
           else
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.greenLight,
+                color: context.colors.greenLight,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: AppColors.green, size: 18),
+                  Icon(Icons.check_circle_rounded, color: context.colors.green, size: 18),
                   SizedBox(width: 10),
                   Text('API key saved securely 🔒',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.green)),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.green)),
                 ],
               ),
             ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -1100,14 +1097,14 @@ class _StepHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 36)),
-        const SizedBox(height: 12),
+        Text(emoji, style: TextStyle(fontSize: 36)),
+        SizedBox(height: 12),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: AppColors.textDark,
+            color: context.colors.textDark,
             height: 1.15,
             letterSpacing: -0.5,
           ),
@@ -1126,15 +1123,15 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
+            color: context.colors.primary.withValues(alpha: 0.06),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -1153,13 +1150,13 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textMedium,
+          color: context.colors.textMedium,
         ),
       ),
     );
@@ -1188,25 +1185,25 @@ class _InputField extends StatelessWidget {
       keyboardType: keyboardType,
       textCapitalization: capitalization,
       inputFormatters: inputFormatters,
-      style: const TextStyle(color: AppColors.textDark),
+      style: TextStyle(color: context.colors.textDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textLight),
+        hintStyle: TextStyle(color: context.colors.textLight),
         filled: true,
-        fillColor: AppColors.white,
+        fillColor: context.colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: context.colors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: context.colors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: context.colors.primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }

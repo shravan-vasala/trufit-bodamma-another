@@ -5,6 +5,7 @@ import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
 import 'past_day_summary_sheet.dart';
+import 'daily_score_sheet.dart';
 
 class WeekCalendarStrip extends ConsumerStatefulWidget {
   const WeekCalendarStrip({super.key});
@@ -43,7 +44,7 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
         if (_pageController.page?.round() != targetPage) {
           _pageController.animateToPage(
             targetPage,
-            duration: const Duration(milliseconds: 300),
+            duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         }
@@ -51,16 +52,16 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
     });
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textLight.withValues(alpha: 0.1),
+            color: context.colors.textLight.withValues(alpha: 0.1),
             blurRadius: 20,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -77,55 +78,57 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
                     ref.read(weekOffsetProvider.notifier).state = 0;
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Today',
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
               Text(
                 DateFormat('EEE, d').format(selectedDate),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     DateFormat('MMM').format(selectedDate).toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                     ),
                   ),
                   Text(
                     DateFormat('yyyy').format(selectedDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                     ),
                   ),
                 ],
               ),
-              const Spacer(),
+              Spacer(),
+              const _DailyScoreRing(),
+              SizedBox(width: 16),
               GestureDetector(
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -136,8 +139,8 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
                     builder: (context, child) {
                       return Theme(
                         data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: AppColors.primary,
+                          colorScheme: ColorScheme.light(
+                            primary: context.colors.primary,
                           ),
                         ),
                         child: child!,
@@ -154,15 +157,15 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
                     ref.read(weekOffsetProvider.notifier).state = weekOffset;
                   }
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_month_outlined,
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                   size: 24,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Week day circles
           SizedBox(
@@ -248,11 +251,11 @@ class _DayCircle extends StatelessWidget {
     
     Color dotColor;
     if (isFuture) {
-      dotColor = const Color(0xFF1F2937); // black
+      dotColor = Color(0xFF1F2937); // black
     } else if (isToday) {
-      dotColor = isComplete ? AppColors.green : const Color(0xFFEF4444); // green if done, else red
+      dotColor = isComplete ? context.colors.green : Color(0xFFEF4444); // green if done, else red
     } else {
-      dotColor = isComplete ? AppColors.green : const Color(0xFF1F2937); // green if done, else black
+      dotColor = isComplete ? context.colors.green : Color(0xFF1F2937); // green if done, else black
     }
 
     return GestureDetector(
@@ -277,17 +280,17 @@ class _DayCircle extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isSelected ? AppColors.primary : AppColors.textLight,
+              color: isSelected ? context.colors.primary : context.colors.textLight,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: Duration(milliseconds: 200),
             width: 32,
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isSelected ? AppColors.primary : Colors.transparent,
+              color: isSelected ? context.colors.primary : Colors.transparent,
             ),
             child: Center(
               child: Text(
@@ -296,13 +299,13 @@ class _DayCircle extends StatelessWidget {
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
-                      ? AppColors.white
-                      : (isToday ? AppColors.primary : AppColors.textDark),
+                      ? context.colors.white
+                      : (isToday ? context.colors.primary : context.colors.textDark),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           // Activity dot
           Container(
             width: 5,
@@ -315,5 +318,136 @@ class _DayCircle extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DailyScoreRing extends ConsumerWidget {
+  const _DailyScoreRing();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoreData = ref.watch(dailyScoreProvider);
+
+    Color scoreColor = context.colors.green;
+    if (scoreData.totalScore < 50) {
+      scoreColor = context.colors.red;
+    } else if (scoreData.totalScore < 80) {
+      scoreColor = context.colors.orange;
+    }
+    
+    final displayScore = scoreData.isFutureDate ? '--' : scoreData.totalScore.toString();
+    final progress = scoreData.isFutureDate ? 0.0 : scoreData.totalScore / 100.0;
+
+    return GestureDetector(
+      onTap: scoreData.isFutureDate ? null : () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => const DailyScoreSheet(),
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Daily Score',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: context.colors.textLight,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(width: 8),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return CustomPaint(
+                      size: const Size(36, 36),
+                      painter: _ScoreRingPainter(
+                        progress: value,
+                        color: scoreColor,
+                        trackColor: context.colors.border,
+                      ),
+                    );
+                  },
+                ),
+                Text(
+                  displayScore,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: scoreData.isFutureDate ? context.colors.textLight : context.colors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color trackColor;
+
+  _ScoreRingPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = 4.0;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawCircle(center, radius, trackPaint);
+
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final startAngle = -3.14159 / 2; // -90 degrees
+    final sweepAngle = 2 * 3.14159 * progress;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScoreRingPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+           oldDelegate.color != color ||
+           oldDelegate.trackColor != trackColor;
   }
 }

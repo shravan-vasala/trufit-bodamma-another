@@ -39,26 +39,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profile = ref.watch(profileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(20),
+          physics: BouncingScrollPhysics(),
+          padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               // Profile header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: context.colors.primaryGradient,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
+                      color: context.colors.primary.withValues(alpha: 0.3),
                       blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      offset: Offset(0, 8),
                     ),
                   ],
                 ),
@@ -70,9 +70,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.white.withValues(alpha: 0.2),
+                        color: context.colors.white.withValues(alpha: 0.2),
                         border: Border.all(
-                          color: AppColors.white.withValues(alpha: 0.5),
+                          color: context.colors.white.withValues(alpha: 0.5),
                           width: 3,
                         ),
                       ),
@@ -88,47 +88,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 child: profile.name.isNotEmpty
                                     ? Text(
                                         profile.name[0].toUpperCase(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.w800,
-                                          color: AppColors.white,
+                                          color: context.colors.white,
                                         ),
                                       )
-                                    : const Icon(Icons.person, size: 40, color: AppColors.white),
+                                    : Icon(Icons.person, size: 40, color: context.colors.white),
                               ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       profile.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.white,
+                        color: context.colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       'Height: ${profile.height.toStringAsFixed(0)} cm',
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.white.withValues(alpha: 0.8),
+                        color: context.colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                     if (profile.targetWeight != null) ...[
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Target: ${profile.targetWeight!.toStringAsFixed(1)} ${profile.weightUnit}',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.white.withValues(alpha: 0.8),
+                          color: context.colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Menu items
               _MenuCard(
@@ -140,7 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (ctx) => const _EditProfileSheet(),
+                    builder: (ctx) => _EditProfileSheet(),
                   );
                 },
               ),
@@ -169,6 +169,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () {
                   ref.read(profileProvider.notifier).toggleUnit();
                 },
+              ),
+              _MenuCard(
+                icon: Icons.dark_mode_rounded,
+                title: 'Theme',
+                subtitle: 'Currently: ${ref.watch(themeModeProvider).name}',
+                onTap: () => _showThemeDialog(context, ref),
               ),
               _SettingsSwitch(
                 icon: Icons.volume_up_rounded,
@@ -200,29 +206,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context.go('/profile/backup-restore');
                 },
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'Made with ❤️ for Bodamma',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                 ),
               ),
               if (_appVersion.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   _appVersion,
                   style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textLight.withValues(alpha: 0.6),
+                    color: context.colors.textLight.withValues(alpha: 0.6),
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _showThemeDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: context.colors.white,
+          title: Text('Select Theme', style: TextStyle(color: context.colors.textDark)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ThemeMode.values.map((mode) {
+              return RadioListTile<ThemeMode>(
+                title: Text(mode.name, style: TextStyle(color: context.colors.textDark)),
+                value: mode,
+                groupValue: ref.watch(themeModeProvider),
+                activeColor: context.colors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    ref.read(themeModeProvider.notifier).setThemeMode(val);
+                    Navigator.pop(ctx);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
@@ -239,11 +274,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.white,
+          decoration: BoxDecoration(
+            color: context.colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,38 +288,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 'Gemini AI Settings',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Enter your Gemini API key to enable highly accurate AI food tracking and calorie estimation.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textMedium,
+                  color: context.colors.textMedium,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               TextField(
                 controller: keyController,
                 obscureText: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Gemini API Key',
                   prefixIcon: Icon(Icons.key_rounded),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -294,10 +329,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ref.read(profileProvider.notifier).updateGeminiKey(key);
                     Navigator.of(ctx).pop();
                   },
-                  child: const Text('Save API Key'),
+                  child: Text('Save API Key'),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),
@@ -326,16 +361,16 @@ class _MenuCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(18),
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.04),
+              color: context.colors.primary.withValues(alpha: 0.04),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -345,38 +380,38 @@ class _MenuCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.lavender,
+                color: context.colors.lavender,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 22),
+              child: Icon(icon, color: context.colors.primary, size: 22),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMedium,
+                      color: context.colors.textMedium,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textLight,
+              color: context.colors.textLight,
             ),
           ],
         ),
@@ -403,47 +438,47 @@ class _SettingsSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: context.colors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: SwitchListTile(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: context.colors.primary,
         secondary: Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.lavender,
+            color: context.colors.lavender,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 22),
+          child: Icon(icon, color: context.colors.primary, size: 22),
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
+            color: context.colors.textDark,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: AppColors.textMedium,
+            color: context.colors.textMedium,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
   }
@@ -502,14 +537,14 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
 
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
         compressQuality: 70,
         maxWidth: 512,
         maxHeight: 512,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Photo',
-            toolbarColor: AppColors.primary,
+            toolbarColor: context.colors.primary,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: true,
@@ -535,7 +570,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e'), backgroundColor: AppColors.red),
+          SnackBar(content: Text('Error picking image: $e'), backgroundColor: context.colors.red),
         );
       }
     }
@@ -546,30 +581,30 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(vertical: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Profile Photo',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-              title: const Text('Take a picture'),
+              leading: Icon(Icons.camera_alt, color: context.colors.primary),
+              title: Text('Take a picture'),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
-              title: const Text('Choose from gallery'),
+              leading: Icon(Icons.photo_library, color: context.colors.primary),
+              title: Text('Choose from gallery'),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.gallery);
@@ -577,8 +612,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
             ),
             if (_localPhotoPath != null && !_clearPhoto)
               ListTile(
-                leading: const Icon(Icons.delete, color: AppColors.red),
-                title: const Text('Remove photo', style: TextStyle(color: AppColors.red)),
+                leading: Icon(Icons.delete, color: context.colors.red),
+                title: Text('Remove photo', style: TextStyle(color: context.colors.red)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   if (_localPhotoPath != null) {
@@ -606,11 +641,11 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,21 +655,21 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Edit Profile',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+                color: context.colors.textDark,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Center(
               child: GestureDetector(
                 onTap: _showPickerOptions,
@@ -643,9 +678,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.lavender,
+                        color: context.colors.lavender,
                       ),
                       child: ClipOval(
                         child: _localPhotoPath != null && !_clearPhoto
@@ -659,13 +694,13 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                                 child: nameController.text.isNotEmpty
                                     ? Text(
                                         nameController.text[0].toUpperCase(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.w800,
-                                          color: AppColors.primary,
+                                          color: context.colors.primary,
                                         ),
                                       )
-                                    : const Icon(Icons.person, size: 40, color: AppColors.primary),
+                                    : Icon(Icons.person, size: 40, color: context.colors.primary),
                               ),
                       ),
                     ),
@@ -673,86 +708,86 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.white, width: 2),
+                          border: Border.all(color: context.colors.white, width: 2),
                         ),
-                        child: const Icon(Icons.camera_alt, color: AppColors.white, size: 14),
+                        child: Icon(Icons.camera_alt, color: context.colors.white, size: 14),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
                 prefixIcon: Icon(Icons.person_rounded),
               ),
               onChanged: (v) => setState(() {}),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(
               controller: heightController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Height (cm)',
                 prefixIcon: Icon(Icons.height_rounded),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(
               controller: targetController,
               keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
+                  TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
                 labelText: 'Target Weight (kg)',
                 prefixIcon: Icon(Icons.flag_rounded),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(
               controller: caloriesController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Target Daily Calories',
                 prefixIcon: Icon(Icons.restaurant_rounded),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: proteinController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Protein (g)',
                       prefixIcon: Icon(Icons.fitness_center_rounded, size: 18),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: carbsController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Carbs (g)',
                       prefixIcon: Icon(Icons.breakfast_dining_rounded, size: 18),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: fatController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Fat (g)',
                       prefixIcon: Icon(Icons.water_drop_rounded, size: 18),
                     ),
@@ -760,7 +795,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -782,10 +817,10 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                   ref.read(profileProvider.notifier).updateProfile(updated);
                   Navigator.of(context).pop();
                 },
-                child: const Text('Save'),
+                child: Text('Save'),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),

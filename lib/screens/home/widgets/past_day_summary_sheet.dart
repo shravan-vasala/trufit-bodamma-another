@@ -90,12 +90,12 @@ class PastDaySummarySheet extends ConsumerWidget {
 
     // 3) Status pill logic
     String statusText = "Nothing logged";
-    Color statusColor = AppColors.textMedium;
+    Color statusColor = context.colors.textMedium;
     if (totalDone == 0) {
       if (isRestDay) statusText = "Rest day / Nothing logged";
     } else if (totalDone >= (totalThings * 0.75).round()) {
       statusText = "Great day";
-      statusColor = AppColors.green;
+      statusColor = context.colors.green;
     } else {
       statusText = "Partial";
       statusColor = Colors.amber.shade700;
@@ -114,8 +114,8 @@ class PastDaySummarySheet extends ConsumerWidget {
 
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.lavender,
+      decoration: BoxDecoration(
+        color: context.colors.lavender,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -123,20 +123,20 @@ class PastDaySummarySheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Drag handle
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               width: 48,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textLight.withValues(alpha: 0.3),
+                color: context.colors.textLight.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -145,25 +145,25 @@ class PastDaySummarySheet extends ConsumerWidget {
                     children: [
                       Text(
                         DateFormat('EEE, dd MMM').format(date),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '$totalDone of $totalThings things completed',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textLight,
+                          color: context.colors.textLight,
                         ),
                       ),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
@@ -180,17 +180,17 @@ class PastDaySummarySheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Rows
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   // Workout Row
                   _SummaryRow(
                     icon: Icons.fitness_center_rounded,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                     title: workoutDayName,
                     subtitle: isRestDay 
                         ? 'Recovery day' 
@@ -204,12 +204,12 @@ class PastDaySummarySheet extends ConsumerWidget {
                       parentContext.go('/home/workout/$currentWorkoutDayId');
                     },
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
 
                   // Meals Row
                   _SummaryRow(
                     icon: Icons.restaurant_rounded,
-                    color: AppColors.green,
+                    color: context.colors.green,
                     title: '$emojiPrefix$completedMeals/$totalMealsTarget logged · ${mealLog.totalCalories} / ${profile.targetCalories} Kcal',
                     subtitle: 'P: ${mealLog.totalProtein}g   C: ${mealLog.totalCarbs}g   F: ${mealLog.totalFat}g',
                     isDone: completedMeals == totalMealsTarget,
@@ -220,12 +220,12 @@ class PastDaySummarySheet extends ConsumerWidget {
                       parentContext.go('/home/meals');
                     },
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
 
                   // Habits Row
                   _SummaryRow(
                     icon: Icons.checklist_rounded,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                     title: 'Habits ($completedHabits/$totalHabitsTarget)',
                     subtitle: missedHabits.isNotEmpty ? 'Missed: $missedHabits' : 'All habits completed!',
                     isDone: completedHabits == totalHabitsTarget,
@@ -239,11 +239,11 @@ class PastDaySummarySheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Metrics 2x2 Grid
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
                   Expanded(
@@ -253,7 +253,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                       value: '${dailyLog.steps ?? 0}',
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: _MetricBox(
                       icon: Icons.bedtime_rounded,
@@ -264,9 +264,9 @@ class PastDaySummarySheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
                   Expanded(
@@ -276,7 +276,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                       value: dailyLog.weight != null ? '${dailyLog.weight} kg' : '—',
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: _MetricBox(
                       icon: Icons.water_drop_rounded,
@@ -287,17 +287,17 @@ class PastDaySummarySheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Action Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: context.colors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -308,18 +308,18 @@ class PastDaySummarySheet extends ConsumerWidget {
                     Navigator.of(context).pop();
                     parentContext.go('/home');
                   },
-                  child: const Text(
+                  child: Text(
                     'Open full day',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.white,
+                      color: context.colors.white,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -349,9 +349,9 @@ class _SummaryRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -365,26 +365,26 @@ class _SummaryRow extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -393,9 +393,9 @@ class _SummaryRow extends StatelessWidget {
               ),
             ),
             if (isDone)
-              const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 24)
+              Icon(Icons.check_circle_rounded, color: context.colors.green, size: 24)
             else
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textLight, size: 24),
+              Icon(Icons.chevron_right_rounded, color: context.colors.textLight, size: 24),
           ],
         ),
       ),
@@ -417,33 +417,33 @@ class _MetricBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(width: 12),
+          Icon(icon, color: context.colors.primary, size: 20),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textLight,
+                    color: context.colors.textLight,
                   ),
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textDark,
+                    color: context.colors.textDark,
                   ),
                 ),
               ],

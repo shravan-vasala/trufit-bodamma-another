@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/reminder_config.dart';
 import '../services/notification_service.dart';
 import 'app_providers.dart';
-import 'package:flutter/material.dart';
 
 class RemindersNotifier extends StateNotifier<ReminderConfig> {
   final SharedPreferences _prefs;
@@ -14,7 +13,7 @@ class RemindersNotifier extends StateNotifier<ReminderConfig> {
     _load();
   }
 
-  static const _key = 'reminder_config';
+  static final _key = 'reminder_config';
 
   void _load() {
     final jsonStr = _prefs.getString(_key);

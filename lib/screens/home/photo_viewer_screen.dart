@@ -50,12 +50,12 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this photo?'),
-        content: const Text('This can\'t be undone.'),
+        title: Text('Delete this photo?'),
+        content: Text('This can\'t be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
@@ -78,7 +78,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                 }
               });
             },
-            child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+            child: Text('Delete', style: TextStyle(color: context.colors.red)),
           ),
         ],
       ),
@@ -110,7 +110,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.photos.isEmpty) return const Scaffold(backgroundColor: Colors.black);
+    if (widget.photos.isEmpty) return Scaffold(backgroundColor: Colors.black);
 
     final currentPhoto = widget.photos[_currentIndex];
     final poseLabel = _poseLabel(currentPhoto.poseTag);
@@ -125,7 +125,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
         child: Stack(
           children: [
             Dismissible(
-              key: const Key('viewer_dismiss'),
+              key: Key('viewer_dismiss'),
               direction: DismissDirection.vertical,
               onDismissed: (_) => Navigator.pop(context),
               child: PageView.builder(
@@ -149,7 +149,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                     left: 8,
                     right: 8,
                   ),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.black87, Colors.transparent],
                       begin: Alignment.topCenter,
@@ -159,13 +159,13 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+                        icon: Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
                         onPressed: () => Navigator.pop(context),
                       ),
                       Expanded(
                         child: Text(
                           titleText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -174,7 +174,7 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                        icon: Icon(Icons.delete_outline_rounded, color: Colors.white),
                         onPressed: _deleteCurrentPhoto,
                       ),
                     ],
@@ -207,7 +207,7 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto> with SingleTickerProvide
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: Duration(milliseconds: 200),
     )..addListener(() {
         if (_animation != null) {
           _transformationController.value = _animation!.value;

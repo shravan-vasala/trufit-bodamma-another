@@ -69,9 +69,9 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: const Text('Add Meal Slot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+      title: Text('Add Meal Slot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -85,9 +85,9 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text('Choose an emoji', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMedium)),
-            const SizedBox(height: 8),
+            SizedBox(height: 20),
+            Text('Choose an emoji', style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textMedium)),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -96,37 +96,37 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
                 return GestureDetector(
                   onTap: () => setState(() => _selectedEmoji = emoji),
                   child: Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.white,
-                      border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                      color: isSelected ? context.colors.primary.withValues(alpha: 0.2) : context.colors.white,
+                      border: Border.all(color: isSelected ? context.colors.primary : context.colors.border),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                    child: Text(emoji, style: TextStyle(fontSize: 24)),
                   ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Row(
               children: [
                 Switch(
                   value: _addToEveryDay,
                   onChanged: (val) => setState(() => _addToEveryDay = val),
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
-                  activeThumbColor: AppColors.primary,
+                  activeTrackColor: context.colors.primary.withValues(alpha: 0.5),
+                  activeThumbColor: context.colors.primary,
                 ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text('Add to every day?', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Add to every day?', style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.textDark)),
                 ),
               ],
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 8.0, top: 4.0),
               child: Text(
                 'If enabled, this slot will appear every day. Otherwise, just today.',
-                style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                style: TextStyle(fontSize: 12, color: context.colors.textMedium),
               ),
             ),
           ],
@@ -135,16 +135,16 @@ class _AddMealSlotDialogState extends ConsumerState<AddMealSlotDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: AppColors.textLight)),
+          child: Text('Cancel', style: TextStyle(color: context.colors.textLight)),
         ),
         ElevatedButton(
           onPressed: _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
+            backgroundColor: context.colors.primary,
+            foregroundColor: context.colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Text('Add Slot'),
+          child: Text('Add Slot'),
         ),
       ],
     );

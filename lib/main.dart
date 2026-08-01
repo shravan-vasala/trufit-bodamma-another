@@ -34,7 +34,6 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -114,10 +113,14 @@ class _TruFitAppState extends ConsumerState<TruFitApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp.router(
       title: 'TruFit Bodamma',
       debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: appRouter,
     );
   }

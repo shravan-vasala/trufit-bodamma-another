@@ -78,7 +78,7 @@ void main() {
     final archive = Archive();
     final manifestData = utf8.encode(jsonEncode({'schemaVersion': 999}));
     archive.addFile(ArchiveFile('manifest.json', manifestData.length, manifestData));
-    final zipData = ZipEncoder().encode(archive)!;
+    final zipData = ZipEncoder().encode(archive);
     final file = File('${tempDir.path}/future_backup.zip');
     await file.writeAsBytes(zipData);
 
@@ -97,7 +97,7 @@ void main() {
     };
     final manifestData = utf8.encode(jsonEncode(manifestMap));
     archive.addFile(ArchiveFile('manifest.json', manifestData.length, manifestData));
-    final zipData = ZipEncoder().encode(archive)!;
+    final zipData = ZipEncoder().encode(archive);
     final file = File('${tempDir.path}/v1_backup.zip');
     await file.writeAsBytes(zipData);
 

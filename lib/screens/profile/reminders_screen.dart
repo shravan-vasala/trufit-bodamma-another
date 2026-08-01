@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/reminders_provider.dart';
-import '../../models/reminder_config.dart';
 
 class RemindersScreen extends ConsumerStatefulWidget {
   const RemindersScreen({super.key});
@@ -19,10 +18,10 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primary,
               onPrimary: Colors.white,
-              onSurface: AppColors.textDark,
+              onSurface: context.colors.textDark,
             ),
           ),
           child: child!,
@@ -46,16 +45,16 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     final config = ref.watch(remindersProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Reminders'),
+        title: Text('Reminders'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         children: [
           _buildSectionHeader('DAILY HABITS'),
           _buildToggleCard(
@@ -75,7 +74,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   )
                 : null,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _buildSectionHeader('WORKOUTS'),
           _buildToggleCard(
             title: 'Workout Reminder',
@@ -94,7 +93,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   )
                 : null,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _buildSectionHeader('MEALS'),
           _buildToggleCard(
             title: 'Meal Logging Nudge',
@@ -113,7 +112,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                           ref.read(remindersProvider.notifier).updateConfig(config.copyWith(lunchTime: t));
                         }),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       _buildTimeSelector(
                         label: 'Dinner Time',
                         time: config.dinnerTime,
@@ -125,7 +124,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   )
                 : null,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _buildSectionHeader('DATA BACKUP'),
           _buildToggleCard(
             title: 'Weekly Backup Reminder',
@@ -140,12 +139,12 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Day of Week', style: TextStyle(fontSize: 14, color: AppColors.textDark)),
+                          Text('Day of Week', style: TextStyle(fontSize: 14, color: context.colors.textDark)),
                           DropdownButton<int>(
                             value: config.backupDayOfWeek,
-                            underline: const SizedBox(),
-                            icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
-                            items: const [
+                            underline: SizedBox(),
+                            icon: Icon(Icons.arrow_drop_down, color: context.colors.primary),
+                            items: [
                               DropdownMenuItem(value: DateTime.monday, child: Text('Monday')),
                               DropdownMenuItem(value: DateTime.tuesday, child: Text('Tuesday')),
                               DropdownMenuItem(value: DateTime.wednesday, child: Text('Wednesday')),
@@ -162,7 +161,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       _buildTimeSelector(
                         label: 'Time',
                         time: config.backupTime,
@@ -181,14 +180,14 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      padding: EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.2,
-          color: AppColors.primary,
+          color: context.colors.primary,
         ),
       ),
     );
@@ -203,11 +202,11 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Column(
         children: [
           Row(
@@ -217,23 +216,23 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                    Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textDark)),
+                    SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(fontSize: 13, color: context.colors.textMedium)),
                   ],
                 ),
               ),
               Switch(
                 value: value,
                 onChanged: onChanged,
-                activeColor: AppColors.primary,
+                activeThumbColor: context.colors.primary,
               ),
             ],
           ),
           if (child != null) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1, color: AppColors.border),
+              child: Divider(height: 1, color: context.colors.border),
             ),
             child,
           ],
@@ -246,23 +245,23 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: EdgeInsets.symmetric(vertical: 4),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textDark)),
+            Text(label, style: TextStyle(fontSize: 14, color: context.colors.textDark)),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.lavender,
+                color: context.colors.lavender,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 _formatTime(time),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: context.colors.primary,
                 ),
               ),
             ),

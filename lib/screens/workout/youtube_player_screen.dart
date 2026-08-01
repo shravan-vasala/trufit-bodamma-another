@@ -31,7 +31,7 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
     _controller = YoutubePlayerController.fromVideoId(
       videoId: widget.videoId,
       autoPlay: true,
-      params: const YoutubePlayerParams(
+      params: YoutubePlayerParams(
         showControls: true,
         showFullscreenButton: true,
         mute: false,
@@ -88,12 +88,12 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
                 ? null
                 : AppBar(
                     backgroundColor: Colors.black,
-                    title: const Text(
+                    title: Text(
                       'Exercise Video',
-                      style: TextStyle(color: AppColors.white, fontSize: 16),
+                      style: TextStyle(color: context.colors.white, fontSize: 16),
                     ),
                     leading: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.white),
+                      icon: Icon(Icons.arrow_back_ios_rounded, color: context.colors.white),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
@@ -111,52 +111,52 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
                   child: player,
                 ),
                 if (!_isFullScreen) ...[
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           widget.title,
-                          style: const TextStyle(
-                            color: AppColors.white,
+                          style: TextStyle(
+                            color: context.colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         if (widget.subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             widget.subtitle,
                             style: TextStyle(
-                              color: AppColors.white.withValues(alpha: 0.6),
+                              color: context.colors.white.withValues(alpha: 0.6),
                               fontSize: 14,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         if (widget.reps.isNotEmpty)
                           Text(
                             'Reps: ${widget.reps}',
                             style: TextStyle(
-                              color: AppColors.white.withValues(alpha: 0.7),
+                              color: context.colors.white.withValues(alpha: 0.7),
                               fontSize: 16,
                             ),
                           ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
                             onPressed: () => _controller.enterFullScreen(),
-                            icon: const Icon(Icons.fullscreen, color: AppColors.primary),
-                            label: const Text(
+                            icon: Icon(Icons.fullscreen, color: context.colors.primary),
+                            label: Text(
                               'Enter Fullscreen',
-                              style: TextStyle(color: AppColors.primary, fontSize: 16),
+                              style: TextStyle(color: context.colors.primary, fontSize: 16),
                             ),
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              backgroundColor: context.colors.primary.withValues(alpha: 0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

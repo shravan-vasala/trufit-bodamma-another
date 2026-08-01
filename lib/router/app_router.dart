@@ -30,11 +30,11 @@ final appRouter = GoRouter(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('Page Not Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          const SizedBox(height: 16),
+          Text('Page Not Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark)),
+          SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => context.go('/home'),
-            child: const Text('Go Home'),
+            child: Text('Go Home'),
           ),
         ],
       ),
@@ -60,19 +60,19 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/home',
-              builder: (context, state) => const HomeScreen(),
+              builder: (context, state) => HomeScreen(),
               routes: [
                 GoRoute(
                   path: 'meals',
-                  builder: (context, state) => const MealDetailScreen(),
+                  builder: (context, state) => MealDetailScreen(),
                 ),
                 GoRoute(
                   path: 'body-stats',
-                  builder: (context, state) => const BodyStatsScreen(),
+                  builder: (context, state) => BodyStatsScreen(),
                 ),
                 GoRoute(
                   path: 'physique-pictures',
-                  builder: (context, state) => const PhysiquePicturesScreen(),
+                  builder: (context, state) => PhysiquePicturesScreen(),
                 ),
                 GoRoute(
                   path: 'workout/:dayId',
@@ -121,7 +121,7 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'weekly-summary',
-                  builder: (context, state) => const WeeklySummaryScreen(),
+                  builder: (context, state) => WeeklySummaryScreen(),
                 ),
               ],
             ),
@@ -132,20 +132,20 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/profile',
-              builder: (context, state) => const ProfileScreen(),
+              builder: (context, state) => ProfileScreen(),
               routes: [
 
                 GoRoute(
                   path: 'manage-plans',
-                  builder: (context, state) => const ManagePlansScreen(),
+                  builder: (context, state) => ManagePlansScreen(),
                 ),
                 GoRoute(
                   path: 'backup-restore',
-                  builder: (context, state) => const BackupRestoreScreen(),
+                  builder: (context, state) => BackupRestoreScreen(),
                 ),
                 GoRoute(
                   path: 'reminders',
-                  builder: (context, state) => const RemindersScreen(),
+                  builder: (context, state) => RemindersScreen(),
                 ),
               ],
             ),
@@ -202,15 +202,15 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 left: 20,
                 right: 20,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.orange,
+                    color: context.colors.orange,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.orange.withValues(alpha: 0.3),
+                        color: context.colors.orange.withValues(alpha: 0.3),
                         blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
@@ -218,10 +218,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                     children: [
                       Icon(
                         timerState.isPaused ? Icons.pause_circle_filled : Icons.timer,
-                        color: AppColors.white,
+                        color: context.colors.white,
                         size: 28,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +231,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                               timerState.exerciseName != null
                                   ? 'Resting for ${timerState.exerciseName}'
                                   : 'Resting',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white70,
@@ -241,10 +241,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                             ),
                             Text(
                               '${timerState.remainingSeconds ~/ 60}:${(timerState.remainingSeconds % 60).toString().padLeft(2, '0')}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.white,
+                                color: context.colors.white,
                               ),
                             ),
                           ],
@@ -258,19 +258,19 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                             label: '+15s',
                             onTap: () => ref.read(restTimerProvider.notifier).addSeconds(15),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           _TimerControlButton(
                             label: '+30s',
                             onTap: () => ref.read(restTimerProvider.notifier).addSeconds(30),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           IconButton(
                             icon: Icon(
                               timerState.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                              color: AppColors.white,
+                              color: context.colors.white,
                             ),
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            constraints: BoxConstraints(),
                             onPressed: () {
                               if (timerState.isPaused) {
                                 ref.read(restTimerProvider.notifier).resumeTimer();
@@ -280,9 +280,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                             },
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: AppColors.white),
+                            icon: Icon(Icons.close, color: context.colors.white),
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            constraints: BoxConstraints(),
                             onPressed: () {
                               ref.read(restTimerProvider.notifier).stopTimer();
                             },
@@ -297,16 +297,16 @@ class ScaffoldWithNavBar extends ConsumerWidget {
         ),
         bottomNavigationBar: SafeArea(
           child: Container(
-            margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            margin: EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: context.colors.white,
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.textDark.withValues(alpha: 0.1),
+                  color: context.colors.textDark.withValues(alpha: 0.1),
                   blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  offset: Offset(0, 10),
                 ),
               ],
             ),
@@ -360,37 +360,43 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
+    return Semantics(
+      label: '$label tab, ${isSelected ? 'selected' : 'unselected'}',
+      button: true,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          constraints: BoxConstraints(minHeight: 48, minWidth: 48),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? context.colors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.white : AppColors.textLight,
+              color: isSelected ? context.colors.white : context.colors.textLight,
               size: 24,
             ),
             if (isSelected) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: context.colors.white,
                 ),
               ),
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -404,20 +410,31 @@ class _TimerControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+    return Semantics(
+      label: label,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: context.colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           ),
         ),
       ),

@@ -44,8 +44,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     final plan = ref.watch(workoutPlanProvider);
     if (plan == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Workout')),
-        body: const Center(child: Text('No workout plan found')),
+        appBar: AppBar(title: Text('Workout')),
+        body: Center(child: Text('No workout plan found')),
       );
     }
 
@@ -59,8 +59,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
     if (day == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Workout')),
-        body: const Center(child: Text('Workout day not found')),
+        appBar: AppBar(title: Text('Workout')),
+        body: Center(child: Text('Workout day not found')),
       );
     }
 
@@ -98,17 +98,17 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
         : completedExercises;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+              padding: EdgeInsets.fromLTRB(8, 8, 20, 0),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_rounded),
+                    icon: Icon(Icons.arrow_back_ios_rounded),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
@@ -117,18 +117,18 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       children: [
                         Text(
                           appBarTitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textDark,
+                            color: context.colors.textDark,
                           ),
                         ),
                         Text(
                           '$viewCompleted/$viewExercises exercises done',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textMedium,
+                            color: context.colors.textMedium,
                           ),
                         ),
                       ],
@@ -136,24 +136,24 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                   ),
                   if (isFinished)
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.greenLight,
+                        color: context.colors.greenLight,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.check_circle,
-                              color: AppColors.green, size: 16),
+                              color: context.colors.green, size: 16),
                           SizedBox(width: 4),
                           Text(
                             'Done',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.green,
+                              color: context.colors.green,
                             ),
                           ),
                         ],
@@ -162,75 +162,75 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // ── Progress bar (always total day progress) ─────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value:
                       totalExercises > 0 ? completedExercises / totalExercises : 0,
-                  backgroundColor: AppColors.lavender,
+                  backgroundColor: context.colors.lavender,
                   valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.green),
+                      AlwaysStoppedAnimation<Color>(context.colors.green),
                   minHeight: 6,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             if (totalExercises > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
                       'Day total: $completedExercises/$totalExercises',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textLight,
+                        color: context.colors.textLight,
                       ),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // ── "Show all sections" banner when filtered ─────────────────
             if (isFiltered)
               GestureDetector(
                 onTap: () => setState(() => _activeSectionIndex = null),
                 child: Container(
-                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  margin: EdgeInsets.fromLTRB(20, 0, 20, 10),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: AppColors.lavenderCard,
+                    color: context.colors.lavenderCard,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.2)),
+                        color: context.colors.primary.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.grid_view_rounded,
-                          color: AppColors.primary, size: 16),
-                      const SizedBox(width: 8),
+                      Icon(Icons.grid_view_rounded,
+                          color: context.colors.primary, size: 16),
+                      SizedBox(width: 8),
                       Text(
                         'Showing: ${workoutDay.sections[_activeSectionIndex!].title}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                         ),
                       ),
-                      const Spacer(),
-                      const Text(
+                      Spacer(),
+                      Text(
                         'Show all →',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -243,8 +243,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                physics: BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 itemCount: sectionsToShow.length,
                 itemBuilder: (context, listIndex) {
                   // Map back to original section index for consistency
@@ -266,16 +266,16 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             if (!isFinished)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    gradient: context.colors.primaryGradient,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.35),
+                        color: context.colors.primary.withValues(alpha: 0.35),
                         blurRadius: 16,
-                        offset: const Offset(0, 6),
+                        offset: Offset(0, 6),
                       ),
                     ],
                   ),
@@ -285,23 +285,23 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      padding: EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.emoji_events_rounded,
-                            color: AppColors.white, size: 24),
+                            color: context.colors.white, size: 24),
                         SizedBox(width: 10),
                         Text(
                           'Finish Workout',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.white,
+                            color: context.colors.white,
                           ),
                         ),
                       ],
@@ -333,20 +333,20 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Finish early?'),
+        title: Text('Finish early?'),
         content:
             Text('Only $completed of $total exercises done — finish anyway?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Keep going'),
+            child: Text('Keep going'),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _executeFinish(context, ref, dayId);
             },
-            child: const Text('Finish'),
+            child: Text('Finish'),
           ),
         ],
       ),
@@ -358,13 +358,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Skip workout?'),
-        content: const Text(
+        title: Text('Skip workout?'),
+        content: Text(
             'Nothing checked — mark this workout as skipped instead?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Keep going'),
+            child: Text('Keep going'),
           ),
           TextButton(
             onPressed: () {
@@ -373,7 +373,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
               ref.read(workoutRepoProvider).finishWorkout(dateStr, dayId);
               context.go('/home');
             },
-            child: const Text('Skip Workout'),
+            child: Text('Skip Workout'),
           ),
         ],
       ),
@@ -390,30 +390,30 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🎉', style: TextStyle(fontSize: 64)),
-              const SizedBox(height: 16),
-              const Text(
+              Text('🎉', style: TextStyle(fontSize: 64)),
+              SizedBox(height: 16),
+              Text(
                 'Workout Complete!',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Great job! Keep up the consistency.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textMedium,
+                  color: context.colors.textMedium,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -421,7 +421,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     Navigator.of(ctx).pop();
                     context.go('/home');
                   },
-                  child: const Text('Back to Home'),
+                  child: Text('Back to Home'),
                 ),
               ),
             ],
@@ -450,9 +450,9 @@ class _SectionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.lavender,
+        color: context.colors.lavender,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -460,33 +460,33 @@ class _SectionWidget extends StatelessWidget {
         children: [
           // Sticky-style section header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+            padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
             child: Row(
               children: [
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text(
                   section.title.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                     letterSpacing: 1,
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
                 Text(
                   '${section.exercises.length} exercises',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMedium,
+                    color: context.colors.textMedium,
                   ),
                 ),
               ],
@@ -503,7 +503,7 @@ class _SectionWidget extends StatelessWidget {
                   exerciseName: exercise.name,
                 );
               }
-              return const SizedBox(height: 4);
+              return SizedBox(height: 4);
             }
             final exerciseIndex = index ~/ 2;
             final exercise = section.exercises[exerciseIndex];
@@ -514,7 +514,7 @@ class _SectionWidget extends StatelessWidget {
               isCompleted: isCompleted,
             );
           }),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
         ],
       ),
     );

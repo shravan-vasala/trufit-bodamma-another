@@ -29,8 +29,8 @@ final phaseProgressProvider = Provider<PhaseProgress>((ref) {
   // Rebuild if logs change
   ref.watch(dailyLogProvider);
 
-  const totalWeeks = 8;
-  const requiredDaysPerWeek = 4;
+  final int totalWeeks = 8;
+  final int requiredDaysPerWeek = 4;
 
   if (profile.planStartDate == null) {
     return PhaseProgress(

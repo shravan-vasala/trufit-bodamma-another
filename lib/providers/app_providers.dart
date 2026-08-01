@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../repositories/coach_note_repository.dart';
@@ -24,6 +22,8 @@ import '../models/exercise_log.dart';
 import '../models/user_profile.dart';
 export 'rest_timer_provider.dart';
 export 'phase_progress_provider.dart';
+export 'theme_provider.dart';
+export 'daily_score_provider.dart';
 
 // ── Date ──
 
@@ -307,7 +307,7 @@ final habitStreakProvider = Provider.family<int, String>((ref, habitId) {
   }
   
   // Go backward
-  DateTime checkDate = current.subtract(const Duration(days: 1));
+  DateTime checkDate = current.subtract(Duration(days: 1));
   while (true) {
     final dStr = '${checkDate.year.toString().padLeft(4, '0')}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
     final comp = habitRepo.getCompletions(dStr);
@@ -315,7 +315,7 @@ final habitStreakProvider = Provider.family<int, String>((ref, habitId) {
     
     if (isHabitCompleted(habit, comp, log)) {
       streak++;
-      checkDate = checkDate.subtract(const Duration(days: 1));
+      checkDate = checkDate.subtract(Duration(days: 1));
     } else {
       break;
     }
@@ -408,7 +408,7 @@ final dailyMealLogsRangeProvider =
 class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
   final Ref _ref;
 
-  CoachNoteNotifier(this._ref) : super(const AsyncValue.loading());
+  CoachNoteNotifier(this._ref) : super(AsyncValue.loading());
 
   Future<void> fetchNote({bool forceRefresh = false}) async {
     final dateStr = _ref.read(dateStringProvider);
@@ -422,7 +422,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       }
     }
     
-    state = const AsyncValue.loading();
+    state = AsyncValue.loading();
     try {
       final coachService = _ref.read(coachServiceProvider);
       final profile = _ref.read(profileProvider);
@@ -439,7 +439,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       }
 
       // Calculate yesterday's habits
-      final yesterday = DateTime.parse(dateStr).subtract(const Duration(days: 1));
+      final yesterday = DateTime.parse(dateStr).subtract(Duration(days: 1));
       final yesterdayStr = DateFormat('yyyy-MM-dd').format(yesterday);
       final yCompletions = habitRepo.getCompletions(yesterdayStr);
       final yLog = dailyLogRepo.getLog(yesterdayStr) ?? DailyLog(date: yesterdayStr);
@@ -452,7 +452,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       // Calculate weight trend (7 days)
       String weightTrend = 'stable';
       final todayWeight = dailyLog.weight ?? profile.targetWeight ?? 0.0;
-      final weekAgo = DateTime.parse(dateStr).subtract(const Duration(days: 7));
+      final weekAgo = DateTime.parse(dateStr).subtract(Duration(days: 7));
       final weekAgoStr = DateFormat('yyyy-MM-dd').format(weekAgo);
       final weekAgoLog = dailyLogRepo.getLog(weekAgoStr);
       final pastWeight = weekAgoLog?.weight ?? profile.targetWeight ?? 0.0;
@@ -489,7 +489,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
             final cLog = dailyLogRepo.getLog(checkStr);
             if (cLog != null && cLog.workoutCompleted) break;
             daysSinceLastWorkout++;
-            checkDate = checkDate.subtract(const Duration(days: 1));
+            checkDate = checkDate.subtract(Duration(days: 1));
           }
         } else {
           final logRepo = _ref.read(exerciseLogRepoProvider);

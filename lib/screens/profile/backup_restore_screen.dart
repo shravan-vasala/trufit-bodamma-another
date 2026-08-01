@@ -75,14 +75,14 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to create backup'), backgroundColor: AppColors.red),
+            SnackBar(content: Text('Failed to create backup'), backgroundColor: context.colors.red),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving backup: $e'), backgroundColor: AppColors.red),
+          SnackBar(content: Text('Error saving backup: $e'), backgroundColor: context.colors.red),
         );
       }
     } finally {
@@ -108,7 +108,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Backup Verified ✨', style: TextStyle(color: AppColors.green)),
+              title: Text('Backup Verified ✨', style: TextStyle(color: context.colors.green)),
               content: Text(
                 'App Version: ${verify.appVersion}\n'
                 'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
@@ -117,7 +117,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                 'Your current data was not touched.'
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Awesome')),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Awesome')),
               ],
             ),
           );
@@ -125,10 +125,10 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Verification Failed', style: TextStyle(color: AppColors.red)),
+              title: Text('Verification Failed', style: TextStyle(color: context.colors.red)),
               content: Text(verify.errorMessage ?? 'Invalid backup file.'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
               ],
             ),
           );
@@ -138,10 +138,10 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Verification Error', style: TextStyle(color: AppColors.red)),
+              title: Text('Verification Error', style: TextStyle(color: context.colors.red)),
               content: Text('An error occurred while verifying the backup: $e'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK')),
               ],
             ),
           );
@@ -169,7 +169,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
         if (!verify.isValid) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid backup file.'), backgroundColor: AppColors.red),
+            SnackBar(content: Text('Invalid backup file.'), backgroundColor: context.colors.red),
           );
           return;
         }
@@ -177,7 +177,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Restore Backup?'),
+            title: Text('Restore Backup?'),
             content: Text(
               'App Version: ${verify.appVersion}\n'
               'Created At: ${verify.createdAt != 'Unknown' ? DateFormat('MMM dd, yyyy · HH:mm').format(DateTime.parse(verify.createdAt)) : 'Unknown'}\n'
@@ -186,7 +186,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
               'WARNING: Restoring will completely overwrite all your current data. A pre-restore safety backup will be created in your app documents directory.'
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
               TextButton(
                 onPressed: () async {
                   Navigator.pop(ctx);
@@ -200,28 +200,28 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (ctx) => const AlertDialog(
-                          title: Text('Restore Complete 🎉', style: TextStyle(color: AppColors.green)),
+                        builder: (ctx) => AlertDialog(
+                          title: Text('Restore Complete 🎉', style: TextStyle(color: context.colors.green)),
                           content: Text('Restore complete — please restart the app.'),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to restore backup.'), backgroundColor: AppColors.red),
+                        SnackBar(content: Text('Failed to restore backup.'), backgroundColor: context.colors.red),
                       );
                     }
                   } catch (e) {
                     if (mounted) {
                       final errorMsg = e.toString().replaceFirst('FormatException: ', '');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Restore error: $errorMsg'), backgroundColor: AppColors.red),
+                        SnackBar(content: Text('Restore error: $errorMsg'), backgroundColor: context.colors.red),
                       );
                     }
                   } finally {
                     if (mounted) setState(() => _isLoading = false);
                   }
                 },
-                child: const Text('Restore', style: TextStyle(color: AppColors.red)),
+                child: Text('Restore', style: TextStyle(color: context.colors.red)),
               ),
             ],
           ),
@@ -234,7 +234,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification error: $e'), backgroundColor: AppColors.red),
+            SnackBar(content: Text('Verification error: $e'), backgroundColor: context.colors.red),
           );
           setState(() => _isLoading = false);
         }
@@ -245,84 +245,84 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
-        title: const Text('Backup & Restore'),
-        backgroundColor: AppColors.white,
+        title: Text('Backup & Restore'),
+        backgroundColor: context.colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.lavender,
+                      color: context.colors.lavender,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Last Backup',
-                          style: TextStyle(fontSize: 14, color: AppColors.textMedium),
+                          style: TextStyle(fontSize: 14, color: context.colors.textMedium),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           _lastBackupDate,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: context.colors.primary,
                           ),
                         ),
                         if (_lastBackupSize.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             _lastBackupSize,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                            style: TextStyle(fontSize: 12, color: context.colors.textMedium),
                           ),
                         ],
-                        const SizedBox(height: 12),
-                        const Divider(color: AppColors.border),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 12),
+                        Divider(color: context.colors.border),
+                        SizedBox(height: 8),
+                        Text(
                           'Last Auto-Backup (Weekly)',
-                          style: TextStyle(fontSize: 14, color: AppColors.textMedium),
+                          style: TextStyle(fontSize: 14, color: context.colors.textMedium),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           _lastAutoBackupDate,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textDark),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   _ActionCard(
                     title: 'Create Backup',
                     subtitle: 'Export a copy of all your data',
                     icon: Icons.upload_file_rounded,
                     onTap: _handleCreateBackup,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _ActionCard(
                     title: 'Restore from Backup',
                     subtitle: 'Overwrite current data with a backup',
                     icon: Icons.restore_page_rounded,
-                    iconColor: AppColors.pinkIcon,
+                    iconColor: context.colors.pinkIcon,
                     onTap: _handleRestoreBackup,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _ActionCard(
                     title: 'Verify Backup',
                     subtitle: 'Test a backup file without restoring',
                     icon: Icons.fact_check_rounded,
-                    iconColor: AppColors.mintIcon,
+                    iconColor: context.colors.mintIcon,
                     onTap: _handleVerifyBackup,
                   ),
                 ],
@@ -337,14 +337,14 @@ class _ActionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
-    this.iconColor = AppColors.primary,
+    this.iconColor,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
   final VoidCallback onTap;
 
   @override
@@ -352,40 +352,40 @@ class _ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.05),
+              color: context.colors.textDark.withValues(alpha: 0.05),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: (iconColor ?? context.colors.primary).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor),
+              child: Icon(icon, color: iconColor ?? context.colors.primary),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textDark)),
+                  SizedBox(height: 4),
+                  Text(subtitle, style: TextStyle(fontSize: 13, color: context.colors.textMedium)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textLight),
+            Icon(Icons.chevron_right_rounded, color: context.colors.textLight),
           ],
         ),
       ),

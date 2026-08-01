@@ -86,11 +86,11 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
+        decoration: BoxDecoration(
+          color: context.colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,31 +100,31 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               'Log: ${widget.exercise.name}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+                color: context.colors.textDark,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               '${widget.exercise.setCount} set${widget.exercise.setCount > 1 ? 's' : ''}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textMedium,
+                color: context.colors.textMedium,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             // Header row
-            const Row(
+            Row(
               children: [
                 SizedBox(width: 40),
                 Expanded(
@@ -134,7 +134,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                       letterSpacing: 1,
                     ),
                   ),
@@ -147,56 +147,62 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                       letterSpacing: 1,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             ...List.generate(widget.exercise.setCount, (i) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
                     SizedBox(
                       width: 40,
                       child: Text(
                         'Set ${i + 1}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                       ),
                     ),
                     Expanded(
-                      child: TextField(
-                        controller: _repsControllers[i],
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 10),
+                      child: Semantics(
+                        label: 'Reps for set ${i + 1}',
+                        child: TextField(
+                          controller: _repsControllers[i],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 10),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
-                      child: TextField(
-                        controller: _weightControllers[i],
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: _lastLog != null && i < _lastLog!.sets.length 
-                            ? _lastLog!.sets[i].weight.toString() 
-                            : '0',
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 10),
+                      child: Semantics(
+                        label: 'Weight in kg for set ${i + 1}',
+                        child: TextField(
+                          controller: _weightControllers[i],
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: _lastLog != null && i < _lastLog!.sets.length 
+                              ? _lastLog!.sets[i].weight.toString() 
+                              : '0',
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 10),
+                          ),
                         ),
                       ),
                     ),
@@ -204,16 +210,20 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
                 ),
               );
             }),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _save,
-                child: const Text('Save Log'),
+            SizedBox(height: 20),
+            Semantics(
+              label: 'Save Log Data',
+              button: true,
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: Text('Save Log'),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
         ),
       ),
@@ -261,7 +271,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: prResult.hasAnyNewPr ? AppColors.green : AppColors.primary,
+        backgroundColor: prResult.hasAnyNewPr ? context.colors.green : context.colors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

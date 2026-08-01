@@ -7,10 +7,10 @@ import '../router/app_router.dart';
 import '../theme/app_colors.dart';
 import 'app_providers.dart'; // to get profileProvider for settings
 
-const String kTimerEndTimeKey = 'rest_timer_end_time';
-const String kTimerRemainingKey = 'rest_timer_remaining';
-const String kTimerIsPausedKey = 'rest_timer_is_paused';
-const String kTimerExerciseKey = 'rest_timer_exercise';
+String kTimerEndTimeKey = 'rest_timer_end_time';
+String kTimerRemainingKey = 'rest_timer_remaining';
+String kTimerIsPausedKey = 'rest_timer_is_paused';
+String kTimerExerciseKey = 'rest_timer_exercise';
 
 class RestTimerState {
   final int remainingSeconds;
@@ -131,7 +131,7 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
 
   void _startInternalTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_targetEndTimeEpoch != null) {
         final remaining = (_targetEndTimeEpoch! - DateTime.now().millisecondsSinceEpoch) ~/ 1000;
         if (remaining > 0) {
@@ -164,29 +164,29 @@ class RestTimerNotifier extends StateNotifier<RestTimerState> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.timer_off_rounded, color: AppColors.white),
-              const SizedBox(width: 12),
+              Icon(Icons.timer_off_rounded, color: context.colors.white),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Rest Complete',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     if (state.exerciseName != null)
                       Text(
                         'Time for ${state.exerciseName}',
-                        style: TextStyle(fontSize: 12, color: AppColors.white.withValues(alpha: 0.8)),
+                        style: TextStyle(fontSize: 12, color: context.colors.white.withValues(alpha: 0.8)),
                       ),
                   ],
                 ),
               ),
             ],
           ),
-          backgroundColor: AppColors.orange,
-          duration: const Duration(seconds: 4),
+          backgroundColor: context.colors.orange,
+          duration: Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

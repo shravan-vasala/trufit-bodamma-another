@@ -19,48 +19,48 @@ class CoachNotesCard extends ConsumerWidget {
       builder: (context) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.6,
-          decoration: const BoxDecoration(
-            color: AppColors.scaffoldBg,
+          decoration: BoxDecoration(
+            color: context.colors.scaffoldBg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Coach History',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.colors.textDark),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppColors.textMedium),
+                    icon: Icon(Icons.close_rounded, color: context.colors.textMedium),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (history.isEmpty)
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: Text('No history yet. Check back tomorrow!', style: TextStyle(color: AppColors.textLight)),
+                    child: Text('No history yet. Check back tomorrow!', style: TextStyle(color: context.colors.textLight)),
                   ),
                 )
               else
                 Expanded(
                   child: ListView.separated(
                     itemCount: history.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final h = history[index];
                       final dt = DateTime.tryParse(h.date) ?? DateTime.now();
                       return Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: context.colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: context.colors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,16 +70,16 @@ class CoachNotesCard extends ConsumerWidget {
                               children: [
                                 Text(
                                   DateFormat('MMM d, yyyy').format(dt),
-                                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary, fontSize: 13),
+                                  style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.primary, fontSize: 13),
                                 ),
                                 if (h.isAi)
-                                  Icon(Icons.auto_awesome, size: 12, color: AppColors.primary.withValues(alpha: 0.6)),
+                                  Icon(Icons.auto_awesome, size: 12, color: context.colors.primary.withValues(alpha: 0.6)),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               h.note,
-                              style: const TextStyle(fontSize: 14, color: AppColors.textDark, height: 1.4),
+                              style: TextStyle(fontSize: 14, color: context.colors.textDark, height: 1.4),
                             ),
                           ],
                         ),
@@ -102,16 +102,16 @@ class CoachNotesCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _showHistory(context, ref),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        padding: const EdgeInsets.all(20),
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.lavender,
+          color: context.colors.lavender,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.05),
+              color: context.colors.primary.withValues(alpha: 0.05),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -124,58 +124,58 @@ class CoachNotesCard extends ConsumerWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: context.colors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.sports_rounded, color: AppColors.white, size: 18),
+                  child: Icon(Icons.sports_rounded, color: context.colors.white, size: 18),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'Coach Bodamma',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                     ),
                   ),
                 ),
                 if (!noteAsync.isLoading)
                   IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 20),
+                    icon: Icon(Icons.refresh_rounded, color: context.colors.primary, size: 20),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: BoxConstraints(),
                     onPressed: () {
                       ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
                     },
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             noteAsync.when(
               data: (note) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     note.note,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                       fontWeight: FontWeight.w500,
                       height: 1.4,
                     ),
                   ),
                   if (note.isAi) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Row(
                       children: [
-                        Icon(Icons.auto_awesome, size: 12, color: AppColors.primary.withValues(alpha: 0.6)),
-                        const SizedBox(width: 4),
+                        Icon(Icons.auto_awesome, size: 12, color: context.colors.primary.withValues(alpha: 0.6)),
+                        SizedBox(width: 4),
                         Text(
                           'Generated by AI',
                           style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.textMedium.withValues(alpha: 0.8),
+                            color: context.colors.textMedium.withValues(alpha: 0.8),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -184,13 +184,13 @@ class CoachNotesCard extends ConsumerWidget {
                   ],
                 ],
               ),
-              loading: () => const Center(
+              loading: () => Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 10),
                   child: SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: context.colors.primary),
                   ),
                 ),
               ),

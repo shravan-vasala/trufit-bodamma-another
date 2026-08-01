@@ -3,7 +3,6 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/reminder_config.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();

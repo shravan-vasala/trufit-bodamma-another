@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
-import '../../profile/manage_habits_screen.dart';
 import '../sleep_entry_dialog.dart';
 
 class HabitsCard extends ConsumerWidget {
@@ -25,15 +24,15 @@ class HabitsCard extends ConsumerWidget {
     final isFuture = selectedDate.isAfter(today);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textLight.withValues(alpha: 0.1),
+            color: context.colors.textLight.withValues(alpha: 0.1),
             blurRadius: 16,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -42,7 +41,7 @@ class HabitsCard extends ConsumerWidget {
         children: [
           for (int i = 0; i < habits.length; i++) ...[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: _HabitItem(
                 habit: habits[i],
                 isCompleted: isHabitCompleted(habits[i], completions, dailyLog),
@@ -51,13 +50,13 @@ class HabitsCard extends ConsumerWidget {
               ),
             ),
             if (i < habits.length - 1)
-              Divider(height: 1, color: AppColors.textLight.withValues(alpha: 0.1)),
+              Divider(height: 1, color: context.colors.textLight.withValues(alpha: 0.1)),
           ],
           if (habits.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(20),
               child: Center(
-                child: Text('No habits yet. Tap the edit icon to add some!', style: TextStyle(color: AppColors.textMedium)),
+                child: Text('No habits yet. Tap the edit icon to add some!', style: TextStyle(color: context.colors.textMedium)),
               ),
             ),
         ],
@@ -81,7 +80,12 @@ class _HabitItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
+    return Semantics(
+      label: '${habit.name}, ${isCompleted ? 'completed' : 'incomplete'}${isFuture ? ', locked' : ''}',
+      button: true,
+      enabled: !isFuture,
+      onTapHint: isCompleted ? 'Mark as incomplete' : 'Mark as complete',
+      child: Row(
         children: [
           Expanded(
             child: GestureDetector(
@@ -90,22 +94,28 @@ class _HabitItem extends ConsumerWidget {
               behavior: HitTestBehavior.opaque,
               child: Row(
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted ? AppColors.green : (isFuture ? AppColors.textLight.withValues(alpha: 0.1) : Colors.transparent),
-                      border: isCompleted || isFuture
-                          ? null
-                          : Border.all(color: AppColors.border, width: 2),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isCompleted ? context.colors.green : (isFuture ? context.colors.textLight.withValues(alpha: 0.1) : Colors.transparent),
+                          border: isCompleted || isFuture
+                              ? null
+                              : Border.all(color: context.colors.border, width: 2),
+                        ),
+                        child: isCompleted
+                            ? Icon(Icons.check, color: context.colors.white, size: 16)
+                            : (isFuture ? Icon(Icons.lock_outline_rounded, color: context.colors.textLight.withValues(alpha: 0.5), size: 14) : null),
+                      ),
                     ),
-                    child: isCompleted
-                        ? const Icon(Icons.check, color: AppColors.white, size: 16)
-                        : (isFuture ? Icon(Icons.lock_outline_rounded, color: AppColors.textLight.withValues(alpha: 0.5), size: 14) : null),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 2),
                   
                   // Habit Name & Progress
                   Expanded(
@@ -117,7 +127,7 @@ class _HabitItem extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: isCompleted ? AppColors.textLight : AppColors.textDark,
+                            color: isCompleted ? context.colors.textLight : context.colors.textDark,
                             decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                           ),
                         ),
@@ -131,16 +141,16 @@ class _HabitItem extends ConsumerWidget {
                                           context: context,
                                           isScrollControlled: true,
                                           backgroundColor: Colors.transparent,
-                                          builder: (_) => const SleepEntryDialog(),
+                                          builder: (_) => SleepEntryDialog(),
                                         );
                                       }
                                     : null,
                                 behavior: HitTestBehavior.opaque,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(top: 2, bottom: 2, right: 8),
+                                  padding: EdgeInsets.only(top: 2, bottom: 2, right: 8),
                                   child: Text(
                                     _formatProgress(),
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
+                                    style: TextStyle(fontSize: 12, color: context.colors.textMedium),
                                   ),
                                 ),
                               ),
@@ -149,23 +159,23 @@ class _HabitItem extends ConsumerWidget {
                                 final streak = ref.watch(habitStreakProvider(habit.id));
                                 if (streak > 1) {
                                   return Container(
-                                    margin: const EdgeInsets.only(top: 2),
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    margin: EdgeInsets.only(top: 2),
+                                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.orange.withValues(alpha: 0.1),
+                                      color: context.colors.orange.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       '🔥 $streak Day Streak',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.orange,
+                                        color: context.colors.orange,
                                       ),
                                     ),
                                   );
                                 }
-                                return const SizedBox.shrink();
+                                return SizedBox.shrink();
                               },
                             ),
                           ],
@@ -189,7 +199,7 @@ class _HabitItem extends ConsumerWidget {
                     ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
                   },
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _MiniButton(
                   icon: Icons.add,
                   onTap: () {
@@ -197,16 +207,17 @@ class _HabitItem extends ConsumerWidget {
                     ref.read(habitCompletionsProvider.notifier).updateProgress(habit.id, newProg);
                   },
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
             ),
             
-          _buildIcon(habit.name, habit.icon),
+          _buildIcon(context, habit.name, habit.icon),
         ],
+      ),
     );
   }
 
-  Widget _buildIcon(String name, String fallbackEmoji) {
+  Widget _buildIcon(BuildContext context, String name, String fallbackEmoji) {
     IconData? outlineIcon;
     final lowerName = name.toLowerCase();
     if (lowerName.contains('sleep')) {
@@ -218,9 +229,9 @@ class _HabitItem extends ConsumerWidget {
     }
     
     if (outlineIcon != null) {
-      return Icon(outlineIcon, color: AppColors.textLight, size: 24);
+      return Icon(outlineIcon, color: context.colors.textLight, size: 24);
     }
-    return Text(fallbackEmoji, style: const TextStyle(fontSize: 20));
+    return Text(fallbackEmoji, style: TextStyle(fontSize: 20));
   }
 
   String _formatProgress() {
@@ -240,7 +251,7 @@ class _HabitItem extends ConsumerWidget {
     
     if ((habit.type == HabitType.autoSteps || habit.type == HabitType.autoSleep) && isSyncCompleted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completed from Samsung Health. Long press to override as not done.')),
+        SnackBar(content: Text('Completed from Samsung Health. Long press to override as not done.')),
       );
       return;
     }
@@ -283,12 +294,12 @@ class _MiniButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: AppColors.lavender,
+          color: context.colors.lavender,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 16, color: AppColors.primary),
+        child: Icon(icon, size: 16, color: context.colors.primary),
       ),
     );
   }

@@ -12,12 +12,12 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: Colors.amber.withValues(alpha: 0.15),
       child: Row(
         children: [
-          const Icon(Icons.wifi_off_rounded, color: Colors.amber, size: 20),
-          const SizedBox(width: 12),
+          Icon(Icons.wifi_off_rounded, color: Colors.amber, size: 20),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               message,

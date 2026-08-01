@@ -11,7 +11,7 @@ class RestTimerLabel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (seconds <= 0) return const SizedBox.shrink();
+    if (seconds <= 0) return SizedBox.shrink();
 
     final timerState = ref.watch(restTimerProvider);
     final isActive = timerState.isActive && timerState.exerciseName == exerciseName;
@@ -23,29 +23,29 @@ class RestTimerLabel extends ConsumerWidget {
         : '$displaySeconds SEC';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
           Expanded(
-            child: Container(height: 1, color: isActive ? AppColors.orange : AppColors.border),
+            child: Container(height: 1, color: isActive ? context.colors.orange : context.colors.border),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.timer_outlined,
                   size: 14,
-                  color: isActive ? AppColors.orange : AppColors.textLight,
+                  color: isActive ? context.colors.orange : context.colors.textLight,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   isActive ? 'RESTING FOR $display' : 'REST FOR $display AFTER SET',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: isActive ? AppColors.orange : AppColors.textLight,
+                    color: isActive ? context.colors.orange : context.colors.textLight,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -53,7 +53,7 @@ class RestTimerLabel extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: Container(height: 1, color: isActive ? AppColors.orange : AppColors.border),
+            child: Container(height: 1, color: isActive ? context.colors.orange : context.colors.border),
           ),
         ],
       ),

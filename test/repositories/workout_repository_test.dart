@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trufit_bodamma/repositories/workout_repository.dart';
 import '../helpers/test_hive_setup.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   late WorkoutRepository repository;

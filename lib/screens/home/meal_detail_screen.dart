@@ -14,7 +14,7 @@ class MealDetailScreen extends ConsumerWidget {
   void _openAddSlotDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => const AddMealSlotDialog(),
+      builder: (_) => AddMealSlotDialog(),
     );
   }
 
@@ -53,72 +53,72 @@ class MealDetailScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: context.colors.scaffoldBg,
       appBar: AppBar(
         title: Text(title),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+        physics: BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 80),
         children: [
           // Header Card
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: isOverTarget 
-                ? const LinearGradient(colors: [AppColors.orange, AppColors.orange])
-                : AppColors.primaryGradient,
+                ? LinearGradient(colors: [context.colors.orange, context.colors.orange])
+                : context.colors.primaryGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: isOverTarget ? AppColors.orange.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.3),
+                  color: isOverTarget ? context.colors.orange.withValues(alpha: 0.3) : context.colors.primary.withValues(alpha: 0.3),
                   blurRadius: 16,
-                  offset: const Offset(0, 6),
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
               children: [
-                const Text('CALORIES', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                const SizedBox(height: 4),
+                Text('CALORIES', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('${dailyLog.totalCalories}', style: const TextStyle(color: AppColors.white, fontSize: 36, fontWeight: FontWeight.bold)),
-                    Text(' / $targetCalories Kcal', style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text('${dailyLog.totalCalories}', style: TextStyle(color: context.colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+                    Text(' / $targetCalories Kcal', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w600)),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: progressRatio,
                     minHeight: 8,
                     backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation(AppColors.white),
+                    valueColor: AlwaysStoppedAnimation(context.colors.white),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Expanded(child: _MacroInfo(label: 'Protein', current: dailyLog.totalProtein, target: profile.targetProteinG.toDouble(), color: AppColors.green)),
+                    Expanded(child: _MacroInfo(label: 'Protein', current: dailyLog.totalProtein, target: profile.targetProteinG.toDouble(), color: context.colors.green)),
                     Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.3)),
-                    Expanded(child: _MacroInfo(label: 'Carbs', current: dailyLog.totalCarbs, target: profile.targetCarbsG.toDouble(), color: AppColors.orange)),
+                    Expanded(child: _MacroInfo(label: 'Carbs', current: dailyLog.totalCarbs, target: profile.targetCarbsG.toDouble(), color: context.colors.orange)),
                     Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.3)),
-                    Expanded(child: _MacroInfo(label: 'Fat', current: dailyLog.totalFat, target: profile.targetFatG.toDouble(), color: AppColors.lavender)),
+                    Expanded(child: _MacroInfo(label: 'Fat', current: dailyLog.totalFat, target: profile.targetFatG.toDouble(), color: context.colors.lavender)),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           // Meal Slots
           ...slotsToDisplay.map((s) => _MealSlotCard(
@@ -128,16 +128,16 @@ class MealDetailScreen extends ConsumerWidget {
                 slotLog: dailyLog.customSlots[s.id],
               )),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           OutlinedButton.icon(
              onPressed: () => _openAddSlotDialog(context),
-             icon: const Icon(Icons.add_rounded, size: 18),
-             label: const Text('Add another meal', style: TextStyle(fontWeight: FontWeight.w600)),
+             icon: Icon(Icons.add_rounded, size: 18),
+             label: Text('Add another meal', style: TextStyle(fontWeight: FontWeight.w600)),
              style: OutlinedButton.styleFrom(
-               foregroundColor: AppColors.textMedium,
-               side: BorderSide(color: AppColors.border),
+               foregroundColor: context.colors.textMedium,
+               side: BorderSide(color: context.colors.border),
                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-               padding: const EdgeInsets.symmetric(vertical: 16),
+               padding: EdgeInsets.symmetric(vertical: 16),
              ),
           ),
         ],
@@ -157,13 +157,13 @@ class _MacroInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = (current / (target > 0 ? target : 1)).clamp(0.0, 1.0);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         children: [
-          Text('${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)}g', style: const TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-          const SizedBox(height: 6),
+          Text('${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)}g', style: TextStyle(color: context.colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+          SizedBox(height: 2),
+          Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
+          SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -197,34 +197,34 @@ class _MealSlotCard extends ConsumerWidget {
     final hasLog = slotLog != null && (slotLog!.items.isNotEmpty || slotLog!.photoPath != null || slotLog!.totalCalories > 0);
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: context.colors.primary.withValues(alpha: 0.05), blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                Text(slotEmoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Expanded(child: Text(slotName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark))),
+                Text(slotEmoji, style: TextStyle(fontSize: 16)),
+                SizedBox(width: 6),
+                Expanded(child: Text(slotName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textDark))),
                 if (hasLog)
-                  Text('${slotLog!.totalCalories} Kcal', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  Text('${slotLog!.totalCalories} Kcal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.primary)),
                 if (hasLog) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 20),
+                  SizedBox(width: 8),
+                  Icon(Icons.check_circle_rounded, color: context.colors.green, size: 20),
                 ] else if (slotLog != null) ...[
                   // Slot exists but is empty (e.g. one-off slot created but not logged yet)
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textMedium),
+                    icon: Icon(Icons.close_rounded, size: 20, color: context.colors.textMedium),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: BoxConstraints(),
                     onPressed: () {
                        // Delete one-off slot
                        ref.read(dailyMealLogProvider.notifier).clearMealSlot(slotId);
@@ -240,7 +240,7 @@ class _MealSlotCard extends ConsumerWidget {
               onTap: () => _openScanner(context, false), // reopen edit
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -251,45 +251,45 @@ class _MealSlotCard extends ConsumerWidget {
                             ? Image.network(slotLog!.photoPath!, width: 64, height: 64, fit: BoxFit.cover)
                             : Image.file(File(slotLog!.photoPath!), width: 64, height: 64, fit: BoxFit.cover),
                       ),
-                    if (slotLog!.photoPath != null) const SizedBox(width: 12),
+                    if (slotLog!.photoPath != null) SizedBox(width: 12),
                     Expanded(
                       child: Wrap(
                         spacing: 6,
                         runSpacing: 6,
                         children: slotLog!.items.map((item) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: AppColors.lavender, borderRadius: BorderRadius.circular(8)),
-                            child: Text('${item.name} · ${item.portion}', style: const TextStyle(fontSize: 11, color: AppColors.textDark)),
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: context.colors.lavender, borderRadius: BorderRadius.circular(8)),
+                            child: Text('${item.name} · ${item.portion}', style: TextStyle(fontSize: 11, color: context.colors.textDark)),
                           );
                         }).toList(),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textLight, size: 14),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_ios_rounded, color: context.colors.textLight, size: 14),
                   ],
                 ),
               ),
             )
           else
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () => _openScanner(context, false),
-                      icon: const Icon(Icons.camera_alt_rounded, size: 18),
-                      label: const Text('Scan Food'),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.white),
+                      icon: Icon(Icons.camera_alt_rounded, size: 18),
+                      label: Text('Scan Food'),
+                      style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary, foregroundColor: context.colors.white),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _openScanner(context, true),
-                      icon: const Icon(Icons.edit_note_rounded, size: 18),
-                      label: const Text('Add Manually'),
+                      icon: Icon(Icons.edit_note_rounded, size: 18),
+                      label: Text('Add Manually'),
                     ),
                   ),
                 ],
