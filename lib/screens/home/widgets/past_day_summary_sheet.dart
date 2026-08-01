@@ -20,7 +20,8 @@ class PastDaySummarySheet extends ConsumerWidget {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
     // Watch trigger for reactivity on updates
-    ref.watch(refreshTriggerProvider);
+    ref.watch(dailyLogProvider);
+    ref.watch(habitCompletionsProvider);
 
     // Synchronous reads from repos
     final dailyLog = ref.read(dailyLogRepoProvider).getOrCreate(dateStr);

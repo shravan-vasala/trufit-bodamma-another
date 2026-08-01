@@ -14,6 +14,7 @@ import 'repositories/coach_note_repository.dart';
 import 'services/health_connect_service.dart';
 import 'services/backup_service.dart';
 import 'services/notification_service.dart';
+import 'services/schema_migration_service.dart';
 import 'providers/app_providers.dart';
 import 'providers/reminders_provider.dart';
 import 'router/app_router.dart';
@@ -39,6 +40,9 @@ Future<void> main() async {
 
   // Initialize Hive
   await Hive.initFlutter();
+  
+  final prefs = await SharedPreferences.getInstance();
+  await SchemaMigrationService.runStartupMigrations(prefs);
 
   // Initialize all repositories
   final workoutRepo = WorkoutRepository();
@@ -66,7 +70,7 @@ Future<void> main() async {
     NotificationService().init(),
   ]);
 
-  final prefs = await SharedPreferences.getInstance();
+
 
   // Run weekly auto-backup (non-blocking)
   BackupService().autoBackup();

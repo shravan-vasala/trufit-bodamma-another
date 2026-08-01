@@ -227,8 +227,9 @@ class _DayCircle extends StatelessWidget {
     // Check if there's activity on this day
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     
-    // Watch the refresh trigger to rebuild when activity is logged
-    ref.watch(refreshTriggerProvider);
+    // Watch to rebuild when activity is logged on the selected date
+    ref.watch(dailyLogProvider);
+    ref.watch(habitCompletionsProvider);
     final hasActivity = ref.read(dailyLogRepoProvider).hasActivityOnDate(dateStr);
     final mealLog = ref.read(mealRepoProvider).getDailyLog(dateStr);
     final habitCompletions = ref.read(habitRepoProvider).getCompletions(dateStr);

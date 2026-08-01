@@ -63,7 +63,6 @@ class _PhotoViewerScreenState extends ConsumerState<PhotoViewerScreen> {
               final item = widget.photos[_currentIndex];
               
               await ref.read(mediaRepoProvider).deletePhoto(item.date, item.path);
-              ref.read(refreshTriggerProvider.notifier).state++;
               
               if (!mounted) return;
               

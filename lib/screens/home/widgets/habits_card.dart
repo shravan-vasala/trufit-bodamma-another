@@ -11,6 +11,10 @@ class HabitsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watches:
+    // - habitsProvider
+    // - habitCompletionsProvider
+    // - dailyLogProvider
     final habits = ref.watch(habitsProvider);
     final completions = ref.watch(habitCompletionsProvider);
     final dailyLog = ref.watch(dailyLogProvider);

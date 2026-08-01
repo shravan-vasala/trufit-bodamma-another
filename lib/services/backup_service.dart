@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'package:trufit_bodamma/services/schema_migration_service.dart';
+
 class BackupVerificationResult {
   final bool isValid;
   final int totalEntries;
@@ -53,7 +55,7 @@ class BackupService {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final manifestData = <String, dynamic>{
-        'schemaVersion': 1,
+        'schemaVersion': SchemaMigrationService.currentSchemaVersion,
         'appVersion': packageInfo.version,
         'createdAt': DateTime.now().toIso8601String(),
         'boxes': <String, dynamic>{},
@@ -204,9 +206,19 @@ class BackupService {
       final manifestData = jsonDecode(manifestContent) as Map<String, dynamic>;
 
       Map<String, dynamic> boxes = manifestData;
+      int manifestVersion = 1;
       if (manifestData.containsKey('schemaVersion')) {
+        manifestVersion = manifestData['schemaVersion'] as int? ?? 1;
         boxes = manifestData['boxes'] as Map<String, dynamic>? ?? {};
       }
+
+      if (manifestVersion > SchemaMigrationService.currentSchemaVersion) {
+        throw FormatException(
+            'Backup schema version ($manifestVersion) is newer than the app version (${SchemaMigrationService.currentSchemaVersion}). '
+            'Please update the app to restore this backup.');
+      }
+
+      boxes = SchemaMigrationService.runMigrationsForRestore(boxes, manifestVersion);
 
       // 0. Create pre-restore safety net
       final backupPath = await createBackup();
@@ -312,6 +324,8 @@ class BackupService {
       }
 
       return true;
+    } on FormatException {
+      rethrow;
     } catch (e) {
       debugPrint('Restore error: $e');
       return false;

@@ -3,12 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../steps_entry_dialog.dart';
+import '../../../widgets/async_error_card.dart';
 
-class SyncStatusSheet extends ConsumerWidget {
+class SyncStatusSheet extends ConsumerStatefulWidget {
   const SyncStatusSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SyncStatusSheet> createState() => _SyncStatusSheetState();
+}
+
+class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
+  String? _errorMessage;
+  String? _errorAction;
+
+  @override
+  Widget build(BuildContext context) {
     final dailyLog = ref.watch(dailyLogProvider);
     final steps = dailyLog.steps ?? 0;
 
@@ -99,18 +108,64 @@ class SyncStatusSheet extends ConsumerWidget {
                 ],
               ),
             ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 20),
+              AsyncErrorCard(
+                title: 'Sync Failed',
+                message: _errorMessage!,
+                actionText: _errorAction,
+                onRetry: _errorAction != null ? () async {
+                  final hcService = ref.read(healthConnectServiceProvider);
+                  if (_errorAction == 'Install Health Connect') {
+                    // Provide a way to get it, or just show message
+                    setState(() => _errorMessage = 'Please install Health Connect from the Play Store.');
+                  } else if (_errorAction == 'Grant Permission') {
+                    await hcService.requestPermission();
+                    if (mounted) setState(() => _errorMessage = null);
+                  }
+                } : null,
+              ),
+            ],
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 onPressed: () async {
+                  setState(() => _errorMessage = null);
                   final hcService = ref.read(healthConnectServiceProvider);
                   final dailyLogRepo = ref.read(dailyLogRepoProvider);
                   final habitRepo = ref.read(habitRepoProvider);
-                  await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
-                  ref.read(refreshTriggerProvider.notifier).state++;
-                  if (context.mounted) Navigator.of(context).pop();
+                  
+                  try {
+                    final isAvail = await hcService.isAvailable();
+                    if (!isAvail) {
+                      setState(() {
+                        _errorMessage = 'Health Connect is not available on this device.';
+                        _errorAction = 'Install Health Connect';
+                      });
+                      return;
+                    }
+                    
+                    final isAuth = await hcService.isAuthorized();
+                    if (!isAuth) {
+                      setState(() {
+                        _errorMessage = 'Missing permissions to read steps.';
+                        _errorAction = 'Grant Permission';
+                      });
+                      return;
+                    }
+
+                    await hcService.syncTodayAndAutoCompleteHabit(dailyLogRepo, habitRepo);
+                    ref.invalidate(dailyLogProvider);
+                    ref.invalidate(habitCompletionsProvider);
+                    if (context.mounted) Navigator.of(context).pop();
+                  } catch (e) {
+                    setState(() {
+                      _errorMessage = 'An unexpected error occurred during sync.';
+                      _errorAction = null;
+                    });
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

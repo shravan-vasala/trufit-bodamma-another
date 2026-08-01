@@ -45,7 +45,7 @@ class _ManageHabitsScreenState extends ConsumerState<ManageHabitsScreen> {
                 final item = list.removeAt(oldIndex);
                 list.insert(newIndex, item);
                 ref.read(habitRepoProvider).reorderHabits(list).then((_) {
-                  ref.read(refreshTriggerProvider.notifier).state++;
+                  ref.invalidate(habitsProvider);
                 });
               },
               itemBuilder: (context, index) {
@@ -112,7 +112,7 @@ class _HabitListTile extends ConsumerWidget {
                         onPressed: () {
                           ref.read(habitRepoProvider).deleteHabit(habit.id).then((_) {
                             if (!context.mounted) return;
-                            ref.read(refreshTriggerProvider.notifier).state++;
+                            ref.invalidate(habitsProvider);
                             Navigator.pop(ctx);
                           });
                         },
@@ -214,7 +214,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
 
     ref.read(habitRepoProvider).saveHabit(updated).then((_) {
       if (!mounted) return;
-      ref.read(refreshTriggerProvider.notifier).state++;
+      ref.invalidate(habitsProvider);
       Navigator.pop(context);
     });
   }

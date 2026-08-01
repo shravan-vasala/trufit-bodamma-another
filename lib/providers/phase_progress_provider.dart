@@ -27,7 +27,7 @@ final phaseProgressProvider = Provider<PhaseProgress>((ref) {
   final dailyLogRepo = ref.watch(dailyLogRepoProvider);
   
   // Rebuild if logs change
-  ref.watch(refreshTriggerProvider);
+  ref.watch(dailyLogProvider);
 
   const totalWeeks = 8;
   const requiredDaysPerWeek = 4;

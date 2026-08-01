@@ -26,7 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     // Initial sync when screen first loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncSteps();
+      _syncSteps(isManualRefresh: true);
       final profile = ref.read(profileProvider);
       if (profile.name.isEmpty) {
         _showNamePrompt();
@@ -80,11 +80,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _syncSteps();
+      _syncSteps(isManualRefresh: false);
     }
   }
 
-  Future<void> _syncSteps() async {
+  Future<void> _syncSteps({bool isManualRefresh = false}) async {
     final hcService = ref.read(healthConnectServiceProvider);
     final dailyLogRepo = ref.read(dailyLogRepoProvider);
     final habitRepo = ref.read(habitRepoProvider);
@@ -104,10 +104,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     }
 
     // Refresh UI
-    ref.read(refreshTriggerProvider.notifier).state++;
+    ref.invalidate(dailyLogProvider);
+    ref.invalidate(habitCompletionsProvider);
     
-    // Fetch dynamic coach note
-    ref.read(coachNoteProvider.notifier).fetchNote();
+    // Fetch dynamic coach note only on manual refresh
+    if (isManualRefresh) {
+      ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
+    }
   }
 
   Widget _buildSectionHeader(String title, {IconData? icon}) {
@@ -142,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: _syncSteps,
+          onRefresh: () => _syncSteps(isManualRefresh: true),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             child: Column(

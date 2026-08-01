@@ -8,6 +8,9 @@ import '../../../providers/app_providers.dart';
 import '../../../services/gemini_food_service.dart';
 import '../../../models/daily_meal_log.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../../widgets/async_error_card.dart';
+import '../../../widgets/offline_banner.dart';
 
 class PhotoCalorieScannerSheet extends ConsumerStatefulWidget {
   final String slotId;
@@ -28,6 +31,8 @@ class _PhotoCalorieScannerSheetState
   bool _isAnalyzing = false;
   bool _analysisComplete = false;
   String? _confidence;
+  String? _errorMessage;
+  bool _isOffline = false;
 
   List<MealItemLog> _items = [];
   int _totalCalories = 0;
@@ -42,6 +47,14 @@ class _PhotoCalorieScannerSheetState
       _analysisComplete = true;
       _items = [];
     }
+    _checkConnectivity();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    setState(() {
+      _isOffline = connectivityResult.contains(ConnectivityResult.none);
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -52,6 +65,7 @@ class _PhotoCalorieScannerSheetState
       _selectedImage = File(picked.path);
       _isAnalyzing = true;
       _analysisComplete = false;
+      _errorMessage = null;
       _items = [];
     });
 
@@ -98,22 +112,24 @@ class _PhotoCalorieScannerSheetState
         _showError('AI could not analyze the image.');
       }
     } catch (e) {
-      _showError(e.toString().replaceAll('Exception: ', ''));
+      String msg = e.toString();
+      if (msg.contains('FormatException') || msg.contains('json')) {
+        _showError('Couldn\'t analyze, try manual entry.');
+      } else if (msg.contains('api key') || msg.contains('API key')) {
+        _showError('Invalid API key.');
+      } else if (msg.contains('SocketException') || msg.contains('network')) {
+        _showError('Network error. Please check your connection.');
+      } else {
+        _showError(msg.replaceAll('Exception: ', ''));
+      }
     }
   }
 
   void _showError(String message) {
     setState(() {
       _isAnalyzing = false;
-      _selectedImage = null;
+      _errorMessage = message;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.red,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   void _removeItem(int index) {
@@ -247,6 +263,11 @@ class _PhotoCalorieScannerSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_isOffline && !_analysisComplete)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12.0),
+              child: OfflineBanner(),
+            ),
           Center(
             child: Container(
               width: 40,
@@ -310,6 +331,23 @@ class _PhotoCalorieScannerSheetState
                   ),
                 ],
               ),
+            ),
+          ] else if (_errorMessage != null) ...[
+            AsyncErrorCard(
+              title: 'Analysis Failed',
+              message: _errorMessage!,
+              onRetry: () => _pickImage(ImageSource.gallery), // Give them a chance to try again easily
+              actionText: 'Try Another Photo',
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _errorMessage = null;
+                  _analysisComplete = true;
+                });
+              },
+              child: const Text('Enter Manually'),
             ),
           ] else if (_selectedImage != null) ...[
             ClipRRect(

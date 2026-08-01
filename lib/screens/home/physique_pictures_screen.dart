@@ -72,7 +72,6 @@ class _PhysiquePicturesScreenState
                 _selectedPhotos.clear();
                 _isSelectionMode = false;
               });
-              ref.read(refreshTriggerProvider.notifier).state++;
             },
             child: const Text('Delete', style: TextStyle(color: AppColors.red)),
           ),
@@ -377,6 +376,9 @@ class _PhysiquePicturesScreenState
                 );
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -424,7 +426,6 @@ class _PhysiquePicturesScreenState
     ).then((_) {
       // Re-fetch in case a photo was deleted
       setState(() {});
-      ref.read(refreshTriggerProvider.notifier).state++;
     });
   }
 
@@ -492,7 +493,7 @@ class _PhysiquePicturesScreenState
 
     // Prompt for metadata (Pose, Weight, Note)
     final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final currentWeight = ref.read(dailyLogRepoProvider).getDailyLog(date).weight;
+    final currentWeight = ref.read(dailyLogRepoProvider).getLog(date)?.weight;
 
     final metadata = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -514,7 +515,7 @@ class _PhysiquePicturesScreenState
             ),
             const SizedBox(height: 16),
             _CaptureMetadataForm(
-              initialWeight: currentWeight,
+              initialWeight: currentWeight ?? 0.0,
               onComplete: (data) => Navigator.pop(ctx, data),
             ),
           ],

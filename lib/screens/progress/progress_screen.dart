@@ -119,7 +119,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           workoutDayId: log.workoutDayId,
         );
         await repo.saveLog(newLog);
-        ref.read(refreshTriggerProvider.notifier).state++;
+        ref.invalidate(dailyLogsRangeProvider);
+        ref.invalidate(dailyLogProvider);
       }
     }
   }

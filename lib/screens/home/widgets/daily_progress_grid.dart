@@ -15,7 +15,13 @@ class DailyProgressGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dailyLog = ref.watch(dailyLogProvider);
+    // Watches:
+    // - dailyLogProvider.select((l) => l.weight)
+    final weight = ref.watch(dailyLogProvider.select((l) => l.weight));
+    final profile = ref.watch(profileProvider);
+
+    final displayWeight = weight ?? profile.targetWeight;
+    final wStr = displayWeight != null ? displayWeight.toStringAsFixed(1) : '--';
     
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
@@ -71,8 +77,8 @@ class DailyProgressGrid extends ConsumerWidget {
                     icon: Icons.monitor_weight_rounded,
                     color: AppColors.lavenderCard,
                     iconColor: AppColors.primary,
-                    subtitle: dailyLog.weight != null
-                        ? '${dailyLog.weight!.toStringAsFixed(1)} kg'
+                    subtitle: weight != null
+                        ? '$wStr kg'
                         : (isFuture ? 'No data' : 'Tap to log'),
                     onTap: isFuture
                         ? () {}
@@ -168,11 +174,13 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
       // Backfill in background
       if (!hcService.isBackfillDone) {
         hcService.backfillLast90Days(dailyLogRepo, habitRepo).then((_) {
-          ref.read(refreshTriggerProvider.notifier).state++;
+          ref.invalidate(dailyLogProvider);
+          ref.invalidate(habitCompletionsProvider);
         });
       }
       
-      ref.read(refreshTriggerProvider.notifier).state++;
+      ref.invalidate(dailyLogProvider);
+      ref.invalidate(habitCompletionsProvider);
     }
   }
 
@@ -236,18 +244,21 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
       );
     }
 
-    // Normal steps card
-    final dailyLog = ref.watch(dailyLogProvider);
+    // Watches:
+    // - dailyLogProvider.select((l) => l.steps)
+    // - dailyLogProvider.select((l) => l.stepsSource)
+    final steps = ref.watch(dailyLogProvider.select((l) => l.steps));
+    final stepsSource = ref.watch(dailyLogProvider.select((l) => l.stepsSource));
 
     // Determine subtitle
     String stepsSubtitle;
     String? sourceHint;
 
-    if (dailyLog.steps != null) {
-      stepsSubtitle = '${dailyLog.steps!} steps';
-      if (dailyLog.stepsSource == 'healthConnect') {
+    if (steps != null) {
+      stepsSubtitle = '$steps steps';
+      if (stepsSource == 'healthConnect') {
         sourceHint = 'Synced via Samsung Health';
-      } else if (dailyLog.stepsSource == 'manual') {
+      } else if (stepsSource == 'manual') {
         sourceHint = 'manual';
       }
     } else {

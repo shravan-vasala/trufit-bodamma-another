@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
+import '../../../widgets/async_error_card.dart';
 
 class CoachNotesCard extends ConsumerWidget {
   const CoachNotesCard({super.key});
@@ -193,9 +194,13 @@ class CoachNotesCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              error: (err, stack) => Text(
-                'Oops! Couldn\'t generate note today.\n$err',
-                style: const TextStyle(fontSize: 13, color: AppColors.textMedium),
+              error: (err, stack) => AsyncErrorCard(
+                title: 'Coach is offline',
+                message: 'Couldn\'t connect to AI coach. Keep up the great work today!',
+                actionText: 'Retry',
+                onRetry: () {
+                  ref.read(coachNoteProvider.notifier).fetchNote(forceRefresh: true);
+                },
               ),
             ),
           ],

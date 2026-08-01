@@ -116,7 +116,6 @@ class ExerciseCompletionsNotifier extends StateNotifier<Map<String, bool>> {
   void toggle(String exerciseName) {
     _repo.toggleExerciseCompletion(_date, _dayId, exerciseName);
     state = _repo.getExerciseCompletions(_date, _dayId);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -132,8 +131,6 @@ final exerciseCompletionsProvider = StateNotifierProvider.family<
 final mealPlanProvider = Provider<MealPlan?>((ref) {
   final repo = ref.watch(mealRepoProvider);
   final profile = ref.watch(profileProvider);
-  // Re-evaluate if refreshTrigger changes
-  ref.watch(refreshTriggerProvider);
   
   final activePlanId = profile.activeMealPlan ?? 'standard_plan';
   return repo.getMealPlan(activePlanId);
@@ -150,13 +147,11 @@ class DailyMealLogNotifier extends StateNotifier<DailyMealLog> {
   Future<void> saveMealSlot(String slotName, MealSlotLog slotLog) async {
     await _repo.saveMealSlot(_date, slotName, slotLog);
     state = _repo.getDailyLog(_date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> clearMealSlot(String slotName) async {
     await _repo.clearMealSlot(_date, slotName);
     state = _repo.getDailyLog(_date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -178,7 +173,6 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
   Future<void> updateWeight(double weight) async {
     await _repo.updateWeight(state.date, weight);
     state = _repo.getOrCreate(state.date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateSteps(int steps, {String? source}) async {
@@ -186,7 +180,6 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
     state = _repo.getOrCreate(state.date);
     _ref.read(stepsSourceProvider.notifier).state = 
         (source == 'healthConnect') ? StepsSource.healthConnect : StepsSource.manual;
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateSleep(double hours, {String? source}) async {
@@ -203,8 +196,7 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
         await habitRepo.setCompletion(state.date, habit.id, false);
       }
     }
-
-    _ref.read(refreshTriggerProvider.notifier).state++;
+    _ref.invalidate(habitCompletionsProvider);
   }
 
   Future<void> clearSleep() async {
@@ -217,14 +209,12 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
     for (final habit in allHabits.where((h) => h.type == HabitType.autoSleep)) {
       await habitRepo.setCompletion(state.date, habit.id, false);
     }
-    
-    _ref.read(refreshTriggerProvider.notifier).state++;
+    _ref.invalidate(habitCompletionsProvider);
   }
 
   Future<void> updateBodyFat(double bodyFat) async {
     await _repo.updateBodyFat(state.date, bodyFat);
     state = _repo.getOrCreate(state.date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> markWorkoutCompleted(String dayId) async {
@@ -245,8 +235,6 @@ class DailyLogNotifier extends StateNotifier<DailyLog> {
         currentPhaseWeek: 1,
       ));
     }
-
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -254,7 +242,6 @@ final dailyLogProvider =
     StateNotifierProvider<DailyLogNotifier, DailyLog>((ref) {
   final repo = ref.watch(dailyLogRepoProvider);
   final date = ref.watch(dateStringProvider);
-  ref.watch(refreshTriggerProvider);
   return DailyLogNotifier(repo, date, ref);
 });
 
@@ -275,19 +262,16 @@ class HabitCompletionsNotifier extends StateNotifier<HabitCompletion> {
   Future<void> toggle(String habitId) async {
     await _repo.toggleCheckboxCompletion(_date, habitId);
     state = _repo.getCompletions(_date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> updateProgress(String habitId, double progress) async {
     await _repo.updateProgress(_date, habitId, progress);
     state = _repo.getCompletions(_date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 
   Future<void> setOverride(String habitId, String? overrideValue) async {
     await _repo.setOverride(_date, habitId, overrideValue);
     state = _repo.getCompletions(_date);
-    _ref.read(refreshTriggerProvider.notifier).state++;
   }
 }
 
@@ -295,7 +279,6 @@ final habitCompletionsProvider =
     StateNotifierProvider<HabitCompletionsNotifier, HabitCompletion>((ref) {
   final repo = ref.watch(habitRepoProvider);
   final date = ref.watch(dateStringProvider);
-  ref.watch(refreshTriggerProvider);
   return HabitCompletionsNotifier(repo, date, ref);
 });
 
@@ -418,9 +401,8 @@ final dailyMealLogsRangeProvider =
   return logs;
 });
 
-// ── Refresh trigger ──
-// Increment this to force providers to rebuild after data changes
-final refreshTriggerProvider = StateProvider<int>((ref) => 0);
+// ── Refresh trigger removed ──
+// Explicit ref.invalidate() is now used.
 
 // ── Coach Notes ──
 class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {

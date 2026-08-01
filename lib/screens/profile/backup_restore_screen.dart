@@ -197,7 +197,6 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                     if (!mounted) return;
 
                     if (success) {
-                      ref.read(refreshTriggerProvider.notifier).state++;
                       showDialog(
                         context: context,
                         barrierDismissible: false,
@@ -213,8 +212,9 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                     }
                   } catch (e) {
                     if (mounted) {
+                      final errorMsg = e.toString().replaceFirst('FormatException: ', '');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Restore error: $e'), backgroundColor: AppColors.red),
+                        SnackBar(content: Text('Restore error: $errorMsg'), backgroundColor: AppColors.red),
                       );
                     }
                   } finally {
