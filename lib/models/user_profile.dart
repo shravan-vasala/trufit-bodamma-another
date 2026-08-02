@@ -1,5 +1,7 @@
 class UserProfile {
   final String name;
+  /// Display name for the AI / notes coach (e.g. "Shravan"). Empty → generic "Coach".
+  final String coachName;
   final String? photoPath;
   final double height; // in cm
   final double? targetWeight; // in kg
@@ -19,6 +21,7 @@ class UserProfile {
   final int currentPhaseWeek;
   UserProfile({
     this.name = '',
+    this.coachName = '',
     this.photoPath,
     this.height = 160,
     this.targetWeight,
@@ -43,6 +46,14 @@ class UserProfile {
     this.currentPhaseWeek = 1,
   });
 
+  /// Title shown on Home coach notes (e.g. "Coach Shravan").
+  String get coachDisplayName {
+    final n = coachName.trim();
+    if (n.isEmpty) return 'Coach';
+    if (n.toLowerCase().startsWith('coach ')) return n;
+    return 'Coach $n';
+  }
+
   double get heightInMeters => height / 100;
 
   double? computeBmi(double? weight) {
@@ -66,6 +77,7 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       name: json['name'] as String? ?? '',
+      coachName: json['coachName'] as String? ?? '',
       photoPath: json['photoPath'] as String?,
       height: (json['height'] as num?)?.toDouble() ?? 160,
       targetWeight: (json['targetWeight'] as num?)?.toDouble(),
@@ -99,6 +111,7 @@ class UserProfile {
 
   Map<String, dynamic> toJson() => {
         'name': name,
+        'coachName': coachName,
         if (photoPath != null) 'photoPath': photoPath,
         'height': height,
         if (targetWeight != null) 'targetWeight': targetWeight,
@@ -119,6 +132,7 @@ class UserProfile {
 
   UserProfile copyWith({
     String? name,
+    String? coachName,
     String? photoPath,
     double? height,
     double? targetWeight,
@@ -141,6 +155,7 @@ class UserProfile {
   }) {
     return UserProfile(
       name: name ?? this.name,
+      coachName: coachName ?? this.coachName,
       photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       height: height ?? this.height,
       targetWeight: targetWeight ?? this.targetWeight,

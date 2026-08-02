@@ -1,10 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:archive/archive.dart';
-import 'package:archive/archive_io.dart';
 import 'package:csv/csv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
 import '../models/daily_log.dart';
 import '../models/exercise_log.dart';
 import '../models/habit.dart';
@@ -16,44 +15,25 @@ class CsvExportService {
     try {
       final archive = Archive();
 
-      // 1. Export Daily Logs
-      final dailyLogsCsv = await _exportDailyLogs(startDate);
-      if (dailyLogsCsv != null) {
-        archive.addFile(ArchiveFile('daily_logs.csv', dailyLogsCsv.length, utf8.encode(dailyLogsCsv)));
+      Future<void> addCsv(String name, String? csvText) async {
+        if (csvText == null || csvText.isEmpty) return;
+        final bytes = utf8.encode(csvText);
+        archive.addFile(ArchiveFile.bytes(name, bytes));
       }
 
-      // 2. Export Exercise Logs
-      final exerciseLogsCsv = await _exportExerciseLogs(startDate);
-      if (exerciseLogsCsv != null) {
-        archive.addFile(ArchiveFile('exercise_logs.csv', exerciseLogsCsv.length, utf8.encode(exerciseLogsCsv)));
-      }
+      await addCsv('daily_logs.csv', await _exportDailyLogs(startDate));
+      await addCsv('exercise_logs.csv', await _exportExerciseLogs(startDate));
+      await addCsv('habits.csv', await _exportHabitCompletions(startDate));
+      await addCsv('body_stats.csv', await _exportBodyStats(startDate));
+      await addCsv('meals.csv', await _exportMeals(startDate));
 
-      // 3. Export Habit Completions
-      final habitsCsv = await _exportHabitCompletions(startDate);
-      if (habitsCsv != null) {
-        archive.addFile(ArchiveFile('habits.csv', habitsCsv.length, utf8.encode(habitsCsv)));
-      }
+      if (archive.isEmpty) return null;
 
-      // 4. Export Body Stats
-      final bodyStatsCsv = await _exportBodyStats(startDate);
-      if (bodyStatsCsv != null) {
-        archive.addFile(ArchiveFile('body_stats.csv', bodyStatsCsv.length, utf8.encode(bodyStatsCsv)));
-      }
+      final zipData = ZipEncoder().encode(archive);
 
-      // 5. Export Meals
-      final mealsCsv = await _exportMeals(startDate);
-      if (mealsCsv != null) {
-        archive.addFile(ArchiveFile('meals.csv', mealsCsv.length, utf8.encode(mealsCsv)));
-      }
-
-      // Encode archive
-      final zipEncoder = ZipEncoder();
-      final zipData = zipEncoder.encode(archive);
-      if (zipData == null) return null;
-
-      // Save to temp dir
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'trufit_export_${DateTime.now().millisecondsSinceEpoch}.zip';
+      final fileName =
+          'trufit_export_${DateTime.now().millisecondsSinceEpoch}.zip';
       final zipFile = File('${tempDir.path}/$fileName');
       await zipFile.writeAsBytes(zipData);
 
@@ -61,6 +41,17 @@ class CsvExportService {
     } catch (e) {
       print('Export error: $e');
       return null;
+    }
+  }
+
+  Future<Box<String>> _openBox(String boxName) async {
+    if (Hive.isBoxOpen(boxName)) {
+      return Hive.box<String>(boxName);
+    }
+    try {
+      return await Hive.openBox<String>(boxName);
+    } catch (_) {
+      return Hive.box<String>(boxName);
     }
   }
 
@@ -75,7 +66,7 @@ class CsvExportService {
   }
 
   Future<String?> _exportDailyLogs(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('daily_logs');
+    final box = await _openBox('daily_logs');
     final rows = <List<dynamic>>[];
     
     // Headers
@@ -107,7 +98,7 @@ class CsvExportService {
   }
 
   Future<String?> _exportExerciseLogs(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('exercise_logs');
+    final box = await _openBox('exercise_logs');
     final rows = <List<dynamic>>[];
     
     rows.add(['Date', 'Exercise', 'Set', 'Reps', 'Weight']);
@@ -136,8 +127,8 @@ class CsvExportService {
   }
 
   Future<String?> _exportHabitCompletions(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('habit_completions');
-    final habitBox = await Hive.openBox<String>('habit_config');
+    final box = await _openBox('habit_completions');
+    final habitBox = await _openBox('habit_config');
     
     final habits = <String, Habit>{};
     for (final hKey in habitBox.keys) {
@@ -179,7 +170,7 @@ class CsvExportService {
   }
 
   Future<String?> _exportBodyStats(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('body_stats');
+    final box = await _openBox('body_stats');
     final rows = <List<dynamic>>[];
     
     rows.add(['Date', 'Unit', 'Waist', 'Hips', 'Chest', 'Left Arm', 'Right Arm', 'Left Thigh', 'Right Thigh', 'Neck']);
@@ -211,7 +202,7 @@ class CsvExportService {
   }
 
   Future<String?> _exportMeals(DateTime? startDate) async {
-    final box = await Hive.openBox<String>('daily_meal_logs');
+    final box = await _openBox('daily_meal_logs');
     final rows = <List<dynamic>>[];
     
     rows.add(['Date', 'Slot', 'Total Calories', 'Total Protein (g)', 'Total Carbs (g)', 'Total Fat (g)']);

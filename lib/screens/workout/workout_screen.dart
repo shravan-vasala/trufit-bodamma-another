@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
@@ -176,7 +177,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                 child: LinearProgressIndicator(
                   value:
                       totalExercises > 0 ? completedExercises / totalExercises : 0,
-                  backgroundColor: context.colors.lavender,
+                  backgroundColor: context.colors.primary.withValues(alpha: 0.12),
                   valueColor:
                       AlwaysStoppedAnimation<Color>(context.colors.green),
                   minHeight: 6,
@@ -390,32 +391,50 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
   void _executeFinish(BuildContext context, WidgetRef ref, String dayId) {
     _persistWorkoutFinished(ref, dayId);
+    HapticFeedback.mediumImpact();
+
+    final name = ref.read(profileProvider).name.trim();
+    final title = name.isEmpty ? 'Workout complete!' : 'Nice work, $name!';
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: context.colors.card,
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('🎉', style: TextStyle(fontSize: 64)),
+              Container(
+                padding: EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: context.colors.green.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.emoji_events_rounded,
+                  color: context.colors.green,
+                  size: 40,
+                ),
+              ),
               SizedBox(height: 16),
               Text(
-                'Workout Complete!',
+                title,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: context.colors.textDark,
                 ),
+                textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
               Text(
-                'Great job! Keep up the consistency.',
+                'Session saved. Head home to finish habits and meals if you have any left.',
                 style: TextStyle(
                   fontSize: 14,
                   color: context.colors.textMedium,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -427,7 +446,22 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     Navigator.of(ctx).pop();
                     context.go('/home');
                   },
-                  child: Text('Back to Home'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colors.primary,
+                    foregroundColor: context.colors.onPrimary,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    'Back to Home',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.colors.onPrimary,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -456,7 +490,7 @@ class _SectionWidget extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: context.colors.lavender,
+        color: context.colors.lavenderCard,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -482,7 +516,7 @@ class _SectionWidget extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: context.colors.primary,
-                    letterSpacing: 1,
+                    letterSpacing: 1.2,
                   ),
                 ),
                 Spacer(),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/habit.dart';
+import '../../utils/habit_icons.dart';
 
 class ManageHabitsScreen extends ConsumerStatefulWidget {
   const ManageHabitsScreen({super.key});
@@ -100,7 +101,11 @@ class _HabitListTile extends ConsumerWidget {
       color: context.colors.card,
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
-        leading: Text(habit.icon, style: TextStyle(fontSize: 24)),
+        leading: Icon(
+          HabitIcons.resolve(habit.icon),
+          color: context.colors.primary,
+          size: 28,
+        ),
         title: Text(
           habit.name,
           style: TextStyle(
@@ -201,11 +206,9 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
   final _stepCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
 
-  String _selectedEmoji = '✅';
+  String _selectedIcon = 'check';
   HabitType _type = HabitType.checkbox;
   bool _isWaterHabit = false;
-
-  final _emojis = ['✅', '🧘', '😴', '🚶', '💧', '📚', '💊', '🍎', '🏃', '🏋️', '🚭', '🥦'];
 
   @override
   void initState() {
@@ -214,7 +217,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
       final h = widget.habit!;
       _isWaterHabit = h.id == 'water';
       _nameCtrl.text = h.name;
-      _selectedEmoji = h.icon;
+      _selectedIcon = HabitIcons.normalize(h.icon);
       _type = h.type;
       _targetCtrl.text = h.target.toString();
       _stepCtrl.text = h.step.toString();
@@ -272,7 +275,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
     final updated = Habit(
       id: id,
       name: name,
-      icon: _selectedEmoji,
+      icon: HabitIcons.normalize(_selectedIcon),
       type: type,
       target: target,
       step: step,
@@ -343,7 +346,7 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
             ],
             SizedBox(height: 16),
             Text(
-              'Emoji',
+              'Icon',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: context.colors.textMedium,
@@ -353,12 +356,14 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _emojis.map((emoji) {
-                final isSelected = emoji == _selectedEmoji;
+              children: HabitIcons.options.map((opt) {
+                final isSelected = opt.id == _selectedIcon;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedEmoji = emoji),
+                  onTap: () => setState(() => _selectedIcon = opt.id),
                   child: Container(
-                    padding: EdgeInsets.all(8),
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? context.colors.primary.withValues(alpha: 0.2)
@@ -370,7 +375,13 @@ class _HabitEditorDialogState extends ConsumerState<_HabitEditorDialog> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(emoji, style: TextStyle(fontSize: 20)),
+                    child: Icon(
+                      opt.icon,
+                      size: 22,
+                      color: isSelected
+                          ? context.colors.primary
+                          : context.colors.textMedium,
+                    ),
                   ),
                 );
               }).toList(),

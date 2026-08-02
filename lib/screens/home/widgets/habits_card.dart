@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/layout_insets.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
+import '../../../utils/habit_icons.dart';
+import '../../../widgets/surface_card.dart';
+import '../../../widgets/app_bottom_sheet.dart';
 import '../sleep_entry_dialog.dart';
 
 class HabitsCard extends ConsumerWidget {
@@ -11,10 +15,6 @@ class HabitsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watches:
-    // - habitsProvider
-    // - habitCompletionsProvider
-    // - dailyLogProvider
     final habits = ref.watch(habitsProvider);
     final completions = ref.watch(habitCompletionsProvider);
     final dailyLog = ref.watch(dailyLogProvider);
@@ -24,19 +24,9 @@ class HabitsCard extends ConsumerWidget {
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: context.colors.card,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: context.colors.textLight.withValues(alpha: 0.1),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
+    return SurfaceCard(
+      margin: EdgeInsets.symmetric(horizontal: kScreenPadding),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -57,7 +47,11 @@ class HabitsCard extends ConsumerWidget {
             Padding(
               padding: EdgeInsets.all(20),
               child: Center(
-                child: Text('No habits yet. Tap the edit icon to add some!', style: TextStyle(color: context.colors.textMedium)),
+                child: Text(
+                  'No habits yet. Tap edit to add a few — water, sleep, or a walk.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.colors.textMedium, height: 1.35),
+                ),
               ),
             ),
         ],
@@ -161,11 +155,8 @@ class _HabitItem extends ConsumerWidget {
                                 GestureDetector(
                                   onTap: (habit.type == HabitType.autoSleep && !isFuture)
                                       ? () {
-                                          showModalBottomSheet(
+                                          showAppBottomSheet(
                                             context: context,
-                                            useRootNavigator: true,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
                                             builder: (_) => SleepEntryDialog(),
                                           );
                                         }
@@ -190,13 +181,24 @@ class _HabitItem extends ConsumerWidget {
                                         color: context.colors.orange.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: Text(
-                                        '🔥 $streak Day Streak',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.colors.orange,
-                                        ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.local_fire_department_rounded,
+                                            size: 12,
+                                            color: context.colors.orange,
+                                          ),
+                                          SizedBox(width: 2),
+                                          Text(
+                                            '$streak Day Streak',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.colors.orange,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     );
                                   }
@@ -236,7 +238,7 @@ class _HabitItem extends ConsumerWidget {
                 ],
               ),
               
-            _buildIcon(context, habit.name, habit.icon),
+            _buildIcon(context, habit.icon),
           ],
         ),
       ),
@@ -309,21 +311,12 @@ class _HabitItem extends ConsumerWidget {
     );
   }
 
-  Widget _buildIcon(BuildContext context, String name, String fallbackEmoji) {
-    IconData? outlineIcon;
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('sleep')) {
-      outlineIcon = Icons.bed_outlined;
-    } else if (lowerName.contains('steps') || lowerName.contains('walk')) {
-      outlineIcon = Icons.directions_walk_rounded;
-    } else if (lowerName.contains('water') || lowerName.contains('hydrate')) {
-      outlineIcon = Icons.local_drink_outlined;
-    }
-    
-    if (outlineIcon != null) {
-      return Icon(outlineIcon, color: context.colors.textLight, size: 24);
-    }
-    return Text(fallbackEmoji, style: TextStyle(fontSize: 20));
+  Widget _buildIcon(BuildContext context, String iconKey) {
+    return Icon(
+      HabitIcons.resolve(iconKey),
+      color: context.colors.textLight,
+      size: 24,
+    );
   }
 
   String _formatProgress() {
@@ -388,7 +381,7 @@ class _MiniButton extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: context.colors.lavender,
+          color: context.colors.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, size: 16, color: context.colors.primary),

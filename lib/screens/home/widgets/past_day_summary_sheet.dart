@@ -218,7 +218,7 @@ class PastDaySummarySheet extends ConsumerWidget {
                   _SummaryRow(
                     icon: Icons.restaurant_rounded,
                     color: context.colors.green,
-                    title: '$emojiPrefix$completedMeals/$totalMealsTarget logged · ${mealLog.totalCalories} / ${profile.targetCalories} Kcal',
+                    title: '$emojiPrefix$completedMeals/$totalMealsTarget logged · ${mealLog.totalCalories} / ${profile.targetCalories} kcal',
                     subtitle: 'P: ${mealLog.totalProtein}g   C: ${mealLog.totalCarbs}g   F: ${mealLog.totalFat}g',
                     isDone: completedMeals == totalMealsTarget,
                     onTap: () {

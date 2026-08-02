@@ -12,19 +12,21 @@ class RemindersScreen extends ConsumerStatefulWidget {
 
 class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   Future<void> _pickTime(BuildContext context, TimeOfDay initialTime, Function(TimeOfDay) onPicked) async {
+    final parentTheme = Theme.of(context);
     final picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
-      builder: (context, child) {
+      builder: (ctx, child) {
+        if (child == null) return const SizedBox.shrink();
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+          data: parentTheme.copyWith(
+            colorScheme: parentTheme.colorScheme.copyWith(
               primary: context.colors.primary,
-              onPrimary: Colors.white,
+              onPrimary: context.colors.onPrimary,
               onSurface: context.colors.textDark,
             ),
           ),
-          child: child!,
+          child: child,
         );
       },
     );

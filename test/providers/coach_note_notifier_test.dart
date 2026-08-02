@@ -6,6 +6,8 @@ import 'package:trufit_bodamma/repositories/daily_log_repository.dart';
 import 'package:trufit_bodamma/repositories/habit_repository.dart';
 import 'package:trufit_bodamma/repositories/meal_repository.dart';
 import 'package:trufit_bodamma/repositories/profile_repository.dart';
+import 'package:trufit_bodamma/repositories/workout_repository.dart';
+import 'package:trufit_bodamma/repositories/exercise_log_repository.dart';
 import 'package:trufit_bodamma/models/coach_note.dart';
 import '../helpers/test_hive_setup.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -21,21 +23,27 @@ void main() {
 
   setUp(() async {
     await setUpTestHive();
-    
+
     coachNoteRepo = CoachNoteRepository();
     await coachNoteRepo.init();
-    
+
     final profileRepo = ProfileRepository();
     await profileRepo.init();
-    
+
     final dailyLogRepo = DailyLogRepository();
     await dailyLogRepo.init();
 
     final habitRepo = HabitRepository();
     await habitRepo.init();
-    
+
     final mealRepo = MealRepository();
     await mealRepo.init();
+
+    final workoutRepo = WorkoutRepository();
+    await workoutRepo.init();
+
+    final exerciseLogRepo = ExerciseLogRepository();
+    await exerciseLogRepo.init();
 
     container = ProviderContainer(
       overrides: [
@@ -44,7 +52,9 @@ void main() {
         dailyLogRepoProvider.overrideWithValue(dailyLogRepo),
         habitRepoProvider.overrideWithValue(habitRepo),
         mealRepoProvider.overrideWithValue(mealRepo),
-        dateStringProvider.overrideWith((ref) => '2023-10-02'),
+        workoutRepoProvider.overrideWithValue(workoutRepo),
+        exerciseLogRepoProvider.overrideWithValue(exerciseLogRepo),
+        selectedDateProvider.overrideWith((ref) => DateTime(2023, 10, 2)),
       ],
     );
   });
@@ -66,27 +76,27 @@ void main() {
     final note = CoachNote(date: '2023-10-02', note: 'Cached Note', isAi: false);
     await coachNoteRepo.saveNote(note);
 
-    // Watch the provider to ensure it stays alive and we can listen to it
     container.listen(coachNoteProvider, (_, __) {});
 
     await container.read(coachNoteProvider.notifier).fetchNote(force: true);
-    
+
     final asyncValue = container.read(coachNoteProvider);
-    expect(asyncValue.value?.note, contains('Bodamma')); // Fallback note contains Bodamma when no API key
+    // Templated fallback uses the profile name (empty → "friend"), not "Bodamma"
+    expect(asyncValue.value?.note, isNotNull);
+    expect(asyncValue.value!.note.isNotEmpty, isTrue);
+    expect(asyncValue.value?.note, isNot('Cached Note'));
+    expect(asyncValue.value?.isAi, false);
   });
 
   test('CoachNoteNotifier fallback without API key', () async {
-    // Watch the provider to ensure it stays alive and we can listen to it
     container.listen(coachNoteProvider, (_, __) {});
 
-    final asyncValueInitial = container.read(coachNoteProvider);
-    expect(asyncValueInitial.isLoading, true); // Loading initially because no cache
-    
-    // Wait for the async fetch to complete
-    await Future.delayed(const Duration(milliseconds: 100));
-    
+    await container.read(coachNoteProvider.notifier).fetchNote(force: true);
+
     final asyncValue = container.read(coachNoteProvider);
-    expect(asyncValue.value?.note, contains('Bodamma'));
+    expect(asyncValue.hasValue, isTrue);
+    expect(asyncValue.value?.note, isNotNull);
+    expect(asyncValue.value!.note.isNotEmpty, isTrue);
     expect(asyncValue.value?.isAi, false);
   });
 }

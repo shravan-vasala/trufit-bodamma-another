@@ -140,10 +140,14 @@ class _ScoreHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String message;
     if (score >= 90) {
-      message = 'Crushing it! 🔥';
-    } else if (score >= 70) message = 'Great week! 👏';
-    else if (score >= 50) message = 'Good effort! 👍';
-    else message = 'Room to grow 🌱';
+      message = 'Crushing it!';
+    } else if (score >= 70) {
+      message = 'Great week!';
+    } else if (score >= 50) {
+      message = 'Good effort!';
+    } else {
+      message = 'Room to grow';
+    }
 
     return Container(
       padding: EdgeInsets.symmetric(vertical: 32, horizontal: 20),

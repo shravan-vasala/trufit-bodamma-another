@@ -16,6 +16,7 @@ class CoachService {
 
   Future<String> generateNote({
     required String userName,
+    required String coachName,
     required int steps,
     required double sleep,
     required int habitsDone,
@@ -28,6 +29,8 @@ class CoachService {
     required bool isRestDay,
     required int daysSinceLastWorkout,
   }) async {
+    final coachLabel = coachName.trim().isEmpty ? 'Coach' : coachName.trim();
+
     // If no API key, use fallback templated note
     if (apiKey == null || apiKey!.isEmpty) {
       return _generateTemplatedNote(
@@ -37,7 +40,7 @@ class CoachService {
 
     // Call Gemini
     final prompt = '''
-You are an enthusiastic, supportive personal fitness coach named Bodamma. 
+You are an enthusiastic, supportive personal fitness coach named $coachLabel. 
 Your client's name is ${userName.isEmpty ? 'friend' : userName}.
 
 Here is their progress and context for today:

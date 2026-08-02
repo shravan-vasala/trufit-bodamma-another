@@ -29,7 +29,7 @@ class Habit {
     return Habit(
       id: json['id'] as String,
       name: json['name'] as String,
-      icon: json['icon'] as String? ?? '✅',
+      icon: json['icon'] as String? ?? 'check',
       type: HabitType.values.firstWhere(
         (e) => e.name == json['type'],
         orElse: () => HabitType.checkbox,
@@ -82,7 +82,7 @@ class Habit {
     Habit(
         id: 'sleep',
         name: 'Sleep 8 hours',
-        icon: '😴',
+        icon: 'bedtime',
         type: HabitType.autoSleep,
         unit: 'hours',
         target: 8.0,
@@ -91,7 +91,7 @@ class Habit {
     Habit(
         id: 'walk',
         name: 'Walk 8000 steps',
-        icon: '🚶',
+        icon: 'walk',
         type: HabitType.autoSteps,
         unit: 'steps',
         target: 8000.0,
@@ -100,7 +100,7 @@ class Habit {
     Habit(
         id: 'water',
         name: 'Drink 3 L of water',
-        icon: '💧',
+        icon: 'water',
         type: HabitType.checkbox,
         unit: 'L',
         target: 3.0,

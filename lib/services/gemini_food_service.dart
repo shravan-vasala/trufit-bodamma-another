@@ -14,37 +14,86 @@ class GeminiFoodService {
 
   GeminiFoodService({this.apiKey});
 
-  Future<Map<String, dynamic>?> analyzeFoodImage(Uint8List imageBytes, String mimeType) async {
-    if (apiKey == null || apiKey!.isEmpty) {
-      throw Exception('Gemini API key is not configured. Please add it in Profile -> AI Settings.');
-    }
-
-    final prompt = '''
-Analyze this food image and estimate its nutritional content. Note that the cuisine is often South Indian home cooking (e.g., rice, curries, dosa, idli, curd, dal).
+  static const _jsonShape = '''
 Return ONLY a JSON object with the exact following structure and types. Do NOT include markdown blocks or any other text.
 {
   "items": [
     {
       "name": "Name of the dish (string)",
       "portion": "Estimated portion size (e.g. 1 bowl, 2 pieces)",
-      "calories": 0, // integer
-      "protein_g": 0.0, // double
-      "carbs_g": 0.0, // double
-      "fat_g": 0.0 // double
+      "calories": 0,
+      "protein_g": 0.0,
+      "carbs_g": 0.0,
+      "fat_g": 0.0
     }
   ],
   "total": {
-    "calories": 0, // integer
-    "protein_g": 0.0, // double
-    "carbs_g": 0.0, // double
-    "fat_g": 0.0 // double
+    "calories": 0,
+    "protein_g": 0.0,
+    "carbs_g": 0.0,
+    "fat_g": 0.0
   },
   "confidence": "high|medium|low"
 }
 If you cannot identify the food, provide a generic "Unknown Food" response with 0 values and low confidence.
 ''';
 
-    final modelsToTry = [
+  static const _cuisineHint =
+      'Note that the cuisine is often South Indian / Indian home cooking '
+      '(e.g. rice, sambar, rasam, curries, dosa, idli, curd, dal, roti, chapati, '
+      'vegetable fry, chicken, fish, eggs). Estimate realistic home-cooked portions.';
+
+  Future<Map<String, dynamic>?> analyzeFoodImage(
+    Uint8List imageBytes,
+    String mimeType,
+  ) async {
+    _ensureApiKey();
+    final prompt = '''
+Analyze this food image and estimate its nutritional content. $_cuisineHint
+$_jsonShape
+''';
+    return _generateWithFallback(
+      (model) => _callGeminiMulti(
+        model,
+        [TextPart(prompt), DataPart(mimeType, imageBytes)],
+      ),
+    );
+  }
+
+  /// Estimate macros from a free-text description of what was eaten at home.
+  Future<Map<String, dynamic>?> analyzeFoodText(String description) async {
+    _ensureApiKey();
+    final trimmed = description.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Please describe what you ate.');
+    }
+
+    final prompt = '''
+Estimate nutritional content for this home-cooked meal description.
+$_cuisineHint
+Meal description:
+"""
+$trimmed
+"""
+$_jsonShape
+''';
+    return _generateWithFallback(
+      (model) => _callGeminiMulti(model, [TextPart(prompt)]),
+    );
+  }
+
+  void _ensureApiKey() {
+    if (apiKey == null || apiKey!.isEmpty) {
+      throw Exception(
+        'Gemini API key is not configured. Please add it in Profile -> AI Settings.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>?> _generateWithFallback(
+    Future<Map<String, dynamic>?> Function(String model) call,
+  ) async {
+    const modelsToTry = [
       'gemini-flash-latest',
       'gemini-2.5-flash',
       'gemini-2.0-flash',
@@ -54,37 +103,38 @@ If you cannot identify the food, provide a generic "Unknown Food" response with 
     for (final model in modelsToTry) {
       try {
         debugPrint('Trying Gemini model: $model...');
-        final result = await _callGemini(model, apiKey!, imageBytes, mimeType, prompt);
-        return result;
+        return await call(model);
       } catch (e) {
         debugPrint('Failed with $model: $e');
         lastError = e.toString();
       }
     }
 
-    throw Exception('Failed to analyze food with all available models. Ensure your API key is valid from Google AI Studio. Last error: $lastError');
+    throw Exception(
+      'Failed to analyze food with all available models. Ensure your API key is valid from Google AI Studio. Last error: $lastError',
+    );
   }
 
-  Future<Map<String, dynamic>?> _callGemini(String modelName, String apiKey, Uint8List imageBytes, String mimeType, String prompt) async {
+  Future<Map<String, dynamic>?> _callGeminiMulti(
+    String modelName,
+    List<Part> parts,
+  ) async {
     final model = GenerativeModel(
       model: modelName,
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.1,
-      ),
+      apiKey: apiKey!,
+      generationConfig: GenerationConfig(temperature: 0.1),
     );
 
-    final imagePart = DataPart(mimeType, imageBytes);
-    final content = [Content.multi([TextPart(prompt), imagePart])];
+    final response = await model.generateContent([Content.multi(parts)]);
 
-    final response = await model.generateContent(content);
-    
     if (response.text != null) {
-      final jsonString = response.text!.trim().replaceAll('```json', '').replaceAll('```', '').trim();
+      final jsonString = response.text!
+          .trim()
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       debugPrint('Gemini Response: $jsonString');
-      
-      final Map<String, dynamic> data = jsonDecode(jsonString);
-      return data;
+      return jsonDecode(jsonString) as Map<String, dynamic>;
     }
     return null;
   }

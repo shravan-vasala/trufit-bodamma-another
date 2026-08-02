@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/layout_insets.dart';
 import '../../../providers/app_providers.dart';
 import '../../../services/health_connect_service.dart';
+import '../../../widgets/app_bottom_sheet.dart';
 import '../weight_entry_dialog.dart';
 import '../steps_entry_dialog.dart';
 import 'sync_status_sheet.dart';
@@ -19,23 +21,31 @@ class DailyProgressGrid extends ConsumerWidget {
     // Watches:
     // - dailyLogProvider.select((l) => l.weight)
     final weight = ref.watch(dailyLogProvider.select((l) => l.weight));
-    final profile = ref.watch(profileProvider);
 
-    final displayWeight = weight ?? profile.targetWeight;
-    final wStr = displayWeight != null ? displayWeight.toStringAsFixed(1) : '--';
-    
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     final isFuture = selectedDate.isAfter(today);
     final isToday = selectedDate.isAtSameMomentAs(today);
+
+    String weightSubtitle;
+    if (weight != null) {
+      weightSubtitle = '${weight.toStringAsFixed(1)} kg';
+    } else if (isFuture) {
+      weightSubtitle = 'No data';
+    } else {
+      final lastWeight = _lastLoggedWeight(ref, selectedDateStr);
+      weightSubtitle = lastWeight != null
+          ? 'Last: ${lastWeight.toStringAsFixed(1)} kg'
+          : 'Tap to log';
+    }
     
     final mediaRepo = ref.watch(mediaRepoProvider);
     final allPhotos = mediaRepo.getAllProgressPhotos();
     final flattenedPhotos = allPhotos.expand((e) => e.value).toList();
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: kScreenPadding),
       child: Column(
         children: [
           IntrinsicHeight(
@@ -78,17 +88,12 @@ class DailyProgressGrid extends ConsumerWidget {
                     icon: Icons.monitor_weight_rounded,
                     color: context.colors.lavenderCard,
                     iconColor: context.colors.primary,
-                    subtitle: weight != null
-                        ? '$wStr kg'
-                        : (isFuture ? 'No data' : 'Tap to log'),
+                    subtitle: weightSubtitle,
                     onTap: isFuture
                         ? () {}
                         : () {
-                            showModalBottomSheet(
+                            showAppBottomSheet(
                               context: context,
-                              isScrollControlled: true,
-                              useRootNavigator: true,
-                              backgroundColor: Colors.transparent,
                               builder: (_) => WeightEntryDialog(),
                             );
                           },
@@ -108,6 +113,20 @@ class DailyProgressGrid extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  double? _lastLoggedWeight(WidgetRef ref, String beforeOrOnDate) {
+    final repo = ref.read(dailyLogRepoProvider);
+    final end = DateTime.parse(beforeOrOnDate);
+    final start = end.subtract(const Duration(days: 90));
+    final startStr =
+        '${start.year.toString().padLeft(4, '0')}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+    final logs = repo.getLogsInRange(startStr, beforeOrOnDate);
+    for (int i = logs.length - 1; i >= 0; i--) {
+      final w = logs[i].weight;
+      if (w != null) return w;
+    }
+    return null;
   }
 }
 
@@ -227,11 +246,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
         child: Container(
           padding: EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: context.colors.primaryGradient,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -248,10 +263,10 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: context.colors.onPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.sync_rounded, color: Colors.white, size: 22),
+                child: Icon(Icons.sync_rounded, color: context.colors.onPrimary, size: 22),
               ),
               SizedBox(height: 14),
               Text(
@@ -259,7 +274,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: context.colors.onPrimary,
                   height: 1.3,
                 ),
               ),
@@ -269,7 +284,7 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white70,
+                  color: context.colors.onPrimary.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -290,11 +305,11 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
         sourceHint = 'manual';
       }
     } else {
-      stepsSubtitle = '0 steps';
+      stepsSubtitle = widget.isFuture ? 'No data' : 'Tap to log';
       if (_isAuth) {
         sourceHint = 'Synced';
       } else {
-        sourceHint = widget.isToday ? 'Tap to log' : null;
+        sourceHint = widget.isToday ? 'Health Connect or manual' : null;
       }
     }
 
@@ -303,18 +318,14 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
           ? () {}
           : () {
               if (_isAuth) {
-                showModalBottomSheet(
+                showAppBottomSheet(
                   context: context,
-                  useRootNavigator: true,
-                  backgroundColor: Colors.transparent,
+                  isScrollControlled: false,
                   builder: (_) => SyncStatusSheet(),
                 );
               } else {
-                showModalBottomSheet(
+                showAppBottomSheet(
                   context: context,
-                  useRootNavigator: true,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
                   builder: (_) => StepsEntryDialog(),
                 );
               }
@@ -493,7 +504,7 @@ class _ProgressCard extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: context.colors.lavender,
+                        color: context.colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       alignment: Alignment.center,

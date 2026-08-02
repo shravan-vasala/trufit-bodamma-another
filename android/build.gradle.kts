@@ -7,27 +7,36 @@ allprojects {
 
 val newBuildDir: Directory =
     rootProject.layout.projectDirectory
-        .dir("../../../../../temp_trufit_build")
+        .dir("${System.getProperty("user.home")}/temp_trufit_build")
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
+// Force every Android library plugin module onto compileSdk 36 (file_picker AAR metadata).
 subprojects {
-    project.evaluationDependsOn(":app")
-    plugins.withId("com.android.library") {
-        val android = project.extensions.findByName("android")
-        if (android != null) {
-            try {
-                android.javaClass.getMethod("setCompileSdkVersion", Int::class.java).invoke(android, 36)
-            } catch (e: Exception) {
-                try {
-                    android.javaClass.getMethod("setCompileSdk", Int::class.java).invoke(android, 36)
-                } catch (e2: Exception) {
-                    // Ignore
-                }
+    afterEvaluate {
+        val android = extensions.findByName("android") ?: return@afterEvaluate
+        try {
+            val m = android.javaClass.methods.firstOrNull { method ->
+                method.name == "setCompileSdk" &&
+                    method.parameterCount == 1 &&
+                    (method.parameterTypes[0] == Int::class.javaPrimitiveType ||
+                        method.parameterTypes[0] == Integer::class.java)
             }
+            m?.invoke(android, 36)
+        } catch (_: Exception) {
+            // ignore
+        }
+        try {
+            val m = android.javaClass.methods.firstOrNull { method ->
+                method.name == "setCompileSdkVersion" && method.parameterCount == 1
+            }
+            m?.invoke(android, 36)
+        } catch (_: Exception) {
+            // ignore
         }
     }
 }

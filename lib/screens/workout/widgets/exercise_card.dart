@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/workout_plan.dart';
-import '../../../models/exercise_pr.dart';
+import '../../../utils/exercise_log_save.dart';
+import '../../../widgets/surface_card.dart';
+import '../../../widgets/primary_button.dart';
+import '../../../widgets/app_bottom_sheet.dart';
 import '../log_data_dialog.dart';
 
 class ExerciseCard extends ConsumerWidget {
@@ -26,19 +29,10 @@ class ExerciseCard extends ConsumerWidget {
     final dateStr = ref.watch(dateStringProvider);
     final isCompleted = logRepo.hasLog(dateStr, exercise.name);
     
-    return Container(
+    return SurfaceCard(
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.colors.card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: context.colors.primary.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.zero,
+      elevation: SurfaceCardElevation.nested,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,7 +64,7 @@ class ExerciseCard extends ConsumerWidget {
                     width: 90,
                     height: 68,
                     decoration: BoxDecoration(
-                      color: context.colors.lavender,
+                      color: context.colors.lavenderCard,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: (exercise.youtubeVideoId == null || exercise.youtubeVideoId == 'XXXX' || exercise.youtubeVideoId!.isEmpty)
@@ -166,7 +160,7 @@ class ExerciseCard extends ConsumerWidget {
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: context.colors.lavender,
+                              color: context.colors.lavenderCard,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -184,7 +178,7 @@ class ExerciseCard extends ConsumerWidget {
                               padding: EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: context.colors.lavender,
+                                color: context.colors.lavenderCard,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -253,11 +247,8 @@ class ExerciseCard extends ConsumerWidget {
                   button: true,
                   child: GestureDetector(
                     onTap: () {
-                      showModalBottomSheet(
+                      showAppBottomSheet(
                         context: context,
-                        useRootNavigator: true,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
                         builder: (_) => LogDataDialog(exercise: exercise),
                       );
                     },
@@ -296,7 +287,7 @@ class ExerciseCard extends ConsumerWidget {
                 width: double.infinity,
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: context.colors.lavender.withValues(alpha: 0.6),
+                  color: context.colors.lavenderCard.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -329,61 +320,73 @@ class ExerciseCard extends ConsumerWidget {
             padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: Row(
               children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          useRootNavigator: true,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => LogDataDialog(exercise: exercise),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        textStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text('Log Data'),
+                if (!isCompleted) ...[
+                  Expanded(
+                    child: CompactButton(
+                      label: 'As planned',
+                      filled: true,
+                      onPressed: () => _logAsPlanned(context, ref),
                     ),
+                  ),
+                  SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: CompactButton(
+                    label: isCompleted ? 'Edit Log' : 'Adjust',
+                    filled: isCompleted,
+                    onPressed: () => _openLogSheet(context),
                   ),
                 ),
                 SizedBox(width: 8),
                 Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        context.push(
-                          '/exercise-progress?name=${Uri.encodeComponent(exercise.name)}',
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        textStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text('Progress'),
-                    ),
+                  child: CompactButton(
+                    label: 'Progress',
+                    onPressed: () {
+                      context.push(
+                        '/exercise-progress?name=${Uri.encodeComponent(exercise.name)}',
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openLogSheet(BuildContext context) {
+    showAppBottomSheet(
+      context: context,
+      builder: (_) => LogDataDialog(exercise: exercise),
+    );
+  }
+
+  Future<void> _logAsPlanned(BuildContext context, WidgetRef ref) async {
+    final prResult = await saveExerciseAsPlanned(ref: ref, exercise: exercise);
+    if (!context.mounted) return;
+
+    String msg = 'Logged ${exercise.name}';
+    if (prResult.hasAnyNewPr) {
+      if (prResult.isNewMaxWeight) {
+        msg = 'New PR! ${prResult.newPr.maxWeight}kg';
+      } else if (prResult.isNewMaxReps) {
+        msg = 'New PR! ${prResult.newPr.maxReps} reps';
+      } else if (prResult.isNewMaxVolume) {
+        msg = 'New Volume PR!';
+      } else if (prResult.isNew1RM) {
+        msg = 'New 1RM PR!';
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor:
+            prResult.hasAnyNewPr ? context.colors.green : context.colors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

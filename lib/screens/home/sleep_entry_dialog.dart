@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
+import '../../widgets/app_bottom_sheet.dart';
+import '../../widgets/primary_button.dart';
 
 class SleepEntryDialog extends ConsumerStatefulWidget {
   const SleepEntryDialog({super.key});
@@ -49,15 +52,29 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
   }
 
   Future<void> _pickTime(bool isBedtime) async {
-    final initialTime = isBedtime 
-        ? (_bedtime ?? TimeOfDay(hour: 22, minute: 0)) 
+    final initialTime = isBedtime
+        ? (_bedtime ?? TimeOfDay(hour: 22, minute: 0))
         : (_waketime ?? TimeOfDay(hour: 6, minute: 0));
-        
+    final parentTheme = Theme.of(context);
+
     final time = await showTimePicker(
       context: context,
       initialTime: initialTime,
+      builder: (ctx, child) {
+        if (child == null) return const SizedBox.shrink();
+        return Theme(
+          data: parentTheme.copyWith(
+            colorScheme: parentTheme.colorScheme.copyWith(
+              primary: context.colors.primary,
+              onPrimary: context.colors.onPrimary,
+              onSurface: context.colors.textDark,
+            ),
+          ),
+          child: child,
+        );
+      },
     );
-    
+
     if (time != null) {
       setState(() {
         if (isBedtime) {
@@ -78,179 +95,130 @@ class _SleepEntryDialogState extends ConsumerState<SleepEntryDialog> {
     final isFuture = selectedDate.isAfter(today);
     final dateFormatted = DateFormat('EEE, d MMM').format(selectedDate);
     
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colors.card,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: context.colors.border,
-                  borderRadius: BorderRadius.circular(2),
+    return AppSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Log Sleep',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.textDark,
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Log Sleep',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: context.colors.textDark,
+              if (_hasExistingEntry)
+                TextButton(
+                  onPressed: () {
+                    ref.read(dailyLogProvider.notifier).clearSleep();
+                    Navigator.of(context).pop();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.colors.pinkIcon,
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
                   ),
+                  child: Text('Clear entry'),
                 ),
-                if (_hasExistingEntry)
-                  TextButton(
-                    onPressed: () {
-                      ref.read(dailyLogProvider.notifier).clearSleep();
-                      Navigator.of(context).pop();
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: context.colors.pink,
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
-                    ),
-                    child: Text('Clear entry'),
-                  ),
-              ],
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Enter your sleep for $dateFormatted',
+            style: TextStyle(
+              fontSize: 14,
+              color: context.colors.textMedium,
             ),
-            SizedBox(height: 8),
-            Text(
-              'Enter your sleep for $dateFormatted',
-              style: TextStyle(
-                fontSize: 14,
-                color: context.colors.textMedium,
-              ),
+          ),
+          SizedBox(height: 24),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: context.colors.textDark,
             ),
-            SizedBox(height: 24),
-            
-            // Mode 1: Hours field
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              style: TextStyle(
+            textAlign: TextAlign.center,
+            enabled: !isFuture,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: context.colors.inputFill,
+              hintText: '0.0',
+              hintStyle: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: context.colors.textDark,
+                color: context.colors.textLight,
               ),
-              textAlign: TextAlign.center,
-              enabled: !isFuture,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark
-                    ? context.colors.scaffoldBg
-                    : context.colors.lavender,
-                hintText: '0.0',
-                hintStyle: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: context.colors.textLight,
-                ),
-                suffixText: 'hrs',
-                suffixStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: context.colors.textMedium,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-            SizedBox(height: 24),
-            
-            // Mode 2: Time Pickers
-            Text(
-              'Or calculate from times:',
-              style: TextStyle(
-                fontSize: 14,
+              suffixText: 'hrs',
+              suffixStyle: TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: context.colors.textMedium,
               ),
             ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _TimePickerCard(
-                    title: 'Bedtime',
-                    time: _bedtime,
-                    onTap: isFuture ? null : () => _pickTime(true),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _TimePickerCard(
-                    title: 'Wake up',
-                    time: _waketime,
-                    onTap: isFuture ? null : () => _pickTime(false),
-                  ),
-                ),
-              ],
+          ),
+          SizedBox(height: 24),
+          Text(
+            'Or calculate from times:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: context.colors.textMedium,
             ),
-            SizedBox(height: 24),
-            
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: isFuture ? null : context.colors.primaryGradient,
-                  color: isFuture ? context.colors.divider : null,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: isFuture ? null : [
-                    BoxShadow(
-                      color: context.colors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _TimePickerCard(
+                  title: 'Bedtime',
+                  time: _bedtime,
+                  onTap: isFuture ? null : () => _pickTime(true),
                 ),
-                child: ElevatedButton(
-                  onPressed: isFuture ? null : () {
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _TimePickerCard(
+                  title: 'Wake up',
+                  time: _waketime,
+                  onTap: isFuture ? null : () => _pickTime(false),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          PrimaryButton(
+            label: isFuture ? 'Cannot log for future date' : 'Save Sleep',
+            onPressed: isFuture
+                ? null
+                : () {
                     final sleepHours = double.tryParse(_controller.text);
-                    if (sleepHours != null && sleepHours >= 0 && sleepHours <= 16) {
-                      ref.read(dailyLogProvider.notifier).updateSleep(sleepHours);
+                    if (sleepHours != null &&
+                        sleepHours >= 0 &&
+                        sleepHours <= 16) {
+                      HapticFeedback.mediumImpact();
+                      ref
+                          .read(dailyLogProvider.notifier)
+                          .updateSleep(sleepHours);
                       Navigator.of(context).pop();
                     } else if (sleepHours != null && sleepHours > 16) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please enter a value between 0 and 16 hours')),
+                        SnackBar(
+                          content: Text(
+                            'Please enter a value between 0 and 16 hours',
+                          ),
+                        ),
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                  ),
-                  child: Text(
-                    isFuture ? 'Cannot log for future date' : 'Save Sleep',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isFuture ? context.colors.textLight : context.colors.onPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 8),
-          ],
-        ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }

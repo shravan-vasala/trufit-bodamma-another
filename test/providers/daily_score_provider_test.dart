@@ -132,11 +132,16 @@ void main() {
   });
 
   test('Rest day receives full workout score without logs', () async {
-    // Override selected date to Sunday
+    // Sunday 2023-10-01 — recreate container (Riverpod parent + override is unsafe)
     final sundayContainer = ProviderContainer(
-      parent: container,
       overrides: [
-        selectedDateProvider.overrideWith((ref) => DateTime(2023, 10, 1)), // Sunday
+        exerciseLogRepoProvider.overrideWithValue(logRepo),
+        workoutRepoProvider.overrideWithValue(workoutRepo),
+        habitRepoProvider.overrideWithValue(container.read(habitRepoProvider)),
+        mealRepoProvider.overrideWithValue(container.read(mealRepoProvider)),
+        dailyLogRepoProvider.overrideWithValue(container.read(dailyLogRepoProvider)),
+        profileRepoProvider.overrideWithValue(container.read(profileRepoProvider)),
+        selectedDateProvider.overrideWith((ref) => DateTime(2023, 10, 1)),
       ],
     );
 
@@ -151,9 +156,10 @@ void main() {
     // Create a meal plan with a custom display name but standard type
     final mockMealPlan = MealPlan(
       planName: 'Test Meal Plan',
+      totalCalories: 1200,
       meals: [
-        MealSlot(type: 'breakfast', name: 'Morning Fuel', targetCalories: 500, targetProtein: 30, targetCarbs: 50, targetFat: 20),
-        MealSlot(type: 'lunch', name: 'Midday Power', targetCalories: 700, targetProtein: 40, targetCarbs: 80, targetFat: 25),
+        Meal(type: 'breakfast', name: 'Morning Fuel', calories: 500, items: []),
+        Meal(type: 'lunch', name: 'Midday Power', calories: 700, items: []),
       ]
     );
     await mealRepo.savePlanJson('test_meal_plan', jsonEncode(mockMealPlan.toJson()));
@@ -183,5 +189,52 @@ void main() {
     final partialScore = container.read(dailyScoreProvider);
     // 1 out of 2 meals = 10 points (max 20)
     expect(partialScore.mealsScore, 10.0);
+  });
+
+  test('DailyScore remainingLabels and isPrimaryComplete helpers', () {
+    final incomplete = DailyScore(
+      totalScore: 40,
+      isFutureDate: false,
+      habitsScore: 20,
+      habitsMax: 40,
+      workoutsScore: 30,
+      workoutsMax: 30,
+      mealsScore: 10,
+      mealsMax: 20,
+      stepsScore: 0,
+      stepsMax: 0,
+    );
+    expect(incomplete.isPrimaryComplete, isFalse);
+    expect(incomplete.remainingLabels, ['habits', 'meals']);
+
+    final complete = DailyScore(
+      totalScore: 100,
+      isFutureDate: false,
+      habitsScore: 40,
+      habitsMax: 40,
+      workoutsScore: 30,
+      workoutsMax: 30,
+      mealsScore: 20,
+      mealsMax: 20,
+      stepsScore: 10,
+      stepsMax: 10,
+    );
+    expect(complete.isPrimaryComplete, isTrue);
+    expect(complete.remainingLabels, isEmpty);
+
+    final future = DailyScore(
+      totalScore: 0,
+      isFutureDate: true,
+      habitsScore: 0,
+      habitsMax: 0,
+      workoutsScore: 0,
+      workoutsMax: 0,
+      mealsScore: 0,
+      mealsMax: 0,
+      stepsScore: 0,
+      stepsMax: 0,
+    );
+    expect(future.isPrimaryComplete, isFalse);
+    expect(future.remainingLabels, isEmpty);
   });
 }

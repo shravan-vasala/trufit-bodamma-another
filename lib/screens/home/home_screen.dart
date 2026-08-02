@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/layout_insets.dart';
 import '../../providers/app_providers.dart';
 import '../../services/health_connect_service.dart';
 import '../../models/habit.dart';
 import '../../utils/workout_completion.dart';
+import '../../widgets/section_header.dart';
+import '../../widgets/surface_card.dart';
 import '../profile/manage_habits_screen.dart';
 import 'widgets/week_calendar_strip.dart';
 import 'widgets/meals_card.dart';
 import 'widgets/habits_card.dart';
 import 'widgets/daily_progress_grid.dart';
 import 'widgets/coach_notes_card.dart';
+import 'widgets/day_complete_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -104,43 +109,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     ref.invalidate(habitCompletionsProvider);
   }
 
-  Widget _buildSectionHeader(
-    String title, {
-    IconData? icon,
-    Widget? trailing,
-    Widget? countLabel,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: context.colors.primary, size: 18),
-            SizedBox(width: 6),
-          ],
-          Text(
-            title,
-            style: TextStyle(
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w800,
-              color: context.colors.primary,
-              fontSize: 13,
-            ),
-          ),
-          if (countLabel != null) ...[
-            SizedBox(width: 6),
-            countLabel,
-          ],
-          Spacer(),
-          if (trailing != null) trailing,
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final plan = ref.watch(workoutPlanProvider);
+
+    // One calm day-complete sheet when primary buckets fill (today only).
+    ref.listen<DailyScore>(dailyScoreProvider, (prev, next) {
+      if (next.isPrimaryComplete &&
+          (prev == null || !prev.isPrimaryComplete)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) maybeShowDayCompleteSheet(context, ref);
+        });
+      }
+    });
 
     return Scaffold(
       backgroundColor: context.colors.scaffoldBg,
@@ -153,45 +134,192 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 12),
-                
-                // Coach Notes
-                CoachNotesCard(),
+                const SizedBox(height: 12),
 
-                // Week Calendar Strip (Wrapped in card inside widget now)
-                WeekCalendarStrip(),
-                  
-                SizedBox(height: 24),
+                // 1. Greeting
+                const _HomeGreeting(),
+                const SizedBox(height: 16),
 
-                // Today's Workouts
+                // Habit streak line (when any streak ≥ 3)
+                const _TopStreakLine(),
+
+                // 2. Week calendar + score
+                const WeekCalendarStrip(),
+                const SizedBox(height: 24),
+
+                // 3. Workout (primary daily action)
                 if (plan != null && plan.days.isNotEmpty) ...[
                   _WorkoutsSection(plan: plan),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                 ],
 
-                // Meals Section
-                _buildSectionHeader('MEALS'),
-                SizedBox(height: 12),
-                MealsCard(),
-                SizedBox(height: 24),
-
-                // Habits Section
-                _buildSectionHeader(
+                // 4. Habits
+                SectionHeader(
                   'HABITS',
-                  trailing: _HabitsEditButton(),
-                  countLabel: _HabitsCountLabel(),
+                  trailing: const _HabitsEditButton(),
+                  countLabel: const _HabitsCountLabel(),
                 ),
-                SizedBox(height: 12),
-                HabitsCard(),
-                SizedBox(height: 24),
+                const SizedBox(height: 12),
+                const HabitsCard(),
+                const SizedBox(height: 24),
 
-                // Daily Progress Section
-                _buildSectionHeader('DAILY PROGRESS', icon: Icons.show_chart_rounded),
-                SizedBox(height: 12),
-                DailyProgressGrid(),
-                SizedBox(height: 24),
+                // 5. Meals
+                const SectionHeader('MEALS'),
+                const SizedBox(height: 12),
+                const MealsCard(),
+                const SizedBox(height: 24),
+
+                // 6. Daily progress metrics
+                const SectionHeader(
+                  'DAILY PROGRESS',
+                  icon: Icons.show_chart_rounded,
+                ),
+                const SizedBox(height: 12),
+                const DailyProgressGrid(),
+                const SizedBox(height: 16),
+
+                // Weekly summary soft link
+                const _WeeklySummaryLink(),
+                const SizedBox(height: 24),
+
+                // 7. Coach notes last (below fold)
+                const CoachNotesCard(),
+                const SizedBox(height: 24),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeGreeting extends ConsumerWidget {
+  const _HomeGreeting();
+
+  String _timeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final name = ref.watch(profileProvider.select((p) => p.name)).trim();
+    final selected = ref.watch(selectedDateProvider);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDay = DateTime(selected.year, selected.month, selected.day);
+    final isToday = selectedDay == today;
+
+    final title = name.isEmpty ? _timeGreeting() : '${_timeGreeting()}, $name';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: context.colors.textDark,
+              height: 1.15,
+            ),
+          ),
+          if (!isToday) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Looking at ${DateFormat('EEE, MMM d').format(selected)}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: context.colors.textMedium,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TopStreakLine extends ConsumerWidget {
+  const _TopStreakLine();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final habits = ref.watch(habitsProvider);
+    if (habits.isEmpty) return const SizedBox.shrink();
+
+    int best = 0;
+    String? bestName;
+    for (final h in habits) {
+      final streak = ref.watch(habitStreakProvider(h.id));
+      if (streak > best) {
+        best = streak;
+        bestName = h.name;
+      }
+    }
+    if (best < 3 || bestName == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Text(
+        '$best-day streak on $bestName — keep it going.',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: context.colors.orange,
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklySummaryLink extends StatelessWidget {
+  const _WeeklySummaryLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GestureDetector(
+        onTap: () => context.go('/progress/weekly-summary'),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: context.colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.insights_rounded,
+                color: context.colors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "This week's summary",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textDark,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.colors.textLight,
+              ),
+            ],
           ),
         ),
       ),
@@ -277,7 +405,7 @@ class _WorkoutsSection extends ConsumerWidget {
       cards.add(_buildCard(
         context,
         title: 'Rest Day',
-        subtitle: 'Take a break and recover',
+        subtitle: 'Recovery day — you\'re all set. Rest counts as complete.',
         isCompleted: isWholeDayCompleted, 
         isFuture: isFuture,
         isRest: true,
@@ -321,22 +449,10 @@ class _WorkoutsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'WORKOUTS ($completedCount/$total)',
-                style: TextStyle(
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w800,
-                  color: context.colors.primary,
-                  fontSize: 13,
-                ),
-              ),
-              if (phaseProgress.isPhaseActive)
-                Row(
+        SectionHeader(
+          'WORKOUTS ($completedCount/$total)',
+          trailing: phaseProgress.isPhaseActive
+              ? Row(
                   children: [
                     Text(
                       'Week ${phaseProgress.currentWeek} of ${phaseProgress.totalWeeks}',
@@ -351,27 +467,29 @@ class _WorkoutsSection extends ConsumerWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                        value: (phaseProgress.currentWeek - 1) / phaseProgress.totalWeeks,
+                        value: (phaseProgress.currentWeek - 1) /
+                            phaseProgress.totalWeeks,
                         strokeWidth: 2,
-                        backgroundColor: context.colors.primary.withValues(alpha: 0.2),
+                        backgroundColor:
+                            context.colors.primary.withValues(alpha: 0.2),
                         color: context.colors.primary,
                       ),
                     ),
                   ],
-                ),
-            ],
-          ),
+                )
+              : null,
         ),
         SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: kScreenPadding),
           child: Column(children: cards),
         ),
       ],
     );
   }
 
-  Widget _buildCard(BuildContext context, {
+  Widget _buildCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required bool isCompleted,
@@ -379,23 +497,16 @@ class _WorkoutsSection extends ConsumerWidget {
     required bool isRest,
     VoidCallback? onTap,
   }) {
-    return GestureDetector(
-      onTap: isFuture ? null : onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: context.colors.card,
-          borderRadius: BorderRadius.circular(20),
-          border: isCompleted ? Border.all(color: context.colors.green.withValues(alpha: 0.3), width: 1.5) : null,
-          boxShadow: [
-            BoxShadow(
-              color: context.colors.textLight.withValues(alpha: 0.1),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: SurfaceCard(
+        onTap: isFuture ? null : onTap,
+        border: isCompleted
+            ? Border.all(
+                color: context.colors.green.withValues(alpha: 0.3),
+                width: 1.5,
+              )
+            : null,
         child: Row(
           children: [
             Expanded(
@@ -430,12 +541,24 @@ class _WorkoutsSection extends ConsumerWidget {
                   color: context.colors.green.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_rounded, color: context.colors.green, size: 20),
+                child: Icon(
+                  Icons.check_rounded,
+                  color: context.colors.green,
+                  size: 20,
+                ),
               )
             else if (isRest)
-              Icon(Icons.self_improvement_rounded, color: context.colors.textLight, size: 26)
+              Icon(
+                Icons.self_improvement_rounded,
+                color: context.colors.textLight,
+                size: 26,
+              )
             else
-              Icon(Icons.fitness_center_outlined, color: context.colors.textDark, size: 26),
+              Icon(
+                Icons.fitness_center_outlined,
+                color: context.colors.textDark,
+                size: 26,
+              ),
           ],
         ),
       ),

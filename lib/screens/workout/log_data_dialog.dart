@@ -5,9 +5,10 @@ import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/workout_plan.dart';
 import '../../models/exercise_log.dart';
+import '../../utils/exercise_log_save.dart';
 import '../../utils/pr_calculator.dart';
-import '../../utils/workout_completion.dart';
-import '../../models/exercise_pr.dart';
+import '../../widgets/app_bottom_sheet.dart';
+import '../../widgets/primary_button.dart';
 
 class LogDataDialog extends ConsumerStatefulWidget {
   const LogDataDialog({super.key, required this.exercise});
@@ -22,30 +23,22 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
   late List<TextEditingController> _repsControllers;
   late List<TextEditingController> _weightControllers;
   ExerciseLog? _lastLog;
-  ExercisePr? _currentPr;
-
-  String _parseRepTarget(String rep) {
-    if (rep.contains('-')) {
-      final parts = rep.split('-');
-      if (parts.length == 2) {
-        return parts[1].trim();
-      }
-    }
-    return rep;
-  }
 
   @override
   void initState() {
     super.initState();
     final setCount = widget.exercise.setCount;
     _repsControllers = List.generate(setCount, (i) {
-      return TextEditingController(text: _parseRepTarget(widget.exercise.reps[i]));
+      return TextEditingController(
+        text: parseRepTarget(widget.exercise.reps[i]),
+      );
     });
     _weightControllers = List.generate(setCount, (i) {
-      return TextEditingController(text: widget.exercise.weightKg?.toString() ?? '');
+      return TextEditingController(
+        text: widget.exercise.weightKg?.toString() ?? '',
+      );
     });
 
-    // Load existing data if any
     _loadExistingData();
   }
 
@@ -53,8 +46,7 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     final dateStr = ref.read(dateStringProvider);
     final repo = ref.read(exerciseLogRepoProvider);
     final existing = repo.getLog(dateStr, widget.exercise.name);
-    _currentPr = repo.getPr(widget.exercise.name);
-    
+
     if (existing != null) {
       for (int i = 0; i < existing.sets.length && i < _repsControllers.length; i++) {
         _repsControllers[i].text = existing.sets[i].reps.toString();
@@ -62,14 +54,11 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
             existing.sets[i].weight > 0 ? existing.sets[i].weight.toString() : '';
       }
     } else {
-      // Find the most recent log to use as ghost text and pre-fill weights
-      final allLogs = repo.getLogsForExercise(widget.exercise.name);
-      final beforeToday = allLogs.where((l) => l.date.compareTo(dateStr) < 0).toList();
-      if (beforeToday.isNotEmpty) {
-        beforeToday.sort((a, b) => a.date.compareTo(b.date));
-        _lastLog = beforeToday.last;
-        
-        // Pre-fill weight fields with last session values
+      _lastLog = mostRecentPriorLog(
+        allLogs: repo.getLogsForExercise(widget.exercise.name),
+        beforeDate: dateStr,
+      );
+      if (_lastLog != null) {
         for (int i = 0; i < _lastLog!.sets.length && i < _weightControllers.length; i++) {
           final w = _lastLog!.sets[i].weight;
           if (w > 0) {
@@ -104,212 +93,172 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     }
   }
 
+  void _fillFromPlan() {
+    setState(() {
+      for (int i = 0; i < widget.exercise.setCount; i++) {
+        _repsControllers[i].text = parseRepTarget(widget.exercise.reps[i]);
+        final planned = widget.exercise.weightKg;
+        if (planned != null && planned > 0) {
+          _weightControllers[i].text = planned.toString();
+        } else if (_lastLog != null && i < _lastLog!.sets.length && _lastLog!.sets[i].weight > 0) {
+          _weightControllers[i].text = _lastLog!.sets[i].weight.toString();
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final subtitle = _getSubtitle();
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colors.card,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: context.colors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Log: ${widget.exercise.name}',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: context.colors.textDark,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              subtitle ?? '${widget.exercise.setCount} set${widget.exercise.setCount > 1 ? 's' : ''}',
-              style: TextStyle(
-                fontSize: 13,
-                color: context.colors.textMedium,
-              ),
-            ),
-            SizedBox(height: 20),
-            // Header row
-            Row(
-              children: [
-                SizedBox(width: 40),
-                Expanded(
-                  child: Text(
-                    'REPS',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.textLight,
-                      letterSpacing: 1,
-                    ),
+    return AppSheet(
+      title: 'Log: ${widget.exercise.name}',
+      subtitle: subtitle ??
+          '${widget.exercise.setCount} set${widget.exercise.setCount > 1 ? 's' : ''}',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SizedBox(width: 40),
+              Expanded(
+                child: Text(
+                  'REPS',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textLight,
+                    letterSpacing: 1,
                   ),
                 ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'WEIGHT (kg)',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.textLight,
-                      letterSpacing: 1,
-                    ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'WEIGHT (kg)',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textLight,
+                    letterSpacing: 1,
                   ),
                 ),
-              ],
-            ),
-            SizedBox(height: 10),
-            ...List.generate(widget.exercise.setCount, (i) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        'Set ${i + 1}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: context.colors.textDark,
-                        ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          ...List.generate(widget.exercise.setCount, (i) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      'Set ${i + 1}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.colors.textDark,
                       ),
                     ),
-                    Expanded(
-                      child: Semantics(
-                        label: 'Reps for set ${i + 1}',
-                        child: TextField(
-                          controller: _repsControllers[i],
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 10),
+                  ),
+                  Expanded(
+                    child: Semantics(
+                      label: 'Reps for set ${i + 1}',
+                      child: TextField(
+                        controller: _repsControllers[i],
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 10,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Semantics(
-                        label: 'Weight in kg for set ${i + 1}',
-                        child: TextField(
-                          controller: _weightControllers[i],
-                          keyboardType:
-                              TextInputType.numberWithOptions(decimal: true),
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            hintText: _lastLog != null && i < _lastLog!.sets.length 
-                              ? _lastLog!.sets[i].weight.toString() 
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Semantics(
+                      label: 'Weight in kg for set ${i + 1}',
+                      child: TextField(
+                        controller: _weightControllers[i],
+                        keyboardType:
+                            TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: _lastLog != null &&
+                                  i < _lastLog!.sets.length
+                              ? _lastLog!.sets[i].weight.toString()
                               : '0',
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 10,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            }),
-            SizedBox(height: 20),
-            Semantics(
-              label: 'Save Log Data',
-              button: true,
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _save,
-                  child: Text('Save Log'),
-                ),
+                  ),
+                ],
               ),
+            );
+          }),
+          SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              onPressed: () async {
+                _fillFromPlan();
+                await _persistAndClose(
+                  buildPlannedSets(widget.exercise, _lastLog),
+                );
+              },
+              child: Text('Log as planned'),
             ),
-            SizedBox(height: 8),
-          ],
-        ),
+          ),
+          SizedBox(height: 10),
+          Semantics(
+            label: 'Save Log Data',
+            button: true,
+            child: PrimaryButton(label: 'Save Log', onPressed: _save),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }
 
   Future<void> _save() async {
-    final dateStr = ref.read(dateStringProvider);
     final sets = <SetLog>[];
     for (int i = 0; i < widget.exercise.setCount; i++) {
       final reps = int.tryParse(_repsControllers[i].text) ?? 0;
       final weight = double.tryParse(_weightControllers[i].text) ?? 0;
       sets.add(SetLog(setNumber: i + 1, reps: reps, weight: weight));
     }
+    await _persistAndClose(sets);
+  }
 
-    final log = ExerciseLog(
-      date: dateStr,
-      exerciseName: widget.exercise.name,
+  Future<void> _persistAndClose(List<SetLog> sets) async {
+    final prResult = await saveExerciseSets(
+      ref: ref,
+      exercise: widget.exercise,
       sets: sets,
     );
-    final repo = ref.read(exerciseLogRepoProvider);
-    await repo.saveLog(log);
-    
-    // Check for PRs
-    final prResult = PrCalculator.calculateNewPr(log, _currentPr);
-    if (prResult.hasAnyNewPr) {
-      await repo.savePr(prResult.newPr);
-    }
 
-    // Auto-sync day flag when every section is fully logged
-    final plan = ref.read(workoutPlanProvider);
-    if (plan != null && plan.days.isNotEmpty) {
-      final date = DateTime.parse(dateStr);
-      final day = WorkoutCompletion.resolveWorkoutDay(plan, date);
-      if (!WorkoutCompletion.isRestDay(day, date) &&
-          WorkoutCompletion.isTrainingDayCompleteWithRepo(dateStr, day, repo)) {
-        final dailyLog = ref.read(dailyLogProvider);
-        if (!dailyLog.workoutCompleted) {
-          await ref.read(dailyLogProvider.notifier).markWorkoutCompleted(day.dayId);
-        }
-      }
-    }
-    
-    // Trigger UI updates
-    ref.read(exerciseLogsUpdateProvider.notifier).state++;
-    ref.invalidate(dailyScoreProvider);
-    ref.invalidate(dailyLogProvider);
-    
-    // Start rest timer if applicable
-    if (widget.exercise.restSecondsAfterSet > 0) {
-      ref.read(restTimerProvider.notifier).startTimer(
-            widget.exercise.restSecondsAfterSet,
-            exerciseName: widget.exercise.name,
-          );
-    }
-    
     if (!mounted) return;
     Navigator.of(context).pop();
+    _showResultSnack(prResult);
+  }
 
+  void _showResultSnack(PrCalculationResult prResult) {
     String msg = 'Logged ${widget.exercise.name}';
     if (prResult.hasAnyNewPr) {
       if (prResult.isNewMaxWeight) {
@@ -326,7 +275,8 @@ class _LogDataDialogState extends ConsumerState<LogDataDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: prResult.hasAnyNewPr ? context.colors.green : context.colors.primary,
+        backgroundColor:
+            prResult.hasAnyNewPr ? context.colors.green : context.colors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

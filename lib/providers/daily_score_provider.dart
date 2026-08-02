@@ -28,6 +28,33 @@ class DailyScore {
     required this.stepsScore,
     required this.stepsMax,
   });
+
+  static bool _bucketFull(double score, double max) =>
+      max <= 0 || score >= max - 0.01;
+
+  /// Habits + meals + workouts fully earned (steps are bonus-only).
+  bool get isPrimaryComplete {
+    if (isFutureDate) return false;
+    return _bucketFull(habitsScore, habitsMax) &&
+        _bucketFull(mealsScore, mealsMax) &&
+        _bucketFull(workoutsScore, workoutsMax);
+  }
+
+  /// Compact labels for Home "still to do" cue.
+  List<String> get remainingLabels {
+    if (isFutureDate) return const [];
+    final labels = <String>[];
+    if (habitsMax > 0 && !_bucketFull(habitsScore, habitsMax)) {
+      labels.add('habits');
+    }
+    if (mealsMax > 0 && !_bucketFull(mealsScore, mealsMax)) {
+      labels.add('meals');
+    }
+    if (workoutsMax > 0 && !_bucketFull(workoutsScore, workoutsMax)) {
+      labels.add('workout');
+    }
+    return labels;
+  }
 }
 
 final dailyScoreProvider = Provider<DailyScore>((ref) {

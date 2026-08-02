@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../../providers/app_providers.dart';
 import '../../models/user_profile.dart';
 import '../../models/habit.dart';
+import '../../utils/habit_icons.dart';
 
 String kOnboardingCompletedKey = 'onboarding_completed';
 
@@ -25,6 +26,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // Step 2 — Profile
   final _nameController = TextEditingController();
+  final _coachNameController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   bool _useKg = true;
@@ -47,6 +49,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _nameController.dispose();
+    _coachNameController.dispose();
     _heightController.dispose();
     _weightController.dispose();
     _geminiKeyController.dispose();
@@ -97,6 +100,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     ref.read(profileProvider.notifier).updateProfile(
           current.copyWith(
             name: name,
+            coachName: _coachNameController.text.trim(),
             height: height,
             targetWeight: weight,
             useKg: _useKg,
@@ -183,6 +187,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   _WelcomePage(),
                   _ProfilePage(
                     nameController: _nameController,
+                    coachNameController: _coachNameController,
                     heightController: _heightController,
                     weightController: _weightController,
                     useKg: _useKg,
@@ -506,6 +511,7 @@ class _FeaturePill extends StatelessWidget {
 
 class _ProfilePage extends StatelessWidget {
   final TextEditingController nameController;
+  final TextEditingController coachNameController;
   final TextEditingController heightController;
   final TextEditingController weightController;
   final bool useKg;
@@ -513,6 +519,7 @@ class _ProfilePage extends StatelessWidget {
 
   const _ProfilePage({
     required this.nameController,
+    required this.coachNameController,
     required this.heightController,
     required this.weightController,
     required this.useKg,
@@ -532,8 +539,20 @@ class _ProfilePage extends StatelessWidget {
           _FieldLabel('Your Name *'),
           _InputField(
             controller: nameController,
-            hint: 'e.g. Santhosh',
+            hint: 'e.g. Bodamma',
             capitalization: TextCapitalization.words,
+          ),
+          SizedBox(height: 20),
+          _FieldLabel('Coach name (optional)'),
+          _InputField(
+            controller: coachNameController,
+            hint: 'e.g. Shravan',
+            capitalization: TextCapitalization.words,
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Shown on daily coach notes (e.g. "Coach Shravan").',
+            style: TextStyle(fontSize: 12, color: context.colors.textMedium),
           ),
           SizedBox(height: 20),
           Row(
@@ -746,7 +765,13 @@ class _GoalsPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Text(habit.icon, style: TextStyle(fontSize: 22)),
+                    Icon(
+                      HabitIcons.resolve(habit.icon),
+                      size: 22,
+                      color: selected
+                          ? context.colors.primary
+                          : context.colors.textMedium,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(

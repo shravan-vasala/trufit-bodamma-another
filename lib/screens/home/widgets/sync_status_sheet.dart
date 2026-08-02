@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../theme/app_colors.dart';
 import '../../../providers/app_providers.dart';
 import '../../../services/health_connect_service.dart';
+import '../../../widgets/app_bottom_sheet.dart';
 import '../steps_entry_dialog.dart';
 import '../../../widgets/async_error_card.dart';
 
@@ -217,11 +218,8 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
               child: TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  showModalBottomSheet(
+                  showAppBottomSheet(
                     context: context,
-                    useRootNavigator: true,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
                     builder: (_) => StepsEntryDialog(),
                   );
                 },

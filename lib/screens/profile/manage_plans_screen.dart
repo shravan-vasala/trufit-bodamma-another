@@ -410,7 +410,7 @@ class _PlanEditorState extends State<_PlanEditor> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Plan saved successfully! ✅'),
+            content: Text('Plan saved successfully'),
             backgroundColor: context.colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

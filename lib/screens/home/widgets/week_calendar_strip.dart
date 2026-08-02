@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/layout_insets.dart';
 import '../../../providers/app_providers.dart';
 import '../../../models/habit.dart';
 import '../../../utils/workout_completion.dart';
+import '../../../widgets/app_bottom_sheet.dart';
+import '../../../widgets/surface_card.dart';
 import 'past_day_summary_sheet.dart';
 import 'daily_score_sheet.dart';
 
@@ -95,20 +98,8 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
       }
     });
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.card,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: context.colors.textLight.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+    return SurfaceCard(
+      margin: EdgeInsets.symmetric(horizontal: kScreenPadding),
       child: Column(
         children: [
           // Date header row
@@ -330,11 +321,8 @@ class _DayCircle extends ConsumerWidget {
         if (isFuture || isToday) {
           ref.read(selectedDateProvider.notifier).state = date;
         } else {
-          showModalBottomSheet(
+          showAppBottomSheet(
             context: context,
-            useRootNavigator: true,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
             builder: (_) => PastDaySummarySheet(date: date),
           );
         }
@@ -396,11 +384,18 @@ class _DayCircle extends ConsumerWidget {
   }
 }
 
-class _DailyScoreRing extends ConsumerWidget {
+class _DailyScoreRing extends ConsumerStatefulWidget {
   const _DailyScoreRing();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DailyScoreRing> createState() => _DailyScoreRingState();
+}
+
+class _DailyScoreRingState extends ConsumerState<_DailyScoreRing> {
+  double _previousProgress = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final scoreData = ref.watch(dailyScoreProvider);
 
     Color scoreColor = context.colors.green;
@@ -415,15 +410,20 @@ class _DailyScoreRing extends ConsumerWidget {
     final progress =
         scoreData.isFutureDate ? 0.0 : scoreData.totalScore / 100.0;
 
+    // Animate from last shown progress when score jumps (not always from 0).
+    final begin = _previousProgress;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _previousProgress != progress) {
+        _previousProgress = progress;
+      }
+    });
+
     return GestureDetector(
       onTap: scoreData.isFutureDate
           ? null
           : () {
-              showModalBottomSheet(
+              showAppBottomSheet(
                 context: context,
-                useRootNavigator: true,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
                 builder: (ctx) => const DailyScoreSheet(),
               );
             },
@@ -451,8 +451,9 @@ class _DailyScoreRing extends ConsumerWidget {
               alignment: Alignment.center,
               children: [
                 TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0, end: progress),
-                  duration: const Duration(milliseconds: 800),
+                  key: ValueKey(progress),
+                  tween: Tween<double>(begin: begin, end: progress),
+                  duration: const Duration(milliseconds: 500),
                   curve: Curves.easeOutCubic,
                   builder: (context, value, child) {
                     return CustomPaint(

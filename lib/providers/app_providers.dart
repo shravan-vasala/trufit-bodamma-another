@@ -544,6 +544,7 @@ class CoachNoteNotifier extends StateNotifier<AsyncValue<CoachNote>> {
       final noteStr = await coachService
           .generateNote(
             userName: profile.name,
+            coachName: profile.coachName,
             steps: dailyLog.steps ?? 0,
             sleep: dailyLog.sleepHours ?? 0.0,
             habitsDone: habitsDone,

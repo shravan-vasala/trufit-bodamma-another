@@ -10,7 +10,10 @@ import '../helpers/test_hive_setup.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
-  late ProviderContainer container;
+  late ProfileRepository profileRepo;
+  late DailyLogRepository dailyLogRepo;
+  late WorkoutRepository workoutRepo;
+  late ExerciseLogRepository exerciseLogRepo;
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,85 +22,63 @@ void main() {
 
   setUp(() async {
     await setUpTestHive();
-    
-    final profileRepo = ProfileRepository();
+
+    profileRepo = ProfileRepository();
     await profileRepo.init();
-    
-    final dailyLogRepo = DailyLogRepository();
+
+    dailyLogRepo = DailyLogRepository();
     await dailyLogRepo.init();
 
-    final workoutRepo = WorkoutRepository();
+    workoutRepo = WorkoutRepository();
     await workoutRepo.init();
 
-    final exerciseLogRepo = ExerciseLogRepository();
+    exerciseLogRepo = ExerciseLogRepository();
     await exerciseLogRepo.init();
+  });
 
-    container = ProviderContainer(
+  tearDown(() async {
+    await tearDownTestHive();
+  });
+
+  ProviderContainer _buildContainer(DateTime selected) {
+    return ProviderContainer(
       overrides: [
         profileRepoProvider.overrideWithValue(profileRepo),
         dailyLogRepoProvider.overrideWithValue(dailyLogRepo),
         workoutRepoProvider.overrideWithValue(workoutRepo),
         exerciseLogRepoProvider.overrideWithValue(exerciseLogRepo),
+        selectedDateProvider.overrideWith((ref) => selected),
       ],
     );
-  });
-
-  tearDown(() async {
-    container.dispose();
-    await tearDownTestHive();
-  });
+  }
 
   test('phaseProgressProvider week boundary calculation', () async {
-    final profileRepo = container.read(profileRepoProvider);
     final profile = profileRepo.getProfile();
-    
-    // Set start date to exactly 7 days ago
     final startDate = DateTime.now().subtract(const Duration(days: 7));
     await profileRepo.saveProfile(profile.copyWith(planStartDate: startDate));
-    
-    // Set current date to today
-    final todayStr = DateTime.now().toIso8601String().split('T').first;
-    
-    final testContainer = ProviderContainer(
-      parent: container,
-      overrides: [
-        dateStringProvider.overrideWithValue(todayStr),
-      ],
+
+    final today = DateTime.now();
+    final testContainer = _buildContainer(
+      DateTime(today.year, today.month, today.day),
     );
-    
+
     final progress = testContainer.read(phaseProgressProvider);
-    
-    // Since 7 days have passed, we should be precisely on week 2, day 1
-    // daysSinceStart = 7
-    // currentWeek = (7 ~/ 7) + 1 = 2
     expect(progress.currentWeek, 2);
     expect(progress.isPhaseActive, true);
     testContainer.dispose();
   });
 
   test('phaseProgressProvider week 1 day 7 calculation', () async {
-    final profileRepo = container.read(profileRepoProvider);
     final profile = profileRepo.getProfile();
-    
-    // Set start date to exactly 6 days ago
     final startDate = DateTime.now().subtract(const Duration(days: 6));
     await profileRepo.saveProfile(profile.copyWith(planStartDate: startDate));
-    
-    // Set current date to today
-    final todayStr = DateTime.now().toIso8601String().split('T').first;
 
-    final testContainer = ProviderContainer(
-      parent: container,
-      overrides: [
-        dateStringProvider.overrideWithValue(todayStr),
-      ],
+    final today = DateTime.now();
+    final testContainer = _buildContainer(
+      DateTime(today.year, today.month, today.day),
     );
-    
+
     final progress = testContainer.read(phaseProgressProvider);
-    
-    // Since 6 days have passed, we should be on week 1, day 7
-    // daysSinceStart = 6
-    // currentWeek = (6 ~/ 7) + 1 = 1
     expect(progress.currentWeek, 1);
     expect(progress.isPhaseActive, true);
     testContainer.dispose();
